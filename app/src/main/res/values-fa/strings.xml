@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">گپ</string>
+    <string name="app_name">گپ مش</string>
 
     <!-- توضیح مجوزها -->
     <string name="permission_bluetooth_rationale">برای چت مستقیم با دیگران بدون اینترنت، به مجوز بلوتوث نیاز است.</string>
@@ -286,7 +286,7 @@
     <string name="permissions_header">مجوزها</string>
     <string name="grant_permissions">اعطای مجوزها</string>
     <string name="location_tracking_warning">گپ موقعیت شما را پیگیری نمی‌کند</string>
-    <string name="app_brand">گپ/</string>
+    <string name="app_brand">گپ مش/</string>
     <string name="geohash_people_header">افراد</string>
     <string name="nobody_around">کسی در اطراف نیست …</string>
     <string name="you_suffix"> (شما)</string>

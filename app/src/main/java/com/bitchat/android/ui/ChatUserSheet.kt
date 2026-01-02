@@ -99,6 +99,26 @@ fun ChatUserSheet(
                     
                     // Only show user actions for other users' messages or when no message is selected
                     if (selectedMessage?.sender != viewModel.nickname.value) {
+                        // Private message action
+                        item {
+                            UserActionRow(
+                                title = stringResource(R.string.action_private_message_title, targetNickname),
+                                subtitle = stringResource(R.string.action_private_message_subtitle),
+                                titleColor = standardBlue,
+                                onClick = {
+                                    // Start private chat with this user
+                                    coroutineScope.launch {
+                                        // Look up peer ID from nickname
+                                        val peerID = viewModel.getPeerIDForNickname(targetNickname)
+                                        if (peerID != null) {
+                                            viewModel.startPrivateChat(peerID)
+                                        }
+                                    }
+                                    onDismiss()
+                                }
+                            )
+                        }
+                        
                         // Slap action
                         item {
                             UserActionRow(

@@ -628,9 +628,17 @@ class ChatViewModel(
     private fun updateReactiveStates() {
         val currentPeers = state.getConnectedPeersValue()
         
-        // Update session states
+        // Update session states - include selected private chat peer even if not in connected list
+        // This ensures lock icon shows correctly if handshake succeeded but announce verify failed
+        val selectedPeer = state.getSelectedPrivateChatPeerValue()
+        val allRelevantPeers = if (selectedPeer != null && !currentPeers.contains(selectedPeer)) {
+            currentPeers + selectedPeer
+        } else {
+            currentPeers
+        }
+        
         val prevStates = state.getPeerSessionStatesValue()
-        val sessionStates = currentPeers.associateWith { peerID ->
+        val sessionStates = allRelevantPeers.associateWith { peerID ->
             meshService.getSessionState(peerID).toString()
         }
         state.setPeerSessionStates(sessionStates)

@@ -170,7 +170,7 @@ data class BitchatPacket(
  * Binary Protocol implementation - supports v1 and v2, backward compatible
  */
 object BinaryProtocol {
-    private const val HEADER_SIZE_V1 = 13
+    private const val HEADER_SIZE_V1 = 14
     private const val HEADER_SIZE_V2 = 15
     private const val SENDER_ID_SIZE = 8
     private const val RECIPIENT_ID_SIZE = 8
@@ -180,6 +180,7 @@ object BinaryProtocol {
         const val HAS_RECIPIENT: UByte = 0x01u
         const val HAS_SIGNATURE: UByte = 0x02u
         const val IS_COMPRESSED: UByte = 0x04u
+        const val HAS_ROUTE: UByte = 0x08u
     }
 
     private fun getHeaderSize(version: UByte): Int {
@@ -324,6 +325,7 @@ object BinaryProtocol {
             val hasRecipient = (flags and Flags.HAS_RECIPIENT) != 0u.toUByte()
             val hasSignature = (flags and Flags.HAS_SIGNATURE) != 0u.toUByte()
             val isCompressed = (flags and Flags.IS_COMPRESSED) != 0u.toUByte()
+            val hasRoute = (flags and Flags.HAS_ROUTE) != 0u.toUByte()
 
             // Payload length - version-dependent (2 or 4 bytes)
             val payloadLength = if (version >= 2u.toUByte()) {
@@ -350,20 +352,46 @@ object BinaryProtocol {
                 recipientBytes
             } else null
             
+            // Route - consumption/stripping (critical for iOS compatibility)
+            // Route bytes are included in payloadLength in the protocol
+            var netPayloadLength = payloadLength.toInt()
+            
+            if (hasRoute) {
+                // Route format: Count(1) + [Hop(8)...]
+                // buffer.get() returns signed byte, so mask with 0xFF to get unsigned int
+                val routeCount = buffer.get().toInt() and 0xFF
+                val routeBytes = 1 + (routeCount * SENDER_ID_SIZE)
+                
+                // Skip route hops
+                if (routeCount > 0) {
+                     val skipBuffer = ByteArray(routeCount * SENDER_ID_SIZE)
+                     buffer.get(skipBuffer)
+                }
+                
+                // Route bytes are counted in payloadLength, so we must subtract them
+                // to get the actual payload/compression size
+                netPayloadLength -= routeBytes
+            }
+            
+            if (netPayloadLength < 0) {
+                Log.e("BinaryProtocol", "Invalid payload length after stripping route")
+                return null
+            }
+
             // Payload
             val payload = if (isCompressed) {
                 // First 2 bytes are original size
-                if (payloadLength.toInt() < 2) return null
+                if (netPayloadLength < 2) return null
                 val originalSize = buffer.getShort().toInt()
                 
                 // Compressed payload
-                val compressedPayload = ByteArray(payloadLength.toInt() - 2)
+                val compressedPayload = ByteArray(netPayloadLength - 2)
                 buffer.get(compressedPayload)
                 
                 // Decompress
                 CompressionUtil.decompress(compressedPayload, originalSize) ?: return null
             } else {
-                val payloadBytes = ByteArray(payloadLength.toInt())
+                val payloadBytes = ByteArray(netPayloadLength)
                 buffer.get(payloadBytes)
                 payloadBytes
             }

@@ -87,7 +87,10 @@ object RelayDirectory {
      */
     fun closestRelaysForGeohash(geohash: String, nRelays: Int): List<String> {
         val snapshot = synchronized(relaysLock) { relays.toList() }
-        if (snapshot.isEmpty()) return emptyList()
+        if (snapshot.isEmpty()) {
+            Log.w(TAG, "GeoDebug: closestRelaysForGeohash geohash=$geohash - relay list is EMPTY!")
+            return emptyList()
+        }
         val center = try {
             val c = com.gap.android.geohash.Geohash.decodeToCenter(geohash)
             c
@@ -97,12 +100,15 @@ object RelayDirectory {
         }
 
         val (lat, lon) = center
-        return snapshot
+        val result = snapshot
             .asSequence()
             .sortedBy { haversineMeters(lat, lon, it.latitude, it.longitude) }
             .take(nRelays.coerceAtLeast(0))
             .map { it.url }
             .toList()
+        
+        Log.i(TAG, "GeoDebug: geohash=$geohash center=($lat, $lon) totalRelays=${snapshot.size} returning ${result.size} relays: ${result.take(3).joinToString()}")
+        return result
     }
 
     private fun haversineMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {

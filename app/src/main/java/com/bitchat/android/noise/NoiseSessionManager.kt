@@ -49,13 +49,28 @@ class NoiseSessionManager(
     }
     
     /**
-     * SIMPLIFIED: Initiate handshake - no tie breaker, just start
+     * Initiate handshake - protects against destroying in-progress handshakes
+     * Returns null if a handshake is already in progress
      */
-    fun initiateHandshake(peerID: String): ByteArray {
+    fun initiateHandshake(peerID: String): ByteArray? {
         Log.d(TAG, "initiateHandshake($peerID)")
 
-        // Remove any existing session first
-        removeSession(peerID)
+        // Check if we already have an established session
+        val existingSession = getSession(peerID)
+        if (existingSession != null) {
+            if (existingSession.isEstablished()) {
+                Log.d(TAG, "Already have established session with $peerID, not initiating new handshake")
+                return null
+            }
+            if (existingSession.isHandshaking()) {
+                // Don't destroy a handshake in progress - this prevents race conditions
+                // where both sides try to initiate and destroy each other's sessions
+                Log.d(TAG, "Handshake already in progress with $peerID, not initiating new one")
+                return null
+            }
+            // Session exists but is uninitialized or failed, remove it
+            removeSession(peerID)
+        }
         
         // Create new session as initiator
         val session = NoiseSession(

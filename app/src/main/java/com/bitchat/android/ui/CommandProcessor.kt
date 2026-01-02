@@ -19,11 +19,13 @@ class CommandProcessor(
         CommandSuggestion("/block", emptyList(), "[nickname]", "block or list blocked peers"),
         CommandSuggestion("/channels", emptyList(), null, "show all discovered channels"),
         CommandSuggestion("/clear", emptyList(), null, "clear chat messages"),
+        CommandSuggestion("/fav", emptyList(), "<nickname>", "add peer to favorites"),
         CommandSuggestion("/hug", emptyList(), "<nickname>", "send someone a warm hug"),
         CommandSuggestion("/j", listOf("/join"), "<channel>", "join or create a channel"),
         CommandSuggestion("/m", listOf("/msg"), "<nickname> [message]", "send private message"),
         CommandSuggestion("/slap", emptyList(), "<nickname>", "slap someone with a trout"),
         CommandSuggestion("/unblock", emptyList(), "<nickname>", "unblock a peer"),
+        CommandSuggestion("/unfav", emptyList(), "<nickname>", "remove from favorites"),
         CommandSuggestion("/w", emptyList(), null, "see who's online")
     )
     
@@ -42,6 +44,8 @@ class CommandProcessor(
             "/pass" -> handlePassCommand(parts, myPeerID)
             "/block" -> handleBlockCommand(parts, meshService)
             "/unblock" -> handleUnblockCommand(parts, meshService)
+            "/fav" -> handleFavoriteCommand(parts, meshService, viewModel, add = true)
+            "/unfav" -> handleFavoriteCommand(parts, meshService, viewModel, add = false)
             "/hug" -> handleActionCommand(parts, "gives", "a warm hug 🫂", meshService, myPeerID, onSendMessage)
             "/slap" -> handleActionCommand(parts, "slaps", "around a bit with a large trout 🐟", meshService, myPeerID, onSendMessage)
             "/channels" -> handleChannelsCommand()
@@ -279,6 +283,166 @@ class CommandProcessor(
             messageManager.addMessage(systemMessage)
         }
     }
+    
+    /**
+     * Handle /fav and /unfav commands
+     * Matches iOS CommandProcessor.handleFavorite implementation
+     */
+    private fun handleFavoriteCommand(
+        parts: List<String>,
+        meshService: BluetoothMeshService,
+        viewModel: ChatViewModel?,
+        add: Boolean
+    ) {
+        // Check geohash context - favorites are only for mesh peers (matching iOS behavior)
+        val selectedChannel = viewModel?.selectedLocationChannel?.value
+        val inGeoPublic = selectedChannel is com.gap.android.geohash.ChannelID.Location
+        val selectedPeer = state.getSelectedPrivateChatPeerValue()
+        val inGeoDM = selectedPeer?.startsWith("nostr_") == true
+        
+        if (inGeoPublic || inGeoDM) {
+            val systemMessage = BitchatMessage(
+                sender = "system",
+                content = "favorites are only for mesh peers in #mesh",
+                timestamp = Date(),
+                isRelay = false
+            )
+            messageManager.addMessage(systemMessage)
+            return
+        }
+        
+        val commandName = if (add) "fav" else "unfav"
+        
+        if (parts.size <= 1) {
+            val systemMessage = BitchatMessage(
+                sender = "system",
+                content = "usage: /$commandName <nickname>",
+                timestamp = Date(),
+                isRelay = false
+            )
+            messageManager.addMessage(systemMessage)
+            return
+        }
+        
+        val targetName = parts[1].removePrefix("@")
+        val peerID = getPeerIDForNickname(targetName, meshService)
+        
+        if (peerID == null) {
+            val systemMessage = BitchatMessage(
+                sender = "system",
+                content = "can't find peer: $targetName",
+                timestamp = Date(),
+                isRelay = false
+            )
+            messageManager.addMessage(systemMessage)
+            return
+        }
+        
+        // Get the Noise public key for persistence
+        val peerInfo = meshService.getPeerInfo(peerID)
+        val noisePublicKey = peerInfo?.noisePublicKey
+        
+        if (noisePublicKey == null) {
+            val systemMessage = BitchatMessage(
+                sender = "system",
+                content = "can't find encryption key for: $targetName",
+                timestamp = Date(),
+                isRelay = false
+            )
+            messageManager.addMessage(systemMessage)
+            return
+        }
+        
+        try {
+            val favoriteService = com.gap.android.favorites.FavoritesPersistenceService.shared
+            
+            if (add) {
+                // Get existing relationship to preserve Nostr pubkey if known
+                val existing = favoriteService.getFavoriteStatus(noisePublicKey)
+                
+                // Update favorite status
+                favoriteService.updateFavoriteStatus(
+                    noisePublicKey = noisePublicKey,
+                    nickname = targetName,
+                    isFavorite = true
+                )
+                
+                // Notify via mesh or Nostr
+                sendFavoriteNotification(meshService, peerID, targetName, true)
+                
+                val systemMessage = BitchatMessage(
+                    sender = "system",
+                    content = "added $targetName to favorites",
+                    timestamp = Date(),
+                    isRelay = false
+                )
+                messageManager.addMessage(systemMessage)
+            } else {
+                // Remove from favorites
+                favoriteService.updateFavoriteStatus(
+                    noisePublicKey = noisePublicKey,
+                    nickname = targetName,
+                    isFavorite = false
+                )
+                
+                // Notify via mesh or Nostr
+                sendFavoriteNotification(meshService, peerID, targetName, false)
+                
+                val systemMessage = BitchatMessage(
+                    sender = "system",
+                    content = "removed $targetName from favorites",
+                    timestamp = Date(),
+                    isRelay = false
+                )
+                messageManager.addMessage(systemMessage)
+            }
+        } catch (e: Exception) {
+            val systemMessage = BitchatMessage(
+                sender = "system",
+                content = "failed to update favorite: ${e.message}",
+                timestamp = Date(),
+                isRelay = false
+            )
+            messageManager.addMessage(systemMessage)
+        }
+    }
+    
+    /**
+     * Send favorite notification to peer via mesh or Nostr
+     */
+    private fun sendFavoriteNotification(
+        meshService: BluetoothMeshService,
+        peerID: String,
+        nickname: String,
+        isFavorite: Boolean
+    ) {
+        try {
+            val content = if (isFavorite) "[FAVORITED]" else "[UNFAVORITED]"
+            
+            // Prefer mesh if session established, else try Nostr
+            if (meshService.hasEstablishedSession(peerID)) {
+                meshService.sendPrivateMessage(
+                    content,
+                    peerID,
+                    nickname,
+                    java.util.UUID.randomUUID().toString()
+                )
+            } else {
+                // Fallback to Nostr transport if available
+                try {
+                    val context = state.javaClass.getDeclaredField("application")
+                        .apply { isAccessible = true }
+                        .get(state) as? android.app.Application
+                    if (context != null) {
+                        val nostrTransport = com.gap.android.nostr.NostrTransport.getInstance(context)
+                        nostrTransport.senderPeerID = meshService.myPeerID
+                        nostrTransport.sendFavoriteNotification(peerID, isFavorite)
+                    }
+                } catch (_: Exception) { }
+            }
+        } catch (_: Exception) { }
+    }
+
     
     private fun handleActionCommand(
         parts: List<String>, 
