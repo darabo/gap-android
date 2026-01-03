@@ -1,4 +1,4 @@
-package com.gap.android.ui.media
+package com.bitchat.android.ui.media
 
 import android.media.MediaPlayer
 import androidx.compose.foundation.background
@@ -99,7 +99,7 @@ fun VoiceNotePlayer(
             )
         }
         val progressBarColor = progressColor ?: MaterialTheme.colorScheme.primary
-        com.gap.android.ui.media.WaveformPreview(
+        com.bitchat.android.ui.media.WaveformPreview(
             modifier = Modifier
                 .height(24.dp)
                 .weight(1f)

@@ -1,4 +1,4 @@
-package com.gap.android.nostr
+package com.bitchat.android.nostr
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -132,7 +132,9 @@ data class NostrEvent(
         
         // Convert to JSON without escaping slashes (compact format)
         val gson = GsonBuilder().disableHtmlEscaping().create()
-        val jsonString = gson.toJson(serialized)
+        // Gson's disableHtmlEscaping handles < > & = ' but may still escape / in some contexts. 
+        // We explicitly revert \/ to / to ensure NIP-01 compliance and match iOS withoutEscapingSlashes.
+        val jsonString = gson.toJson(serialized).replace("\\/", "/")
         
         // SHA256 hash of the JSON string
         val digest = MessageDigest.getInstance("SHA-256")

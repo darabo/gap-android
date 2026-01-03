@@ -20,7 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package com.gap.android.noise.southernstorm.crypto;
+package com.bitchat.android.noise.southernstorm.crypto;
 
 /**
  * Implementation of the ChaCha20 core hash transformation.

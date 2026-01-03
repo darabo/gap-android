@@ -1,4 +1,4 @@
-package com.gap.android.util
+package com.bitchat.android.util
 
 /**
  * Extension function to convert a ByteArray to a hexadecimal string.

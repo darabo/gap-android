@@ -1,7 +1,7 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
-import com.gap.android.mesh.BluetoothMeshService
-import com.gap.android.model.BitchatMessage
+import com.bitchat.android.mesh.BluetoothMeshService
+import com.bitchat.android.model.BitchatMessage
 import java.util.Date
 
 /**
@@ -137,7 +137,7 @@ class CommandProcessor(
         // Channel-aware who command (matches iOS behavior)
         val (peerList, contextDescription) = if (viewModel != null) {
             when (val selectedChannel = viewModel.selectedLocationChannel.value) {
-                is com.gap.android.geohash.ChannelID.Mesh,
+                is com.bitchat.android.geohash.ChannelID.Mesh,
                 null -> {
                     // Mesh channel: show Bluetooth-connected peers
                     val connectedPeers = state.getConnectedPeersValue()
@@ -147,7 +147,7 @@ class CommandProcessor(
                     Pair(peerList, "online users")
                 }
                 
-                is com.gap.android.geohash.ChannelID.Location -> {
+                is com.bitchat.android.geohash.ChannelID.Location -> {
                     // Location channel: show geohash participants
                     val geohashPeople = viewModel.geohashPeople.value ?: emptyList()
                     val currentNickname = state.getNicknameValue()
@@ -296,7 +296,7 @@ class CommandProcessor(
     ) {
         // Check geohash context - favorites are only for mesh peers (matching iOS behavior)
         val selectedChannel = viewModel?.selectedLocationChannel?.value
-        val inGeoPublic = selectedChannel is com.gap.android.geohash.ChannelID.Location
+        val inGeoPublic = selectedChannel is com.bitchat.android.geohash.ChannelID.Location
         val selectedPeer = state.getSelectedPrivateChatPeerValue()
         val inGeoDM = selectedPeer?.startsWith("nostr_") == true
         
@@ -354,7 +354,7 @@ class CommandProcessor(
         }
         
         try {
-            val favoriteService = com.gap.android.favorites.FavoritesPersistenceService.shared
+            val favoriteService = com.bitchat.android.favorites.FavoritesPersistenceService.shared
             
             if (add) {
                 // Get existing relationship to preserve Nostr pubkey if known
@@ -434,7 +434,7 @@ class CommandProcessor(
                         .apply { isAccessible = true }
                         .get(state) as? android.app.Application
                     if (context != null) {
-                        val nostrTransport = com.gap.android.nostr.NostrTransport.getInstance(context)
+                        val nostrTransport = com.bitchat.android.nostr.NostrTransport.getInstance(context)
                         nostrTransport.senderPeerID = meshService.myPeerID
                         nostrTransport.sendFavoriteNotification(peerID, isFavorite)
                     }
@@ -458,7 +458,7 @@ class CommandProcessor(
 
             // If we're in a geohash location channel, don't add a local echo here.
             // GeohashViewModel.sendGeohashMessage() will add the local echo with proper metadata.
-            val isInLocationChannel = state.selectedLocationChannel.value is com.gap.android.geohash.ChannelID.Location
+            val isInLocationChannel = state.selectedLocationChannel.value is com.bitchat.android.geohash.ChannelID.Location
 
             // Send as regular message
             if (state.getSelectedPrivateChatPeerValue() != null) {
@@ -609,13 +609,13 @@ class CommandProcessor(
         // Get peer candidates based on active channel (matches iOS logic exactly)
         val peerCandidates: List<String> = if (viewModel != null) {
             when (val selectedChannel = viewModel.selectedLocationChannel.value) {
-                is com.gap.android.geohash.ChannelID.Mesh,
+                is com.bitchat.android.geohash.ChannelID.Mesh,
                 null -> {
                     // Mesh channel: use Bluetooth mesh peer nicknames
                     meshService.getPeerNicknames().values.filter { it != meshService.getPeerNicknames()[meshService.myPeerID] }
                 }
                 
-                is com.gap.android.geohash.ChannelID.Location -> {
+                is com.bitchat.android.geohash.ChannelID.Location -> {
                     // Location channel: use geohash participants with collision-resistant suffixes
                     val geohashPeople = viewModel.geohashPeople.value ?: emptyList()
                     val currentNickname = state.getNicknameValue()

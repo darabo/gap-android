@@ -1,9 +1,9 @@
-package com.gap.android.model
+package com.bitchat.android.model
 
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import com.gap.android.features.file.FileUtils
+import com.bitchat.android.features.file.FileUtils
 import java.io.File
 
 /**

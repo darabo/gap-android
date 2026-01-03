@@ -1,6 +1,6 @@
-package com.gap.android.model
+package com.bitchat.android.model
 
-import com.gap.android.protocol.BitchatPacket
+import com.bitchat.android.protocol.BitchatPacket
 
 /**
  * Represents a routed packet with additional metadata

@@ -46,7 +46,7 @@
     <string name="notification_summary_more">تے %1$d ہور</string>
     <string name="notification_messages_from_people">%2$d لوکان کولوں %1$d پیغام</string>
     <string name="notification_more_conversations">تے %1$d ہور گلاں</string>
-    <string name="notification_active_peers_title">👥 نیڑے bitchatter!</string>
+    <string name="notification_active_peers_title">👥 نیڑے gapchatter!</string>
     <string name="notification_active_peers_one">نیڑے 1 بندہ</string>
     <string name="notification_active_peers_many">نیڑے %1$d بندے</string>
     <string name="notification_new_messages">نویں پیغام</string>

@@ -1,4 +1,4 @@
-package com.gap.android.geohash
+package com.bitchat.android.geohash
 
 import android.Manifest
 import android.content.Context
@@ -50,7 +50,7 @@ class LocationChannelManager private constructor(private val context: Context) {
     private var refreshTimer: Job? = null
     private var isGeocoding: Boolean = false
     private val gson = Gson()
-    private var dataManager: com.gap.android.ui.DataManager? = null
+    private var dataManager: com.bitchat.android.ui.DataManager? = null
 
     // Published state for UI bindings (matching iOS @Published properties)
     private val _permissionState = MutableStateFlow(PermissionState.NOT_DETERMINED)
@@ -77,7 +77,7 @@ class LocationChannelManager private constructor(private val context: Context) {
     init {
         updatePermissionState()
         // Initialize DataManager and load persisted settings
-        dataManager = com.gap.android.ui.DataManager(context)
+        dataManager = com.bitchat.android.ui.DataManager(context)
         loadPersistedChannelSelection()
         loadLocationServicesState()
     }
@@ -276,7 +276,7 @@ class LocationChannelManager private constructor(private val context: Context) {
             
             // Use last known location if we have one
             if (lastKnownLocation != null) {
-                Log.d(TAG, "Using last known location: ${lastKnownLocation.latitude}, ${lastKnownLocation.longitude}")
+                Log.d(TAG, "Using last known location: ${lastKnownLocation.latitude.toString().take(4)}***, ${lastKnownLocation.longitude.toString().take(4)}***")
                 lastLocation = lastKnownLocation
                 _isLoadingLocation.value = false // Make sure loading state is off
                 computeChannels(lastKnownLocation)
@@ -300,7 +300,7 @@ class LocationChannelManager private constructor(private val context: Context) {
     // One-time location listener to get a fresh location update
     private val oneShotLocationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
-            Log.d(TAG, "Fresh location received: ${location.latitude}, ${location.longitude}")
+            Log.d(TAG, "Fresh location received: ${location.latitude.toString().take(4)}***, ${location.longitude.toString().take(4)}***")
             lastLocation = location
             computeChannels(location)
             reverseGeocodeIfNeeded(location)
@@ -348,7 +348,7 @@ class LocationChannelManager private constructor(private val context: Context) {
                             context.mainExecutor,
                             { location ->
                                 if (location != null) {
-                                    Log.d(TAG, "Fresh location received: ${location.latitude}, ${location.longitude}")
+                                    Log.d(TAG, "Fresh location received: ${location.latitude.toString().take(4)}***, ${location.longitude.toString().take(4)}***")
                                     lastLocation = location
                                     computeChannels(location)
                                     reverseGeocodeIfNeeded(location)
@@ -415,7 +415,7 @@ class LocationChannelManager private constructor(private val context: Context) {
     }
 
     private fun computeChannels(location: Location) {
-        Log.d(TAG, "Computing channels for location: ${location.latitude}, ${location.longitude}")
+        Log.d(TAG, "Computing channels for location: ${location.latitude.toString().take(4)}***, ${location.longitude.toString().take(4)}***")
         
         val levels = GeohashChannelLevel.allCases()
         val result = mutableListOf<GeohashChannel>()

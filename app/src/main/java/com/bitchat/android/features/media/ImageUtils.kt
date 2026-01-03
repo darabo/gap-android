@@ -1,4 +1,4 @@
-package com.gap.android.features.media
+package com.bitchat.android.features.media
 
 import android.content.Context
 import android.graphics.Bitmap

@@ -1,4 +1,4 @@
-package com.gap.android.model
+package com.bitchat.android.model
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize

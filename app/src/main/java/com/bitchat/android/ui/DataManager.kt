@@ -1,4 +1,4 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
 import android.content.Context
 import android.content.SharedPreferences

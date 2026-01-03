@@ -1,6 +1,6 @@
-package com.gap.android.services
+package com.bitchat.android.services
 
-import com.gap.android.ui.ChatState
+import com.bitchat.android.ui.ChatState
 
 object ConversationAliasResolver {
 

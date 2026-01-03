@@ -1,4 +1,4 @@
-package com.gap.android.util
+package com.bitchat.android.util
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

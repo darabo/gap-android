@@ -1,4 +1,4 @@
-package com.gap.android.nostr
+package com.bitchat.android.nostr
 
 import android.util.Log
 import kotlinx.coroutines.Dispatchers

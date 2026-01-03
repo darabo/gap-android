@@ -1,4 +1,4 @@
-package com.gap.android.onboarding
+package com.bitchat.android.onboarding
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
-import com.gap.android.R
+import com.bitchat.android.R
 
 /**
  * Permission explanation screen shown before requesting permissions

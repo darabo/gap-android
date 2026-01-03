@@ -1,4 +1,4 @@
-package com.gap.android.nostr
+package com.bitchat.android.nostr
 
 import android.app.Application
 import android.util.Log

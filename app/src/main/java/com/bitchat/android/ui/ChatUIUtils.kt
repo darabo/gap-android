@@ -1,4 +1,4 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
@@ -10,10 +10,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.gap.android.model.BitchatMessage
-import com.gap.android.mesh.BluetoothMeshService
+import com.bitchat.android.model.BitchatMessage
+import com.bitchat.android.mesh.BluetoothMeshService
 import androidx.compose.material3.ColorScheme
-import com.gap.android.ui.theme.BASE_FONT_SIZE
+import com.bitchat.android.ui.theme.BASE_FONT_SIZE
 import java.text.SimpleDateFormat
 import java.util.*
 

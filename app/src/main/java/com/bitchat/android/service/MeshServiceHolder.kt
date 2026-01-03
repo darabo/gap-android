@@ -1,7 +1,7 @@
-package com.gap.android.service
+package com.bitchat.android.service
 
 import android.content.Context
-import com.gap.android.mesh.BluetoothMeshService
+import com.bitchat.android.mesh.BluetoothMeshService
 
 /**
  * Process-wide holder to share a single BluetoothMeshService instance

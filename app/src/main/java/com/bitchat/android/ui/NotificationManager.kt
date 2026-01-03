@@ -1,4 +1,4 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,9 +10,9 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.Person
 import androidx.core.app.NotificationManagerCompat
-import com.gap.android.MainActivity
-import com.gap.android.R
-import com.gap.android.util.NotificationIntervalManager
+import com.bitchat.android.MainActivity
+import com.bitchat.android.R
+import com.bitchat.android.util.NotificationIntervalManager
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -42,7 +42,7 @@ class NotificationManager(
         private const val SUMMARY_NOTIFICATION_ID = 999
       private const val GEOHASH_SUMMARY_NOTIFICATION_ID = 998
         private const val ACTIVE_PEERS_NOTIFICATION_ID = 997
-        private const val ACTIVE_PEERS_NOTIFICATION_TIME_INTERVAL = com.gap.android.util.AppConstants.UI.ACTIVE_PEERS_NOTIFICATION_INTERVAL_MS
+        private const val ACTIVE_PEERS_NOTIFICATION_TIME_INTERVAL = com.bitchat.android.util.AppConstants.UI.ACTIVE_PEERS_NOTIFICATION_INTERVAL_MS
 
         // Intent extras for notification handling
         const val EXTRA_OPEN_PRIVATE_CHAT = "open_private_chat"

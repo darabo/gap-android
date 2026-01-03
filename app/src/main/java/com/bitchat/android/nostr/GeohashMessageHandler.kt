@@ -1,10 +1,10 @@
-package com.gap.android.nostr
+package com.bitchat.android.nostr
 
 import android.app.Application
 import android.util.Log
-import com.gap.android.model.BitchatMessage
-import com.gap.android.ui.ChatState
-import com.gap.android.ui.MessageManager
+import com.bitchat.android.model.BitchatMessage
+import com.bitchat.android.ui.ChatState
+import com.bitchat.android.ui.MessageManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,7 +23,7 @@ class GeohashMessageHandler(
     private val messageManager: MessageManager,
     private val repo: GeohashRepository,
     private val scope: CoroutineScope,
-    private val dataManager: com.gap.android.ui.DataManager
+    private val dataManager: com.bitchat.android.ui.DataManager
 ) {
     companion object { private const val TAG = "GeohashMessageHandler" }
 
@@ -67,7 +67,7 @@ class GeohashMessageHandler(
                 event.tags.find { it.size >= 2 && it[0] == "t" && it[1] == "teleport" }?.let { repo.markTeleported(event.pubkey) }
                 // Register a geohash DM alias for this participant so MessageRouter can route DMs via Nostr
                 try {
-                    com.gap.android.nostr.GeohashAliasRegistry.put("nostr_${event.pubkey.take(16)}", event.pubkey)
+                    com.bitchat.android.nostr.GeohashAliasRegistry.put("nostr_${event.pubkey.take(16)}", event.pubkey)
                 } catch (_: Exception) { }
 
                 // Skip our own events for message emission

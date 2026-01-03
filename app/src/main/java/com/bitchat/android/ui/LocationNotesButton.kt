@@ -1,4 +1,4 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -15,10 +15,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.gap.android.R
-import com.gap.android.geohash.ChannelID
-import com.gap.android.geohash.LocationChannelManager
-import com.gap.android.nostr.LocationNotesManager
+import com.bitchat.android.R
+import com.bitchat.android.geohash.ChannelID
+import com.bitchat.android.geohash.LocationChannelManager
+import com.bitchat.android.nostr.LocationNotesManager
 
 /**
  * Location Notes button component for MainHeader

@@ -1,4 +1,4 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -6,7 +6,7 @@ import java.security.MessageDigest
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
-import com.gap.android.model.BitchatMessage
+import com.bitchat.android.model.BitchatMessage
 import java.util.*
 
 /**

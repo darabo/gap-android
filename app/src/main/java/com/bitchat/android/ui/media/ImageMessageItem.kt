@@ -1,4 +1,4 @@
-package com.gap.android.ui.media
+package com.bitchat.android.ui.media
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,9 +27,9 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.text.font.FontFamily
-import com.gap.android.mesh.BluetoothMeshService
-import com.gap.android.model.BitchatMessage
-import com.gap.android.model.BitchatMessageType
+import com.bitchat.android.mesh.BluetoothMeshService
+import com.bitchat.android.model.BitchatMessage
+import com.bitchat.android.model.BitchatMessageType
 import androidx.compose.material3.ColorScheme
 import java.text.SimpleDateFormat
 import java.util.*
@@ -50,7 +50,7 @@ fun ImageMessageItem(
 ) {
     val path = message.content.trim()
     Column(modifier = modifier.fillMaxWidth()) {
-        val headerText = com.gap.android.ui.formatMessageHeaderAnnotatedString(
+        val headerText = com.bitchat.android.ui.formatMessageHeaderAnnotatedString(
             message = message,
             currentUserNickname = currentUserNickname,
             meshService = meshService,
@@ -78,7 +78,23 @@ fun ImageMessageItem(
         )
 
         val context = LocalContext.current
-        val bmp = remember(path) { try { android.graphics.BitmapFactory.decodeFile(path) } catch (_: Exception) { null } }
+        // Use decodeStream on background thread to bypass SELinux /proc policy issues with decodeFile
+        var bmp by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+        
+        LaunchedEffect(path) {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                try {
+                    val file = java.io.File(path)
+                    if (file.exists()) {
+                        java.io.FileInputStream(file).use { fis ->
+                            bmp = android.graphics.BitmapFactory.decodeStream(fis)
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("ImageMessageItem", "Failed to load image: ${e.message}")
+                }
+            }
+        }
 
         // Collect all image paths from messages for swipe navigation
         val imagePaths = remember(messages) {
@@ -86,11 +102,12 @@ fun ImageMessageItem(
                 .map { it.content.trim() }
         }
 
-        if (bmp != null) {
-            val img = bmp.asImageBitmap()
-            val aspect = (bmp.width.toFloat() / bmp.height.toFloat()).takeIf { it.isFinite() && it > 0 } ?: 1f
+        val bitmap = bmp
+        if (bitmap != null) {
+            val img = bitmap.asImageBitmap()
+            val aspect = (bitmap.width.toFloat() / bitmap.height.toFloat()).takeIf { it.isFinite() && it > 0 } ?: 1f
             val progressFraction: Float? = when (val st = message.deliveryStatus) {
-                is com.gap.android.model.DeliveryStatus.PartiallyDelivered -> if (st.total > 0) st.reached.toFloat() / st.total.toFloat() else 0f
+                is com.bitchat.android.model.DeliveryStatus.PartiallyDelivered -> if (st.total > 0) st.reached.toFloat() / st.total.toFloat() else 0f
                 else -> null
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
@@ -115,7 +132,7 @@ fun ImageMessageItem(
                         // Fully revealed image
                         Image(
                             bitmap = img,
-                            contentDescription = stringResource(com.gap.android.R.string.cd_image),
+                            contentDescription = stringResource(com.bitchat.android.R.string.cd_image),
                             modifier = Modifier
                                 .widthIn(max = 300.dp)
                                 .aspectRatio(aspect)
@@ -128,7 +145,7 @@ fun ImageMessageItem(
                         )
                     }
                     // Cancel button overlay during sending
-                    val showCancel = message.sender == currentUserNickname && (message.deliveryStatus is com.gap.android.model.DeliveryStatus.PartiallyDelivered)
+                    val showCancel = message.sender == currentUserNickname && (message.deliveryStatus is com.bitchat.android.model.DeliveryStatus.PartiallyDelivered)
                     if (showCancel) {
                         Box(
                             modifier = Modifier
@@ -139,13 +156,13 @@ fun ImageMessageItem(
                                 .clickable { onCancelTransfer?.invoke(message) },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(imageVector = Icons.Filled.Close, contentDescription = stringResource(com.gap.android.R.string.cd_cancel), tint = Color.White, modifier = Modifier.size(14.dp))
+                            Icon(imageVector = Icons.Filled.Close, contentDescription = stringResource(com.bitchat.android.R.string.cd_cancel), tint = Color.White, modifier = Modifier.size(14.dp))
                         }
                     }
                 }
             }
         } else {
-            Text(text = stringResource(com.gap.android.R.string.image_unavailable), fontFamily = FontFamily.Monospace, color = Color.Gray)
+            Text(text = stringResource(com.bitchat.android.R.string.image_unavailable), fontFamily = FontFamily.Monospace, color = Color.Gray)
         }
     }
 }

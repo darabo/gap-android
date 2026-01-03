@@ -1,4 +1,4 @@
-package com.gap.android.nostr
+package com.bitchat.android.nostr
 
 import android.util.Log
 import com.google.gson.Gson
@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
 import kotlin.math.pow
+import kotlinx.coroutines.flow.first
 
 /**
  * Manages WebSocket connections to Nostr relays
@@ -42,10 +43,10 @@ class NostrRelayManager private constructor() {
         )
         
         // Exponential backoff configuration (same as iOS)
-        private const val INITIAL_BACKOFF_INTERVAL = com.gap.android.util.AppConstants.Nostr.INITIAL_BACKOFF_INTERVAL_MS  // 1 second
-        private const val MAX_BACKOFF_INTERVAL = com.gap.android.util.AppConstants.Nostr.MAX_BACKOFF_INTERVAL_MS    // 5 minutes
-        private const val BACKOFF_MULTIPLIER = com.gap.android.util.AppConstants.Nostr.BACKOFF_MULTIPLIER
-        private const val MAX_RECONNECT_ATTEMPTS = com.gap.android.util.AppConstants.Nostr.MAX_RECONNECT_ATTEMPTS
+        private const val INITIAL_BACKOFF_INTERVAL = com.bitchat.android.util.AppConstants.Nostr.INITIAL_BACKOFF_INTERVAL_MS  // 1 second
+        private const val MAX_BACKOFF_INTERVAL = com.bitchat.android.util.AppConstants.Nostr.MAX_BACKOFF_INTERVAL_MS    // 5 minutes
+        private const val BACKOFF_MULTIPLIER = com.bitchat.android.util.AppConstants.Nostr.BACKOFF_MULTIPLIER
+        private const val MAX_RECONNECT_ATTEMPTS = com.bitchat.android.util.AppConstants.Nostr.MAX_RECONNECT_ATTEMPTS
         
         // Track gift-wraps we initiated for logging
         private val pendingGiftWrapIDs = ConcurrentHashMap.newKeySet<String>()
@@ -112,11 +113,11 @@ class NostrRelayManager private constructor() {
     
     // Subscription validation timer
     private var subscriptionValidationJob: Job? = null
-    private val SUBSCRIPTION_VALIDATION_INTERVAL = com.gap.android.util.AppConstants.Nostr.SUBSCRIPTION_VALIDATION_INTERVAL_MS // 30 seconds
+    private val SUBSCRIPTION_VALIDATION_INTERVAL = com.bitchat.android.util.AppConstants.Nostr.SUBSCRIPTION_VALIDATION_INTERVAL_MS // 30 seconds
     
     // OkHttp client for WebSocket connections (via provider to honor Tor)
     private val httpClient: OkHttpClient
-        get() = com.gap.android.net.OkHttpProvider.webSocketClient()
+        get() = com.bitchat.android.net.OkHttpProvider.webSocketClient()
     
     private val gson by lazy { NostrRequest.createGson() }
     
@@ -245,6 +246,33 @@ class NostrRelayManager private constructor() {
         Log.d(TAG, "🌐 Connecting to ${relaysList.size} Nostr relays")
         
         scope.launch {
+            // Wait for Tor if enabled
+            val artiManager = com.bitchat.android.net.ArtiTorManager.getInstance()
+            val status = artiManager.statusFlow.value
+            
+            if (status.mode == com.bitchat.android.net.TorMode.ON) {
+                if (!artiManager.isProxyEnabled()) {
+                    Log.i(TAG, "⏳ Tor enabled but not ready (bootstrapping: ${status.bootstrapPercent}%). Waiting...")
+                    try {
+                        // Wait until running and 100% bootstrapped, or error/off
+                        artiManager.statusFlow.first { s ->
+                            (s.state == com.bitchat.android.net.ArtiTorManager.TorState.RUNNING && s.bootstrapPercent >= 100) ||
+                            s.mode == com.bitchat.android.net.TorMode.OFF ||
+                            s.state == com.bitchat.android.net.ArtiTorManager.TorState.ERROR
+                        }
+                        
+                        val finalStatus = artiManager.statusFlow.value
+                        if (finalStatus.state == com.bitchat.android.net.ArtiTorManager.TorState.RUNNING) {
+                            Log.i(TAG, "✅ Tor is ready. Proceeding with Nostr connection.")
+                        } else {
+                            Log.w(TAG, "⚠️ Tor wait ended with state: ${finalStatus.state}. Proceeding anyway (might fail).")
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error waiting for Tor: ${e.message}")
+                    }
+                }
+            }
+
             relaysList.forEach { relay ->
                 launch {
                     connectToRelay(relay.url)

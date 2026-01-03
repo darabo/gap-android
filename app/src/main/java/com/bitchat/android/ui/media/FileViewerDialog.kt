@@ -1,4 +1,4 @@
-package com.gap.android.ui.media
+package com.bitchat.android.ui.media
 
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -24,9 +24,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.gap.android.R
-import com.gap.android.features.file.FileUtils
-import com.gap.android.model.BitchatFilePacket
+import com.bitchat.android.R
+import com.bitchat.android.features.file.FileUtils
+import com.bitchat.android.model.BitchatFilePacket
 import kotlinx.coroutines.launch
 import java.io.File
 

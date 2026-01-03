@@ -1,7 +1,7 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
-import com.gap.android.model.BitchatMessage
-import com.gap.android.model.BitchatMessageType
+import com.bitchat.android.model.BitchatMessage
+import com.bitchat.android.model.BitchatMessageType
 
 /**
  * Utilities for building human-friendly notification text/previews.

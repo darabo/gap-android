@@ -1,7 +1,7 @@
-package com.gap.android.services
+package com.bitchat.android.services
 
 import android.content.Context
-import com.gap.android.ui.DataManager
+import com.bitchat.android.ui.DataManager
 
 /**
  * Provides current user's nickname for announcements and leave messages.

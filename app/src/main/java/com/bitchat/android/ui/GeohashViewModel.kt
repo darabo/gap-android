@@ -1,17 +1,17 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.gap.android.nostr.GeohashMessageHandler
-import com.gap.android.nostr.GeohashRepository
-import com.gap.android.nostr.NostrDirectMessageHandler
-import com.gap.android.nostr.NostrIdentityBridge
-import com.gap.android.nostr.NostrProtocol
-import com.gap.android.nostr.NostrRelayManager
-import com.gap.android.nostr.NostrSubscriptionManager
-import com.gap.android.nostr.PoWPreferenceManager
+import com.bitchat.android.nostr.GeohashMessageHandler
+import com.bitchat.android.nostr.GeohashRepository
+import com.bitchat.android.nostr.NostrDirectMessageHandler
+import com.bitchat.android.nostr.NostrIdentityBridge
+import com.bitchat.android.nostr.NostrProtocol
+import com.bitchat.android.nostr.NostrRelayManager
+import com.bitchat.android.nostr.NostrSubscriptionManager
+import com.bitchat.android.nostr.PoWPreferenceManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +25,8 @@ class GeohashViewModel(
     private val privateChatManager: PrivateChatManager,
     private val meshDelegateHandler: MeshDelegateHandler,
     private val dataManager: DataManager,
-    private val notificationManager: NotificationManager
+    private val notificationManager: NotificationManager,
+    private val getMeshService: () -> com.bitchat.android.mesh.BluetoothMeshService
 ) : AndroidViewModel(application) {
 
     companion object { private const val TAG = "GeohashViewModel" }
@@ -53,11 +54,11 @@ class GeohashViewModel(
     private var currentGeohashSubId: String? = null
     private var currentDmSubId: String? = null
     private var geoTimer: Job? = null
-    private var locationChannelManager: com.gap.android.geohash.LocationChannelManager? = null
+    private var locationChannelManager: com.bitchat.android.geohash.LocationChannelManager? = null
 
     val geohashPeople: StateFlow<List<GeoPerson>> = state.geohashPeople
     val geohashParticipantCounts: StateFlow<Map<String, Int>> = state.geohashParticipantCounts
-    val selectedLocationChannel: StateFlow<com.gap.android.geohash.ChannelID?> = state.selectedLocationChannel
+    val selectedLocationChannel: StateFlow<com.bitchat.android.geohash.ChannelID?> = state.selectedLocationChannel
 
     fun initialize() {
         subscriptionManager.connect()
@@ -72,7 +73,7 @@ class GeohashViewModel(
             )
         }
         try {
-            locationChannelManager = com.gap.android.geohash.LocationChannelManager.getInstance(getApplication())
+            locationChannelManager = com.bitchat.android.geohash.LocationChannelManager.getInstance(getApplication())
             viewModelScope.launch {
                 locationChannelManager?.selectedChannel?.collect { channel ->
                     state.setSelectedLocationChannel(channel)
@@ -86,7 +87,7 @@ class GeohashViewModel(
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize location channel state: ${e.message}")
-            state.setSelectedLocationChannel(com.gap.android.geohash.ChannelID.Mesh)
+            state.setSelectedLocationChannel(com.bitchat.android.geohash.ChannelID.Mesh)
             state.setIsTeleported(false)
         }
     }
@@ -102,12 +103,12 @@ class GeohashViewModel(
         initialize()
     }
 
-    fun sendGeohashMessage(content: String, channel: com.gap.android.geohash.GeohashChannel, myPeerID: String, nickname: String?) {
+    fun sendGeohashMessage(content: String, channel: com.bitchat.android.geohash.GeohashChannel, myPeerID: String, nickname: String?) {
         viewModelScope.launch {
             try {
                 val tempId = "temp_${System.currentTimeMillis()}_${kotlin.random.Random.nextInt(1000)}"
                 val pow = PoWPreferenceManager.getCurrentSettings()
-                val localMsg = com.gap.android.model.BitchatMessage(
+                val localMsg = com.bitchat.android.model.BitchatMessage(
                     id = tempId,
                     sender = nickname ?: myPeerID,
                     content = content,
@@ -120,7 +121,7 @@ class GeohashViewModel(
                 messageManager.addChannelMessage("geo:${channel.geohash}", localMsg)
                 val startedMining = pow.enabled && pow.difficulty > 0
                 if (startedMining) {
-                    com.gap.android.ui.PoWMiningTracker.startMiningMessage(tempId)
+                    com.bitchat.android.ui.PoWMiningTracker.startMiningMessage(tempId)
                 }
                 try {
                     val identity = NostrIdentityBridge.deriveIdentity(forGeohash = channel.geohash, context = getApplication())
@@ -128,10 +129,22 @@ class GeohashViewModel(
                     val event = NostrProtocol.createEphemeralGeohashEvent(content, channel.geohash, identity, nickname, teleported)
                     val relayManager = NostrRelayManager.getInstance(getApplication())
                     relayManager.sendEventToGeohash(event, channel.geohash, includeDefaults = false, nRelays = 5)
+
+                    // FIXED: Also broadcast over Bluetooth Mesh for nearby peers
+                    try {
+                        val json = com.google.gson.Gson().toJson(event)
+                        getMeshService().sendMessage(
+                            content = json,
+                            channel = "geo:${channel.geohash}"
+                        )
+                        Log.d(TAG, "📡 Broadcast geohash event to mesh: ${event.id}")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to broadcast geohash to mesh: ${e.message}")
+                    }
                 } finally {
                     // Ensure we stop the per-message mining animation regardless of success/failure
                     if (startedMining) {
-                        com.gap.android.ui.PoWMiningTracker.stopMiningMessage(tempId)
+                        com.bitchat.android.ui.PoWMiningTracker.stopMiningMessage(tempId)
                     }
                 }
             } catch (e: Exception) {
@@ -165,10 +178,10 @@ class GeohashViewModel(
         repo.putNostrKeyMapping(convKey, pubkeyHex)
         // Record the conversation's geohash using the currently selected location channel (if any)
         val current = state.selectedLocationChannel.value
-        val gh = (current as? com.gap.android.geohash.ChannelID.Location)?.channel?.geohash
+        val gh = (current as? com.bitchat.android.geohash.ChannelID.Location)?.channel?.geohash
         if (!gh.isNullOrEmpty()) {
             repo.setConversationGeohash(convKey, gh)
-            com.gap.android.nostr.GeohashConversationRegistry.set(convKey, gh)
+            com.bitchat.android.nostr.GeohashConversationRegistry.set(convKey, gh)
         }
         onStartPrivateChat(convKey)
         Log.d(TAG, "🗨️ Started geohash DM with ${pubkeyHex} -> ${convKey} (geohash=${gh})")
@@ -183,7 +196,7 @@ class GeohashViewModel(
             // Refresh people list and counts to remove blocked entry immediately
             repo.refreshGeohashPeople()
             repo.updateReactiveParticipantCounts()
-            val sysMsg = com.gap.android.model.BitchatMessage(
+            val sysMsg = com.bitchat.android.model.BitchatMessage(
                 sender = "system",
                 content = "blocked $targetNickname in geohash channels",
                 timestamp = Date(),
@@ -191,7 +204,7 @@ class GeohashViewModel(
             )
             messageManager.addMessage(sysMsg)
         } else {
-            val sysMsg = com.gap.android.model.BitchatMessage(
+            val sysMsg = com.bitchat.android.model.BitchatMessage(
                 sender = "system",
                 content = "user '$targetNickname' not found in current geohash",
                 timestamp = Date(),
@@ -201,7 +214,7 @@ class GeohashViewModel(
         }
     }
 
-    fun selectLocationChannel(channel: com.gap.android.geohash.ChannelID) {
+    fun selectLocationChannel(channel: com.bitchat.android.geohash.ChannelID) {
         locationChannelManager?.select(channel) ?: run { Log.w(TAG, "Cannot select location channel - not initialized") }
     }
 
@@ -212,20 +225,20 @@ class GeohashViewModel(
         return colorForPeerSeed(seed, isDark).copy()
     }
 
-    private fun switchLocationChannel(channel: com.gap.android.geohash.ChannelID?) {
+    private fun switchLocationChannel(channel: com.bitchat.android.geohash.ChannelID?) {
         geoTimer?.cancel(); geoTimer = null
         currentGeohashSubId?.let { subscriptionManager.unsubscribe(it); currentGeohashSubId = null }
         currentDmSubId?.let { subscriptionManager.unsubscribe(it); currentDmSubId = null }
 
         when (channel) {
-            is com.gap.android.geohash.ChannelID.Mesh -> {
+            is com.bitchat.android.geohash.ChannelID.Mesh -> {
                 Log.d(TAG, "📡 Switched to mesh channel")
                 repo.setCurrentGeohash(null)
                 notificationManager.setCurrentGeohash(null)
                 notificationManager.clearMeshMentionNotifications()
                 repo.refreshGeohashPeople()
             }
-            is com.gap.android.geohash.ChannelID.Location -> {
+            is com.bitchat.android.geohash.ChannelID.Location -> {
                 Log.d(TAG, "📍 Switching to geohash channel: ${channel.channel.geohash}")
                 repo.setCurrentGeohash(channel.channel.geohash)
                 notificationManager.setCurrentGeohash(channel.channel.geohash)
@@ -260,7 +273,7 @@ class GeohashViewModel(
                         handler = { event -> dmHandler.onGiftWrap(event, geohash, dmIdentity) }
                     )
                     // Also register alias in global registry for routing convenience
-                    com.gap.android.nostr.GeohashAliasRegistry.put("nostr_${dmIdentity.publicKeyHex.take(16)}", dmIdentity.publicKeyHex)
+                    com.bitchat.android.nostr.GeohashAliasRegistry.put("nostr_${dmIdentity.publicKeyHex.take(16)}", dmIdentity.publicKeyHex)
                 }
             }
             null -> {

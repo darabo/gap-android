@@ -1,4 +1,4 @@
-package com.gap.android.onboarding
+package com.bitchat.android.onboarding
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
@@ -16,7 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
-import com.gap.android.R
+import com.bitchat.android.R
 
 /**
  * Screen shown when checking location services status or requesting location services enable

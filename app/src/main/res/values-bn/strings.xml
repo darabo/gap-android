@@ -46,7 +46,7 @@
     <string name="notification_summary_more">এবং %1$d আরো</string>
     <string name="notification_messages_from_people">%2$d জন থেকে %1$d বার্তা</string>
     <string name="notification_more_conversations">এবং %1$d আরো কথোপকথন</string>
-    <string name="notification_active_peers_title">👥 কাছাকাছি bitchatter!</string>
+    <string name="notification_active_peers_title">👥 কাছাকাছি gapchatter!</string>
     <string name="notification_active_peers_one">কাছাকাছি ১ জন</string>
     <string name="notification_active_peers_many">কাছাকাছি %1$d জন</string>
     <string name="notification_new_messages">নতুন বার্তা</string>

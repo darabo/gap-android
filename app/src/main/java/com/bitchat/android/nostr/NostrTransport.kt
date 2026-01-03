@@ -1,9 +1,9 @@
-package com.gap.android.nostr
+package com.bitchat.android.nostr
 
 import android.content.Context
 import android.util.Log
-import com.gap.android.model.ReadReceipt
-import com.gap.android.model.NoisePayloadType
+import com.bitchat.android.model.ReadReceipt
+import com.bitchat.android.model.NoisePayloadType
 import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -19,7 +19,7 @@ class NostrTransport(
     
     companion object {
         private const val TAG = "NostrTransport"
-        private const val READ_ACK_INTERVAL = com.gap.android.util.AppConstants.Nostr.READ_ACK_INTERVAL_MS // ~3 per second (0.35s interval like iOS)
+        private const val READ_ACK_INTERVAL = com.bitchat.android.util.AppConstants.Nostr.READ_ACK_INTERVAL_MS // ~3 per second (0.35s interval like iOS)
         
         @Volatile
         private var INSTANCE: NostrTransport? = null
@@ -87,7 +87,7 @@ class NostrTransport(
                 
                 // Strict: lookup the recipient's current BitChat peer ID using favorites mapping
                 val recipientPeerIDForEmbed = try {
-                    com.gap.android.favorites.FavoritesPersistenceService.shared
+                    com.bitchat.android.favorites.FavoritesPersistenceService.shared
                         .findPeerIDForNostrPubkey(recipientNostrPubkey)
                 } catch (_: Exception) { null }
                 if (recipientPeerIDForEmbed.isNullOrBlank()) {
@@ -423,9 +423,9 @@ class NostrTransport(
         // Use provided geohash or derive from current location
         val geohash = sourceGeohash ?: run {
             val selected = try {
-                com.gap.android.geohash.LocationChannelManager.getInstance(context).selectedChannel.value
+                com.bitchat.android.geohash.LocationChannelManager.getInstance(context).selectedChannel.value
             } catch (_: Exception) { null }
-            if (selected !is com.gap.android.geohash.ChannelID.Location) {
+            if (selected !is com.bitchat.android.geohash.ChannelID.Location) {
                 Log.w(TAG, "NostrTransport: cannot send geohash PM - not in a location channel and no geohash provided")
                 return
             }
@@ -483,16 +483,16 @@ class NostrTransport(
     private fun resolveNostrPublicKey(peerID: String): String? {
         try {
             // 1) Fast path: direct peerID→npub mapping (mutual favorites after mesh mapping)
-            com.gap.android.favorites.FavoritesPersistenceService.shared.findNostrPubkeyForPeerID(peerID)?.let { return it }
+            com.bitchat.android.favorites.FavoritesPersistenceService.shared.findNostrPubkeyForPeerID(peerID)?.let { return it }
 
             // 2) Legacy path: resolve by noise public key association
             val noiseKey = hexStringToByteArray(peerID)
-            val favoriteStatus = com.gap.android.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKey)
+            val favoriteStatus = com.bitchat.android.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKey)
             if (favoriteStatus?.peerNostrPublicKey != null) return favoriteStatus.peerNostrPublicKey
 
             // 3) Prefix match on noiseHex from 16-hex peerID
             if (peerID.length == 16) {
-                val fallbackStatus = com.gap.android.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(peerID)
+                val fallbackStatus = com.bitchat.android.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(peerID)
                 return fallbackStatus?.peerNostrPublicKey
             }
             

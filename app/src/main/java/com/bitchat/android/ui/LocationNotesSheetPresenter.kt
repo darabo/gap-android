@@ -1,4 +1,4 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gap.android.geohash.GeohashChannelLevel
-import com.gap.android.geohash.LocationChannelManager
+import com.bitchat.android.geohash.GeohashChannelLevel
+import com.bitchat.android.geohash.LocationChannelManager
 
 /**
  * Presenter component for LocationNotesSheet

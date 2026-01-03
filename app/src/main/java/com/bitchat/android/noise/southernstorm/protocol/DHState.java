@@ -20,7 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package com.gap.android.noise.southernstorm.protocol;
+package com.bitchat.android.noise.southernstorm.protocol;
 
 /**
  * Interface to a Diffie-Hellman algorithm for the Noise protocol.

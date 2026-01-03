@@ -1,4 +1,4 @@
-package com.gap.android.ui.media
+package com.bitchat.android.ui.media
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -20,7 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import com.gap.android.features.media.ImageUtils
+import com.bitchat.android.features.media.ImageUtils
 import java.io.File
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -47,7 +47,7 @@ fun ImagePickerButton(
         val path = capturedImagePath
         if (success && !path.isNullOrBlank()) {
             // Downscale + correct orientation, then send; delete original
-            val outPath = com.gap.android.features.media.ImageUtils.downscalePathAndSaveToAppFiles(context, path)
+            val outPath = com.bitchat.android.features.media.ImageUtils.downscalePathAndSaveToAppFiles(context, path)
             if (!outPath.isNullOrBlank()) {
                 onImageReady(outPath)
             }
@@ -86,7 +86,7 @@ fun ImagePickerButton(
     ) {
         Icon(
             imageVector = Icons.Filled.PhotoCamera,
-            contentDescription = stringResource(com.gap.android.R.string.pick_image),
+            contentDescription = stringResource(com.bitchat.android.R.string.pick_image),
             tint = Color.Gray,
             modifier = Modifier.size(20.dp)
         )

@@ -20,11 +20,11 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package com.gap.android.noise.southernstorm.protocol;
+package com.bitchat.android.noise.southernstorm.protocol;
 
 import java.util.Arrays;
 
-import com.gap.android.noise.southernstorm.crypto.Curve448;
+import com.bitchat.android.noise.southernstorm.crypto.Curve448;
 
 /**
  * Implementation of the Curve448 algorithm for the Noise protocol.

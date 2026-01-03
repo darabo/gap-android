@@ -1,4 +1,4 @@
-package com.gap.android.protocol
+package com.bitchat.android.protocol
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
@@ -78,8 +78,8 @@ data class BitchatPacket(
         ttl = ttl
     )
 
-    fun toBinaryData(): ByteArray? {
-        return BinaryProtocol.encode(this)
+    fun toBinaryData(padding: Boolean = false): ByteArray? {
+        return BinaryProtocol.encode(this, padding)
     }
 
     /**
@@ -97,9 +97,9 @@ data class BitchatPacket(
             timestamp = timestamp,
             payload = payload,
             signature = null, // Remove signature for signing
-            ttl = com.gap.android.util.AppConstants.SYNC_TTL_HOPS // Use fixed TTL=0 for signing to ensure relay compatibility
+            ttl = com.bitchat.android.util.AppConstants.SYNC_TTL_HOPS // Use fixed TTL=0 for signing to ensure relay compatibility
         )
-        return BinaryProtocol.encode(unsignedPacket)
+        return BinaryProtocol.encode(unsignedPacket, padding = false, compress = false)
     }
 
     companion object {
@@ -190,14 +190,63 @@ object BinaryProtocol {
         }
     }
     
-    fun encode(packet: BitchatPacket): ByteArray? {
+    /**
+     * Peek at packet length from header without consuming the buffer.
+     * Used to split multi-packet BLE writes (e.g., 512-byte writes from iOS containing 2 packets).
+     * Returns the total packet size including header, or -1 if unable to determine.
+     */
+    fun peekPacketLength(data: ByteArray, offset: Int = 0): Int {
         try {
-            // Try to compress payload if beneficial
+            val remaining = data.size - offset
+            if (remaining < HEADER_SIZE_V1 + SENDER_ID_SIZE) return -1
+            
+            val version = data[offset].toUByte()
+            if (version.toUInt() != 1u && version.toUInt() != 2u) return -1
+            
+            val headerSize = getHeaderSize(version)
+            if (remaining < headerSize + SENDER_ID_SIZE) return -1
+            
+            // Read flags at offset 11 (after version, type, ttl, timestamp)
+            val flagsOffset = offset + 11
+            val flags = data[flagsOffset].toUByte()
+            val hasRecipient = (flags and Flags.HAS_RECIPIENT) != 0u.toUByte()
+            val hasSignature = (flags and Flags.HAS_SIGNATURE) != 0u.toUByte()
+            
+            // Read payload length - version-dependent position and size
+            val payloadLengthOffset = offset + 12
+            val payloadLength = if (version >= 2u.toUByte()) {
+                // 4 bytes for v2+
+                if (remaining < payloadLengthOffset + 4) return -1
+                ((data[payloadLengthOffset].toInt() and 0xFF) shl 24) or
+                ((data[payloadLengthOffset + 1].toInt() and 0xFF) shl 16) or
+                ((data[payloadLengthOffset + 2].toInt() and 0xFF) shl 8) or
+                (data[payloadLengthOffset + 3].toInt() and 0xFF)
+            } else {
+                // 2 bytes for v1
+                if (remaining < payloadLengthOffset + 2) return -1
+                ((data[payloadLengthOffset].toInt() and 0xFF) shl 8) or
+                (data[payloadLengthOffset + 1].toInt() and 0xFF)
+            }
+            
+            // Calculate total size
+            var totalSize = headerSize + SENDER_ID_SIZE + payloadLength
+            if (hasRecipient) totalSize += RECIPIENT_ID_SIZE
+            if (hasSignature) totalSize += SIGNATURE_SIZE
+            
+            return totalSize
+        } catch (e: Exception) {
+            return -1
+        }
+    }
+    
+    fun encode(packet: BitchatPacket, padding: Boolean = true, compress: Boolean = true): ByteArray? {
+        try {
+            // Try to compress payload if beneficial and requested
             var payload = packet.payload
             var originalPayloadSize: UShort? = null
             var isCompressed = false
             
-            if (CompressionUtil.shouldCompress(payload)) {
+            if (compress && CompressionUtil.shouldCompress(payload)) {
                 CompressionUtil.compress(payload)?.let { compressedPayload ->
                     originalPayloadSize = payload.size.toUShort()
                     payload = compressedPayload
@@ -276,11 +325,13 @@ object BinaryProtocol {
             buffer.rewind()
             buffer.get(result)
             
-            // Apply padding to standard block sizes for traffic analysis resistance
-            val optimalSize = MessagePadding.optimalBlockSize(result.size)
-            val paddedData = MessagePadding.pad(result, optimalSize)
-            
-            return paddedData
+            return if (padding) {  
+                // Apply padding to standard block sizes for traffic analysis resistance
+                val optimalSize = MessagePadding.optimalBlockSize(result.size)
+                MessagePadding.pad(result, optimalSize)
+            } else {
+                result
+            }
             
         } catch (e: Exception) {
             Log.e("BinaryProtocol", "Error encoding packet type ${packet.type}: ${e.message}")

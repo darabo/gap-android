@@ -1,8 +1,8 @@
-package com.gap.android.model
+package com.bitchat.android.model
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
-import com.gap.android.util.*
+import com.bitchat.android.util.*
 
 /**
  * Identity announcement structure with TLV encoding

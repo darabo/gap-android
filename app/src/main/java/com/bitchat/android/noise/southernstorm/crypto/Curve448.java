@@ -53,7 +53,7 @@ THE SOFTWARE.
 
 */
 
-package com.gap.android.noise.southernstorm.crypto;
+package com.bitchat.android.noise.southernstorm.crypto;
 
 import java.util.Arrays;
 

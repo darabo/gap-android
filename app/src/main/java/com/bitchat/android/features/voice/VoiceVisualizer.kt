@@ -1,4 +1,4 @@
-package com.gap.android.features.voice
+package com.bitchat.android.features.voice
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState

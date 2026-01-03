@@ -1,4 +1,4 @@
-package com.gap.android.ui.media
+package com.bitchat.android.ui.media
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,7 +27,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.res.stringResource
-import com.gap.android.R
+import com.bitchat.android.R
 
 /**
  * Media picker that offers image and file options

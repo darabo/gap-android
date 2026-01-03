@@ -1,9 +1,9 @@
-package com.gap.android.nostr
+package com.bitchat.android.nostr
 
 import android.app.Application
 import android.util.Log
-import com.gap.android.ui.ChatState
-import com.gap.android.ui.GeoPerson
+import com.bitchat.android.ui.ChatState
+import com.bitchat.android.ui.GeoPerson
 import java.util.Date
 
 /**
@@ -14,7 +14,7 @@ import java.util.Date
 class GeohashRepository(
     private val application: Application,
     private val state: ChatState,
-    private val dataManager: com.gap.android.ui.DataManager
+    private val dataManager: com.bitchat.android.ui.DataManager
 ) {
     companion object { private const val TAG = "GeohashRepository" }
 

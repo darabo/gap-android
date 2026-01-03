@@ -1,4 +1,4 @@
-package com.gap.android.ui.theme
+package com.bitchat.android.ui.theme
 
 import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,4 +1,4 @@
-package com.gap.android.net
+package com.bitchat.android.net
 
 import okhttp3.OkHttpClient
 import java.net.InetSocketAddress

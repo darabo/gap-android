@@ -1,7 +1,7 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
-import com.gap.android.model.BitchatMessage
-import com.gap.android.model.DeliveryStatus
+import com.bitchat.android.model.BitchatMessage
+import com.bitchat.android.model.DeliveryStatus
 import java.util.*
 import java.util.Collections
 
@@ -13,8 +13,8 @@ class MessageManager(private val state: ChatState) {
     // Message deduplication - FIXED: Prevent duplicate messages from dual connection paths
     private val processedUIMessages = Collections.synchronizedSet(mutableSetOf<String>())
     private val recentSystemEvents = Collections.synchronizedMap(mutableMapOf<String, Long>())
-    private val MESSAGE_DEDUP_TIMEOUT = com.gap.android.util.AppConstants.UI.MESSAGE_DEDUP_TIMEOUT_MS // 30 seconds
-    private val SYSTEM_EVENT_DEDUP_TIMEOUT = com.gap.android.util.AppConstants.UI.SYSTEM_EVENT_DEDUP_TIMEOUT_MS // 5 seconds
+    private val MESSAGE_DEDUP_TIMEOUT = com.bitchat.android.util.AppConstants.UI.MESSAGE_DEDUP_TIMEOUT_MS // 30 seconds
+    private val SYSTEM_EVENT_DEDUP_TIMEOUT = com.bitchat.android.util.AppConstants.UI.SYSTEM_EVENT_DEDUP_TIMEOUT_MS // 5 seconds
     
     // MARK: - Public Message Management
     
@@ -23,7 +23,7 @@ class MessageManager(private val state: ChatState) {
         currentMessages.add(message)
         state.setMessages(currentMessages)
         // Reflect into process-wide store so snapshot replacements don't drop local outgoing messages
-        try { com.gap.android.services.AppStateStore.addPublicMessage(message) } catch (_: Exception) { }
+        try { com.bitchat.android.services.AppStateStore.addPublicMessage(message) } catch (_: Exception) { }
     }
 
     // Log a system message into the main chat (visible to user)
@@ -55,7 +55,7 @@ class MessageManager(private val state: ChatState) {
         currentChannelMessages[channel] = channelMessageList
         state.setChannelMessages(currentChannelMessages)
         // Reflect into process-wide store
-        try { com.gap.android.services.AppStateStore.addChannelMessage(channel, message) } catch (_: Exception) { }
+        try { com.bitchat.android.services.AppStateStore.addChannelMessage(channel, message) } catch (_: Exception) { }
         
         // Update unread count if not currently viewing this channel
         // Consider both classic channels (state.currentChannel) and geohash location channel selection
@@ -64,7 +64,7 @@ class MessageManager(private val state: ChatState) {
             if (channel.startsWith("geo:")) {
                 val geo = channel.removePrefix("geo:")
                 val selected = state.selectedLocationChannel.value
-                selected is com.gap.android.geohash.ChannelID.Location && selected.channel.geohash.equals(geo, ignoreCase = true)
+                selected is com.bitchat.android.geohash.ChannelID.Location && selected.channel.geohash.equals(geo, ignoreCase = true)
             } else false
         } catch (_: Exception) { false }
 
@@ -110,7 +110,7 @@ class MessageManager(private val state: ChatState) {
         currentPrivateChats[peerID] = chatMessages
         state.setPrivateChats(currentPrivateChats)
         // Reflect into process-wide store
-        try { com.gap.android.services.AppStateStore.addPrivateMessage(peerID, message) } catch (_: Exception) { }
+        try { com.bitchat.android.services.AppStateStore.addPrivateMessage(peerID, message) } catch (_: Exception) { }
         
         // Mark as unread if not currently viewing this chat
         if (state.getSelectedPrivateChatPeerValue() != peerID && message.sender != state.getNicknameValue()) {
@@ -131,7 +131,7 @@ class MessageManager(private val state: ChatState) {
         currentPrivateChats[peerID] = chatMessages
         state.setPrivateChats(currentPrivateChats)
         // Reflect into process-wide store
-        try { com.gap.android.services.AppStateStore.addPrivateMessage(peerID, message) } catch (_: Exception) { }
+        try { com.bitchat.android.services.AppStateStore.addPrivateMessage(peerID, message) } catch (_: Exception) { }
     }
     
     fun clearPrivateMessages(peerID: String) {
@@ -251,7 +251,7 @@ class MessageManager(private val state: ChatState) {
         if (updated) {
             state.setPrivateChats(updatedPrivateChats)
             // Keep process-wide store in sync to prevent snapshot overwrites resetting status
-            try { com.gap.android.services.AppStateStore.updatePrivateMessageStatus(messageID, status) } catch (_: Exception) { }
+            try { com.bitchat.android.services.AppStateStore.updatePrivateMessageStatus(messageID, status) } catch (_: Exception) { }
         }
         
         // Update in main messages

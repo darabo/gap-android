@@ -40,7 +40,7 @@
     <string name="notification_summary_more">ve %1$d daha</string>
     <string name="notification_messages_from_people">%2$d kişiden %1$d mesaj</string>
     <string name="notification_more_conversations">ve %1$d sohbet daha</string>
-    <string name="notification_active_peers_title">👥 yakında bitchatter’lar!</string>
+    <string name="notification_active_peers_title">👥 yakında gapchatter’lar!</string>
     <string name="notification_active_peers_one">Yakında 1 kişi</string>
     <string name="notification_active_peers_many">Yakında %1$d kişi</string>
     <string name="notification_new_messages">Yeni mesajlar</string>

@@ -1,8 +1,8 @@
-package com.gap.android.nostr
+package com.bitchat.android.nostr
 
 import android.content.Context
 import android.util.Log
-import com.gap.android.identity.SecureIdentityStateManager
+import com.bitchat.android.identity.SecureIdentityStateManager
 import java.security.MessageDigest
 import java.security.SecureRandom
 
@@ -180,7 +180,7 @@ object NostrIdentityBridge {
      * Generate candidate key for a specific iteration (matches iOS implementation)
      */
     private fun candidateKey(seed: ByteArray, message: ByteArray, iteration: UInt): ByteArray {
-        val input = message + iteration.toLittleEndianBytes()
+        val input = message + iteration.toBigEndianBytes()
         return hmacSha256(seed, input)
     }
     
@@ -289,11 +289,11 @@ private fun ByteArray.toHexStringLocal(): String {
     return joinToString("") { "%02x".format(it) }
 }
 
-private fun UInt.toLittleEndianBytes(): ByteArray {
+private fun UInt.toBigEndianBytes(): ByteArray {
     val bytes = ByteArray(4)
-    bytes[0] = (this and 0xFFu).toByte()
-    bytes[1] = ((this shr 8) and 0xFFu).toByte()
-    bytes[2] = ((this shr 16) and 0xFFu).toByte()
-    bytes[3] = ((this shr 24) and 0xFFu).toByte()
+    bytes[0] = ((this shr 24) and 0xFFu).toByte()
+    bytes[1] = ((this shr 16) and 0xFFu).toByte()
+    bytes[2] = ((this shr 8) and 0xFFu).toByte()
+    bytes[3] = (this and 0xFFu).toByte()
     return bytes
 }

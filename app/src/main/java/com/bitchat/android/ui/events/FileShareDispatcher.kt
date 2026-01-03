@@ -1,4 +1,4 @@
-package com.gap.android.ui.events
+package com.bitchat.android.ui.events
 
 /**
  * Lightweight dispatcher so lower-level UI (MessageInput) can trigger

@@ -1,11 +1,11 @@
-package com.gap.android.mesh
+package com.bitchat.android.mesh
 
 import android.util.Log
-import com.gap.android.crypto.EncryptionService
-import com.gap.android.protocol.BitchatPacket
-import com.gap.android.protocol.MessageType
-import com.gap.android.model.RoutedPacket
-import com.gap.android.util.toHexString
+import com.bitchat.android.crypto.EncryptionService
+import com.bitchat.android.protocol.BitchatPacket
+import com.bitchat.android.protocol.MessageType
+import com.bitchat.android.model.RoutedPacket
+import com.bitchat.android.util.toHexString
 import kotlinx.coroutines.*
 import java.util.*
 import kotlin.collections.mutableSetOf
@@ -19,10 +19,10 @@ class SecurityManager(private val encryptionService: EncryptionService, private 
     
     companion object {
         private const val TAG = "SecurityManager"
-        private const val MESSAGE_TIMEOUT = com.gap.android.util.AppConstants.Security.MESSAGE_TIMEOUT_MS // 5 minutes (same as iOS)
-        private const val CLEANUP_INTERVAL = com.gap.android.util.AppConstants.Security.CLEANUP_INTERVAL_MS // 5 minutes
-        private const val MAX_PROCESSED_MESSAGES = com.gap.android.util.AppConstants.Security.MAX_PROCESSED_MESSAGES
-        private const val MAX_PROCESSED_KEY_EXCHANGES = com.gap.android.util.AppConstants.Security.MAX_PROCESSED_KEY_EXCHANGES
+        private const val MESSAGE_TIMEOUT = com.bitchat.android.util.AppConstants.Security.MESSAGE_TIMEOUT_MS // 5 minutes (same as iOS)
+        private const val CLEANUP_INTERVAL = com.bitchat.android.util.AppConstants.Security.CLEANUP_INTERVAL_MS // 5 minutes
+        private const val MAX_PROCESSED_MESSAGES = com.bitchat.android.util.AppConstants.Security.MAX_PROCESSED_MESSAGES
+        private const val MAX_PROCESSED_KEY_EXCHANGES = com.bitchat.android.util.AppConstants.Security.MAX_PROCESSED_KEY_EXCHANGES
     }
     
     // Security tracking
@@ -148,18 +148,36 @@ class SecurityManager(private val encryptionService: EncryptionService, private 
      * Verify packet signature
      */
     fun verifySignature(packet: BitchatPacket, peerID: String): Boolean {
-        return packet.signature?.let { signature ->
-            try {
-                val isValid = encryptionService.verify(signature, packet.payload, peerID)
-                if (!isValid) {
-                    Log.w(TAG, "Invalid signature for packet from $peerID")
-                }
-                isValid
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to verify signature from $peerID: ${e.message}")
-                false
+        // If no signature, consider valid (authentication handled by Noise for encrypted packets)
+        val signature = packet.signature ?: return true
+        
+        return try {
+            // 1. Get peer's signing public key
+            val peerInfo = delegate?.getPeerInfo(peerID)
+            val signingKey = peerInfo?.signingPublicKey
+            
+            if (signingKey == null) {
+                Log.w(TAG, "Cannot verify signature from $peerID: No signing key known")
+                return false
             }
-        } ?: true // No signature means verification passes
+
+            // 2. Get canonical packet data for verification (version, header, payload, etc.)
+            val signedData = packet.toBinaryDataForSigning()
+            if (signedData == null) {
+                Log.w(TAG, "Cannot verify signature from $peerID: Packet encoding failed")
+                return false
+            }
+
+            // 3. Verify Ed25519 signature
+            val isValid = encryptionService.verifyEd25519Signature(signature, signedData, signingKey)
+            if (!isValid) {
+                Log.w(TAG, "Invalid Ed25519 signature for packet type ${packet.type} from $peerID")
+            }
+            isValid
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to verify signature from $peerID: ${e.message}")
+            false
+        }
     }
     
     /**

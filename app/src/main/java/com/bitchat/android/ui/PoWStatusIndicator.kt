@@ -1,4 +1,4 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
@@ -14,11 +14,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gap.android.nostr.NostrProofOfWork
+import com.bitchat.android.nostr.NostrProofOfWork
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gap.android.R
-import com.gap.android.nostr.PoWPreferenceManager
+import com.bitchat.android.R
+import com.bitchat.android.nostr.PoWPreferenceManager
 
 /**
  * Shows the current Proof of Work status and settings

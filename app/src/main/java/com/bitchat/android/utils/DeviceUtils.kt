@@ -1,4 +1,4 @@
-package com.gap.android.utils
+package com.bitchat.android.utils
 
 import android.content.Context
 import android.content.res.Configuration

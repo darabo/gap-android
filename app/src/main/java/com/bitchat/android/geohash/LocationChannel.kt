@@ -1,4 +1,4 @@
-package com.gap.android.geohash
+package com.bitchat.android.geohash
 
 /**
  * Levels of location channels mapped to geohash precisions.

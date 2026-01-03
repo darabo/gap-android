@@ -1,6 +1,6 @@
-package com.gap.android.model
+package com.bitchat.android.model
 
-import com.gap.android.sync.SyncDefaults
+import com.bitchat.android.sync.SyncDefaults
 
 /**
  * REQUEST_SYNC payload using GCS (Golomb-Coded Set) parameters.

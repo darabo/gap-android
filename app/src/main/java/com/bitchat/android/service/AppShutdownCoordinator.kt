@@ -1,11 +1,11 @@
-package com.gap.android.service
+package com.bitchat.android.service
 
 import android.app.Application
 import android.os.Process
 import androidx.core.app.NotificationManagerCompat
-import com.gap.android.mesh.BluetoothMeshService
-import com.gap.android.net.ArtiTorManager
-import com.gap.android.net.TorMode
+import com.bitchat.android.mesh.BluetoothMeshService
+import com.bitchat.android.net.ArtiTorManager
+import com.bitchat.android.net.TorMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,7 +43,7 @@ object AppShutdownCoordinator {
             }
 
             // Clear AppState in-memory store
-            try { com.gap.android.services.AppStateStore.clear() } catch (_: Exception) { }
+            try { com.bitchat.android.services.AppStateStore.clear() } catch (_: Exception) { }
 
             // Stop foreground and clear notification
             try { stopForeground() } catch (_: Exception) { }

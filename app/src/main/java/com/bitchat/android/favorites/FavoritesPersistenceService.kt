@@ -1,8 +1,8 @@
-package com.gap.android.favorites
+package com.bitchat.android.favorites
 
 import android.content.Context
 import android.util.Log
-import com.gap.android.identity.SecureIdentityStateManager
+import com.bitchat.android.identity.SecureIdentityStateManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.util.*
@@ -329,7 +329,7 @@ class FavoritesPersistenceService private constructor(private val context: Conte
     /** Normalize a Nostr public key string (npub bech32 or hex) to lowercase hex */
     private fun normalizeNostrKeyToHex(value: String): String? = try {
         if (value.startsWith("npub1")) {
-            val (hrp, data) = com.gap.android.nostr.Bech32.decode(value)
+            val (hrp, data) = com.bitchat.android.nostr.Bech32.decode(value)
             if (hrp != "npub") null else data.joinToString("") { "%02x".format(it) }
         } else value.lowercase()
     } catch (_: Exception) { null }

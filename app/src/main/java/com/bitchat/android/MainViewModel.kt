@@ -1,10 +1,10 @@
-package com.gap.android
+package com.bitchat.android
 
 import androidx.lifecycle.ViewModel
-import com.gap.android.onboarding.BluetoothStatus
-import com.gap.android.onboarding.LocationStatus
-import com.gap.android.onboarding.OnboardingState
-import com.gap.android.onboarding.BatteryOptimizationStatus
+import com.bitchat.android.onboarding.BluetoothStatus
+import com.bitchat.android.onboarding.LocationStatus
+import com.bitchat.android.onboarding.OnboardingState
+import com.bitchat.android.onboarding.BatteryOptimizationStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -1,4 +1,4 @@
-package com.gap.android.ui.debug
+package com.bitchat.android.ui.debug
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,13 +26,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.rotate
-import com.gap.android.mesh.BluetoothMeshService
+import com.bitchat.android.mesh.BluetoothMeshService
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
-import com.gap.android.R
+import com.bitchat.android.R
 import androidx.compose.ui.platform.LocalContext
-import com.gap.android.service.MeshServicePreferences
-import com.gap.android.service.MeshForegroundService
+import com.bitchat.android.service.MeshServicePreferences
+import com.bitchat.android.service.MeshForegroundService
 
 private enum class GraphMode { OVERALL, PER_DEVICE, PER_PEER }
 
@@ -76,7 +76,7 @@ fun DebugSettingsSheet(
                 val directMap = peers.associateWith { pid -> meshService.getPeerInfo(pid)?.isDirectConnection == true }
                 val devices = entries.map { (address, isClient, rssi) ->
                     val pid = mapping[address]
-                    com.gap.android.ui.debug.ConnectedDevice(
+                    com.bitchat.android.ui.debug.ConnectedDevice(
                         deviceAddress = address,
                         peerID = pid,
                         nickname = pid?.let { nicknames[it] },
@@ -486,8 +486,8 @@ fun DebugSettingsSheet(
                         Slider(value = gcsMaxBytes.toFloat(), onValueChange = { manager.setGcsMaxBytes(it.toInt()) }, valueRange = 128f..1024f, steps = 0)
                         Text(stringResource(R.string.debug_target_fpr_fmt, gcsFpr), fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colorScheme.onSurface.copy(alpha = 0.7f))
                         Slider(value = gcsFpr.toFloat(), onValueChange = { manager.setGcsFprPercent(it.toDouble()) }, valueRange = 0.1f..5.0f, steps = 49)
-                        val p = remember(gcsFpr) { com.gap.android.sync.GCSFilter.deriveP(gcsFpr / 100.0) }
-                        val nmax = remember(gcsFpr, gcsMaxBytes) { com.gap.android.sync.GCSFilter.estimateMaxElementsForSize(gcsMaxBytes, p) }
+                        val p = remember(gcsFpr) { com.bitchat.android.sync.GCSFilter.deriveP(gcsFpr / 100.0) }
+                        val nmax = remember(gcsFpr, gcsMaxBytes) { com.bitchat.android.sync.GCSFilter.estimateMaxElementsForSize(gcsMaxBytes, p) }
                         Text(stringResource(R.string.debug_derived_p_fmt, p.toString(), nmax.toString()), fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colorScheme.onSurface.copy(alpha = 0.7f))
                     }
                 }

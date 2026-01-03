@@ -1,4 +1,4 @@
-package com.gap.android.identity
+package com.bitchat.android.identity
 
 import android.content.Context
 import android.content.SharedPreferences

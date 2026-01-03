@@ -1,4 +1,4 @@
-//package com.gap.android.services
+//package com.bitchat.android.services
 //
 //import android.content.Context
 //import android.content.SharedPreferences

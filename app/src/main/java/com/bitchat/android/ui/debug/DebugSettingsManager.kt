@@ -1,4 +1,4 @@
-package com.gap.android.ui.debug
+package com.bitchat.android.ui.debug
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

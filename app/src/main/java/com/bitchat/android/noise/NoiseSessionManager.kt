@@ -1,4 +1,4 @@
-package com.gap.android.noise
+package com.bitchat.android.noise
 
 import android.util.Log
 import java.util.concurrent.ConcurrentHashMap

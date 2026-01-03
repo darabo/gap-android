@@ -1,5 +1,5 @@
 
-package com.gap.android.features.voice
+package com.bitchat.android.features.voice
 
 import android.content.Context
 import android.media.MediaRecorder

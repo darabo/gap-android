@@ -1,15 +1,15 @@
 
-package com.gap.android.mesh
+package com.bitchat.android.mesh
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattServer
 import android.util.Log
-import com.gap.android.protocol.SpecialRecipients
-import com.gap.android.model.RoutedPacket
-import com.gap.android.protocol.MessageType
-import com.gap.android.util.toHexString
+import com.bitchat.android.protocol.SpecialRecipients
+import com.bitchat.android.model.RoutedPacket
+import com.bitchat.android.protocol.MessageType
+import com.bitchat.android.util.toHexString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -47,7 +47,7 @@ class BluetoothPacketBroadcaster(
     
     companion object {
         private const val TAG = "BluetoothPacketBroadcaster"
-        private const val CLEANUP_DELAY = com.gap.android.util.AppConstants.Mesh.BROADCAST_CLEANUP_DELAY_MS
+        private const val CLEANUP_DELAY = com.bitchat.android.util.AppConstants.Mesh.BROADCAST_CLEANUP_DELAY_MS
     }
 
     // Optional nickname resolver injected by higher layer (peerID -> nickname?)
@@ -73,7 +73,7 @@ class BluetoothPacketBroadcaster(
         try {
             val fromNick = incomingPeer?.let { nicknameResolver?.invoke(it) }
             val toNick = toPeer?.let { nicknameResolver?.invoke(it) }
-            val manager = com.gap.android.ui.debug.DebugSettingsManager.getInstance()
+            val manager = com.bitchat.android.ui.debug.DebugSettingsManager.getInstance()
             // Always log outgoing for the actual transmission target
             manager.logOutgoing(
                 packetType = typeName,
@@ -121,6 +121,10 @@ class BluetoothPacketBroadcaster(
         try {
             for (request in channel) {
                 broadcastSinglePacketInternal(request.routed, request.gattServer, request.characteristic)
+                // Add delay between packets to prevent BLE buffer overflow on receiving device
+                // Task specifies 15ms to balance speed and reliability
+                // Previous value of 80ms may have been too slow
+                delay(15)
             }
         } finally {
             Log.d(TAG, "🎭 Packet broadcaster actor terminated")
@@ -159,18 +163,48 @@ class BluetoothPacketBroadcaster(
                     TransferProgressManager.start(transferId, fragments.size)
                 }
                 val job = connectionScope.launch {
-                    var sent = 0
-                    fragments.forEach { fragment ->
-                        if (!isActive) return@launch
-                        // If cancelled, stop sending remaining fragments
-                        if (transferId != null && transferJobs[transferId]?.isCancelled == true) return@launch
-                        broadcastSinglePacket(RoutedPacket(fragment, transferId = transferId), gattServer, characteristic)
-                        // 20ms delay between fragments
-                        delay(20)
-                        if (transferId != null) {
-                            sent += 1
-                            TransferProgressManager.progress(transferId, sent, fragments.size)
-                            if (sent == fragments.size) TransferProgressManager.complete(transferId, fragments.size)
+                    // Batching configuration for BLE reliability
+                    val BATCH_SIZE = 5
+                    val INTER_BATCH_DELAY = 150L  // ms pause after each batch to let BLE buffers drain
+                    
+                    // Carousel: Broadcast fragments multiple times to ensure delivery over unreliable BLE
+                    val loops = 3 
+                    repeat(loops) { attempt ->
+                        if (isFile) {
+                            Log.d(TAG, "🔄 Carousel attempt ${attempt + 1}/$loops for transfer ${transferId?.take(8)}...")
+                        }
+                        
+                        var sent = 0
+                        fragments.forEachIndexed { idx, fragment ->
+                            if (!isActive) return@launch
+                            // If cancelled, stop sending remaining fragments
+                            if (transferId != null && transferJobs[transferId]?.isCancelled == true) return@launch
+                            
+                            broadcastSinglePacket(RoutedPacket(fragment, transferId = transferId), gattServer, characteristic)
+                            
+                            // 15ms delay between submitting fragments to the actor queue
+                            delay(15)
+                            
+                            // Pause every BATCH_SIZE fragments to let BLE buffers drain
+                            // This prevents buffer overflow disconnects during large transfers
+                            if ((idx + 1) % BATCH_SIZE == 0 && idx < fragments.lastIndex) {
+                                if (isFile && attempt == 0) {
+                                    Log.d(TAG, "⏸️ Batch pause at fragment ${idx + 1}/${fragments.size}")
+                                }
+                                delay(INTER_BATCH_DELAY)
+                            }
+                            
+                            // Only update progress on the first loop to avoid UI jumping
+                            if (transferId != null && attempt == 0) {
+                                sent += 1
+                                TransferProgressManager.progress(transferId, sent, fragments.size)
+                                if (sent == fragments.size) TransferProgressManager.complete(transferId, fragments.size)
+                            }
+                        }
+                        
+                        // Small pause between carousel rotations
+                        if (attempt < loops - 1) {
+                            delay(500) 
                         }
                     }
                 }

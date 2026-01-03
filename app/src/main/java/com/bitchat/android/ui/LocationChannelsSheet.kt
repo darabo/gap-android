@@ -1,4 +1,4 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
 import android.content.Intent
 import android.net.Uri
@@ -29,17 +29,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import com.gap.android.geohash.ChannelID
+import com.bitchat.android.geohash.ChannelID
 import kotlinx.coroutines.launch
-import com.gap.android.geohash.GeohashChannel
-import com.gap.android.geohash.GeohashChannelLevel
-import com.gap.android.geohash.LocationChannelManager
-import com.gap.android.geohash.GeohashBookmarksStore
-import com.gap.android.ui.theme.BASE_FONT_SIZE
+import com.bitchat.android.geohash.GeohashChannel
+import com.bitchat.android.geohash.GeohashChannelLevel
+import com.bitchat.android.geohash.LocationChannelManager
+import com.bitchat.android.geohash.GeohashBookmarksStore
+import com.bitchat.android.ui.theme.BASE_FONT_SIZE
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gap.android.R
-import com.gap.android.core.ui.component.button.CloseButton
+import com.bitchat.android.R
+import com.bitchat.android.core.ui.component.button.CloseButton
 
 /**
  * Location Channels Sheet for selecting geohash-based location channels
@@ -692,8 +692,8 @@ private fun splitTitleAndCount(title: String): Pair<String, String?> {
 private fun meshTitleWithCount(viewModel: ChatViewModel): String {
     val meshCount = meshCount(viewModel)
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val peopleText = ctx.resources.getQuantityString(com.gap.android.R.plurals.people_count, meshCount, meshCount)
-    val meshLabel = stringResource(com.gap.android.R.string.mesh_label)
+    val peopleText = ctx.resources.getQuantityString(com.bitchat.android.R.plurals.people_count, meshCount, meshCount)
+    val meshLabel = stringResource(com.bitchat.android.R.string.mesh_label)
     return "$meshLabel [$peopleText]"
 }
 
@@ -707,14 +707,14 @@ private fun meshCount(viewModel: ChatViewModel): Int {
 @Composable
 private fun geohashTitleWithCount(channel: GeohashChannel, participantCount: Int): String {
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val peopleText = ctx.resources.getQuantityString(com.gap.android.R.plurals.people_count, participantCount, participantCount)
+    val peopleText = ctx.resources.getQuantityString(com.bitchat.android.R.plurals.people_count, participantCount, participantCount)
     val levelName = when (channel.level) {
-        com.gap.android.geohash.GeohashChannelLevel.BUILDING -> "Building" // iOS: precision 8 for location notes
-        com.gap.android.geohash.GeohashChannelLevel.BLOCK -> stringResource(com.gap.android.R.string.location_level_block)
-        com.gap.android.geohash.GeohashChannelLevel.NEIGHBORHOOD -> stringResource(com.gap.android.R.string.location_level_neighborhood)
-        com.gap.android.geohash.GeohashChannelLevel.CITY -> stringResource(com.gap.android.R.string.location_level_city)
-        com.gap.android.geohash.GeohashChannelLevel.PROVINCE -> stringResource(com.gap.android.R.string.location_level_province)
-        com.gap.android.geohash.GeohashChannelLevel.REGION -> stringResource(com.gap.android.R.string.location_level_region)
+        com.bitchat.android.geohash.GeohashChannelLevel.BUILDING -> "Building" // iOS: precision 8 for location notes
+        com.bitchat.android.geohash.GeohashChannelLevel.BLOCK -> stringResource(com.bitchat.android.R.string.location_level_block)
+        com.bitchat.android.geohash.GeohashChannelLevel.NEIGHBORHOOD -> stringResource(com.bitchat.android.R.string.location_level_neighborhood)
+        com.bitchat.android.geohash.GeohashChannelLevel.CITY -> stringResource(com.bitchat.android.R.string.location_level_city)
+        com.bitchat.android.geohash.GeohashChannelLevel.PROVINCE -> stringResource(com.bitchat.android.R.string.location_level_province)
+        com.bitchat.android.geohash.GeohashChannelLevel.REGION -> stringResource(com.bitchat.android.R.string.location_level_region)
     }
     return "$levelName [$peopleText]"
 }
@@ -722,7 +722,7 @@ private fun geohashTitleWithCount(channel: GeohashChannel, participantCount: Int
 @Composable
 private fun geohashHashTitleWithCount(geohash: String, participantCount: Int): String {
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val peopleText = ctx.resources.getQuantityString(com.gap.android.R.plurals.people_count, participantCount, participantCount)
+    val peopleText = ctx.resources.getQuantityString(com.bitchat.android.R.plurals.people_count, participantCount, participantCount)
     return "#$geohash [$peopleText]"
 }
 

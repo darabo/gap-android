@@ -1,4 +1,4 @@
-package com.gap.android.mesh
+package com.bitchat.android.mesh
 
 import android.bluetooth.*
 import android.bluetooth.le.BluetoothLeScanner
@@ -8,15 +8,16 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.os.ParcelUuid
 import android.util.Log
-import com.gap.android.protocol.BitchatPacket
-import com.gap.android.util.AppConstants
+import com.bitchat.android.protocol.BitchatPacket
+import com.bitchat.android.protocol.BinaryProtocol
+import com.bitchat.android.util.AppConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
 import kotlinx.coroutines.Job
-import com.gap.android.ui.debug.DebugSettingsManager
-import com.gap.android.ui.debug.DebugScanResult
+import com.bitchat.android.ui.debug.DebugSettingsManager
+import com.bitchat.android.ui.debug.DebugScanResult
 
 /**
  * Manages GATT client operations, scanning, and client-side connections
@@ -76,7 +77,7 @@ class BluetoothGattClientManager(
     fun start(): Boolean {
         // Respect debug setting
         try {
-            if (!com.gap.android.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value) {
+            if (!com.bitchat.android.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value) {
                 Log.i(TAG, "Client start skipped: GATT Client disabled in debug settings")
                 return false
             }
@@ -150,7 +151,7 @@ class BluetoothGattClientManager(
      * Handle scan state changes from power manager
      */
     fun onScanStateChanged(shouldScan: Boolean) {
-        val enabled = try { com.gap.android.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
+        val enabled = try { com.bitchat.android.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
         if (shouldScan && enabled) {
             startScanning()
         } else {
@@ -199,7 +200,7 @@ class BluetoothGattClientManager(
     @Suppress("DEPRECATION")
     private fun startScanning() {
         // Respect debug setting
-        val enabled = try { com.gap.android.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
+        val enabled = try { com.bitchat.android.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
         if (!permissionManager.hasBluetoothPermissions() || bleScanner == null || !isActive || !enabled) return
         
         // Rate limit scan starts to prevent "scanning too frequently" errors
@@ -492,14 +493,21 @@ class BluetoothGattClientManager(
             override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
                 val value = characteristic.value
                 Log.i(TAG, "Client: Received packet from ${gatt.device.address}, size: ${value.size} bytes")
-                val packet = BitchatPacket.fromBinaryData(value)
-                if (packet != null) {
-                    val peerID = packet.senderID.take(8).toByteArray().joinToString("") { "%02x".format(it) }
-                    Log.d(TAG, "Client: Parsed packet type ${packet.type} from $peerID")
-                    delegate?.onPacketReceived(packet, peerID, gatt.device)
-                } else {
-                    Log.w(TAG, "Client: Failed to parse packet from ${gatt.device.address}, size: ${value.size} bytes")
-                    Log.w(TAG, "Client: Packet data: ${value.joinToString(" ") { "%02x".format(it) }}")
+                
+                // Split multi-packet BLE writes (iOS may send 512-byte writes with 2 concatenated packets)
+                val packets = splitPackets(value)
+                Log.d(TAG, "Client: Split into ${packets.size} packet(s)")
+                
+                for ((index, packetData) in packets.withIndex()) {
+                    val packet = BitchatPacket.fromBinaryData(packetData)
+                    if (packet != null) {
+                        val peerID = packet.senderID.take(8).toByteArray().joinToString("") { "%02x".format(it) }
+                        Log.d(TAG, "Client: Parsed packet ${index + 1}/${packets.size} type ${packet.type} from $peerID")
+                        delegate?.onPacketReceived(packet, peerID, gatt.device)
+                    } else {
+                        Log.w(TAG, "Client: Failed to parse packet ${index + 1}/${packets.size} from ${gatt.device.address}, size: ${packetData.size} bytes")
+                        Log.w(TAG, "Client: Packet data: ${packetData.take(64).joinToString(" ") { "%02x".format(it) }}")
+                    }
                 }
             }
             
@@ -541,7 +549,7 @@ class BluetoothGattClientManager(
      */
     fun restartScanning() {
         // Respect debug setting
-        val enabled = try { com.gap.android.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
+        val enabled = try { com.bitchat.android.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
         if (!isActive || !enabled) return
         
         connectionScope.launch {
@@ -557,4 +565,35 @@ class BluetoothGattClientManager(
             }
         }
     }
-} 
+    
+    /**
+     * Split a multi-packet BLE write into individual packets.
+     * iOS may send 512-byte writes containing 2 concatenated 256-byte packets.
+     * Uses BinaryProtocol.peekPacketLength to identify packet boundaries.
+     */
+    private fun splitPackets(data: ByteArray): List<ByteArray> {
+        val packets = mutableListOf<ByteArray>()
+        var offset = 0
+        
+        while (offset < data.size) {
+            val packetSize = BinaryProtocol.peekPacketLength(data, offset)
+            if (packetSize <= 0 || offset + packetSize > data.size) {
+                // Can't determine packet size - include remaining bytes as final packet
+                if (offset < data.size) {
+                    packets.add(data.copyOfRange(offset, data.size))
+                }
+                break
+            }
+            
+            packets.add(data.copyOfRange(offset, offset + packetSize))
+            offset += packetSize
+        }
+        
+        // Fallback: if no packets parsed, try whole buffer as single packet
+        if (packets.isEmpty() && data.isNotEmpty()) {
+            packets.add(data)
+        }
+        
+        return packets
+    }
+}

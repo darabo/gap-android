@@ -1,4 +1,4 @@
-package com.gap.android.protocol
+package com.bitchat.android.protocol
 
 import java.security.SecureRandom
 

@@ -1,4 +1,4 @@
-package com.gap.android.core.ui.utils
+package com.bitchat.android.core.ui.utils
 
 import androidx.compose.foundation.clickable
 import androidx.compose.runtime.*

@@ -1,11 +1,11 @@
-package com.gap.android.nostr
+package com.bitchat.android.nostr
 
 import android.util.Base64
 import android.util.Log
-import com.gap.android.model.PrivateMessagePacket
-import com.gap.android.model.NoisePayloadType
-import com.gap.android.protocol.BitchatPacket
-import com.gap.android.protocol.MessageType
+import com.bitchat.android.model.PrivateMessagePacket
+import com.bitchat.android.model.NoisePayloadType
+import com.bitchat.android.protocol.BitchatPacket
+import com.bitchat.android.protocol.MessageType
 import java.util.*
 
 /**
@@ -46,7 +46,7 @@ object NostrEmbeddedBitChat {
                 timestamp = System.currentTimeMillis().toULong(),
                 payload = payload,
                 signature = null,
-                ttl = com.gap.android.util.AppConstants.MESSAGE_TTL_HOPS
+                ttl = com.bitchat.android.util.AppConstants.MESSAGE_TTL_HOPS
             )
             
             val data = packet.toBinaryData() ?: return null
@@ -86,7 +86,7 @@ object NostrEmbeddedBitChat {
                 timestamp = System.currentTimeMillis().toULong(),
                 payload = payload,
                 signature = null,
-                ttl = com.gap.android.util.AppConstants.MESSAGE_TTL_HOPS
+                ttl = com.bitchat.android.util.AppConstants.MESSAGE_TTL_HOPS
             )
             
             val data = packet.toBinaryData() ?: return null
@@ -123,7 +123,7 @@ object NostrEmbeddedBitChat {
                 timestamp = System.currentTimeMillis().toULong(),
                 payload = payload,
                 signature = null,
-                ttl = com.gap.android.util.AppConstants.MESSAGE_TTL_HOPS
+                ttl = com.bitchat.android.util.AppConstants.MESSAGE_TTL_HOPS
             )
             
             val data = packet.toBinaryData() ?: return null
@@ -158,7 +158,7 @@ object NostrEmbeddedBitChat {
                 timestamp = System.currentTimeMillis().toULong(),
                 payload = payload,
                 signature = null,
-                ttl = com.gap.android.util.AppConstants.MESSAGE_TTL_HOPS
+                ttl = com.bitchat.android.util.AppConstants.MESSAGE_TTL_HOPS
             )
             
             val data = packet.toBinaryData() ?: return null

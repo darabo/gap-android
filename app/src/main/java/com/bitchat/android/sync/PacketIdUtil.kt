@@ -1,6 +1,6 @@
-package com.gap.android.sync
+package com.bitchat.android.sync
 
-import com.gap.android.protocol.BitchatPacket
+import com.bitchat.android.protocol.BitchatPacket
 import java.security.MessageDigest
 
 /**

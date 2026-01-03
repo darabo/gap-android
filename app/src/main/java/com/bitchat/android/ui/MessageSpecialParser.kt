@@ -1,4 +1,4 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
 import androidx.compose.ui.text.AnnotatedString
 import android.util.Patterns

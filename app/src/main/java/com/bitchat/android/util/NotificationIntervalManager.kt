@@ -1,4 +1,4 @@
-package com.gap.android.util
+package com.bitchat.android.util
 
 class NotificationIntervalManager {
   private var _lastNetworkNotificationTime = 0L

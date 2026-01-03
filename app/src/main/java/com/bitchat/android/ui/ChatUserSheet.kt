@@ -1,4 +1,4 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,13 +11,13 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gap.android.ui.theme.BASE_FONT_SIZE
+import com.bitchat.android.ui.theme.BASE_FONT_SIZE
 import androidx.compose.ui.res.stringResource
-import com.gap.android.R
+import com.bitchat.android.R
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.launch
-import com.gap.android.model.BitchatMessage
+import com.bitchat.android.model.BitchatMessage
 
 /**
  * User Action Sheet for selecting actions on a specific user (slap, hug, block)
@@ -156,7 +156,7 @@ fun ChatUserSheet(
                                 onClick = {
                                     // Check if we're in a geohash channel
                                     val selectedLocationChannel = viewModel.selectedLocationChannel.value
-                                    if (selectedLocationChannel is com.gap.android.geohash.ChannelID.Location) {
+                                    if (selectedLocationChannel is com.bitchat.android.geohash.ChannelID.Location) {
                                         // Get user's nostr public key and add to geohash block list
                                         viewModel.blockUserInGeohash(targetNickname)
                                     } else {

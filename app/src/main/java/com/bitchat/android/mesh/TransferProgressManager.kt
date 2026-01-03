@@ -1,4 +1,4 @@
-package com.gap.android.mesh
+package com.bitchat.android.mesh
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

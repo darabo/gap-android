@@ -1,4 +1,4 @@
-package com.gap.android.sync
+package com.bitchat.android.sync
 
 import java.security.MessageDigest
 import kotlin.math.ceil
@@ -188,4 +188,3 @@ object GCSFilter {
         }
     }
 }
-

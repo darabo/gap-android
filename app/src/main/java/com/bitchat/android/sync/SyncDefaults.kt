@@ -1,4 +1,4 @@
-package com.gap.android.sync
+package com.bitchat.android.sync
 
 object SyncDefaults {
     // Default values used when debug prefs are unavailable

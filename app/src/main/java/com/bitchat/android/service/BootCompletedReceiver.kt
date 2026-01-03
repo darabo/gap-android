@@ -1,4 +1,4 @@
-package com.gap.android.service
+package com.bitchat.android.service
 
 import android.content.BroadcastReceiver
 import android.content.Context

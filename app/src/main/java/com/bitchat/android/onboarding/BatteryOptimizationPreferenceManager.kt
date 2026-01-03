@@ -1,4 +1,4 @@
-package com.gap.android.onboarding
+package com.bitchat.android.onboarding
 
 import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,14 +1,14 @@
-package com.gap.android.nostr
+package com.bitchat.android.nostr
 
 import android.app.Application
 import android.util.Log
-import com.gap.android.model.BitchatMessage
-import com.gap.android.model.DeliveryStatus
-import com.gap.android.protocol.BitchatPacket
-import com.gap.android.services.SeenMessageStore
-import com.gap.android.ui.ChatState
-import com.gap.android.ui.MeshDelegateHandler
-import com.gap.android.ui.PrivateChatManager
+import com.bitchat.android.model.BitchatMessage
+import com.bitchat.android.model.DeliveryStatus
+import com.bitchat.android.protocol.BitchatPacket
+import com.bitchat.android.services.SeenMessageStore
+import com.bitchat.android.ui.ChatState
+import com.bitchat.android.ui.MeshDelegateHandler
+import com.bitchat.android.ui.PrivateChatManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,7 +22,7 @@ class NostrDirectMessageHandler(
     private val meshDelegateHandler: MeshDelegateHandler,
     private val scope: CoroutineScope,
     private val repo: GeohashRepository,
-    private val dataManager: com.gap.android.ui.DataManager
+    private val dataManager: com.bitchat.android.ui.DataManager
 ) {
     companion object { private const val TAG = "NostrDirectMessageHandler" }
 
@@ -69,13 +69,13 @@ class NostrDirectMessageHandler(
                 val packetData = base64URLDecode(base64Content) ?: return@launch
                 val packet = BitchatPacket.fromBinaryData(packetData) ?: return@launch
 
-                if (packet.type != com.gap.android.protocol.MessageType.NOISE_ENCRYPTED.value) return@launch
+                if (packet.type != com.bitchat.android.protocol.MessageType.NOISE_ENCRYPTED.value) return@launch
 
-                val noisePayload = com.gap.android.model.NoisePayload.decode(packet.payload) ?: return@launch
+                val noisePayload = com.bitchat.android.model.NoisePayload.decode(packet.payload) ?: return@launch
                 val messageTimestamp = Date(giftWrap.createdAt * 1000L)
                 val convKey = "nostr_${senderPubkey.take(16)}"
                 repo.putNostrKeyMapping(convKey, senderPubkey)
-                com.gap.android.nostr.GeohashAliasRegistry.put(convKey, senderPubkey)
+                com.bitchat.android.nostr.GeohashAliasRegistry.put(convKey, senderPubkey)
                 if (geohash.isNotEmpty()) {
                     // Remember which geohash this conversation belongs to so we can subscribe on-demand
                     repo.setConversationGeohash(convKey, geohash)
@@ -104,7 +104,7 @@ class NostrDirectMessageHandler(
     }
 
     private suspend fun processNoisePayload(
-        payload: com.gap.android.model.NoisePayload,
+        payload: com.bitchat.android.model.NoisePayload,
         convKey: String,
         senderNickname: String,
         timestamp: Date,
@@ -112,8 +112,8 @@ class NostrDirectMessageHandler(
         recipientIdentity: NostrIdentity
     ) {
         when (payload.type) {
-            com.gap.android.model.NoisePayloadType.PRIVATE_MESSAGE -> {
-                val pm = com.gap.android.model.PrivateMessagePacket.decode(payload.data) ?: return
+            com.bitchat.android.model.NoisePayloadType.PRIVATE_MESSAGE -> {
+                val pm = com.bitchat.android.model.PrivateMessagePacket.decode(payload.data) ?: return
                 val existingMessages = state.getPrivateChatsValue()[convKey] ?: emptyList()
                 if (existingMessages.any { it.id == pm.messageID }) return
 
@@ -148,29 +148,29 @@ class NostrDirectMessageHandler(
                     seenStore.markRead(pm.messageID)
                 }
             }
-            com.gap.android.model.NoisePayloadType.DELIVERED -> {
+            com.bitchat.android.model.NoisePayloadType.DELIVERED -> {
                 val messageId = String(payload.data, Charsets.UTF_8)
                 withContext(Dispatchers.Main) {
                     meshDelegateHandler.didReceiveDeliveryAck(messageId, convKey)
                 }
             }
-            com.gap.android.model.NoisePayloadType.READ_RECEIPT -> {
+            com.bitchat.android.model.NoisePayloadType.READ_RECEIPT -> {
                 val messageId = String(payload.data, Charsets.UTF_8)
                 withContext(Dispatchers.Main) {
                     meshDelegateHandler.didReceiveReadReceipt(messageId, convKey)
                 }
             }
-            com.gap.android.model.NoisePayloadType.FILE_TRANSFER -> {
+            com.bitchat.android.model.NoisePayloadType.FILE_TRANSFER -> {
                 // Properly handle encrypted file transfer
-                val file = com.gap.android.model.BitchatFilePacket.decode(payload.data)
+                val file = com.bitchat.android.model.BitchatFilePacket.decode(payload.data)
                 if (file != null) {
                     val uniqueMsgId = java.util.UUID.randomUUID().toString().uppercase()
-                    val savedPath = com.gap.android.features.file.FileUtils.saveIncomingFile(application, file)
+                    val savedPath = com.bitchat.android.features.file.FileUtils.saveIncomingFile(application, file)
                     val message = BitchatMessage(
                         id = uniqueMsgId,
                         sender = senderNickname,
                         content = savedPath,
-                        type = com.gap.android.features.file.FileUtils.messageTypeForMime(file.mimeType),
+                        type = com.bitchat.android.features.file.FileUtils.messageTypeForMime(file.mimeType),
                         timestamp = timestamp,
                         isRelay = false,
                         isPrivate = true,

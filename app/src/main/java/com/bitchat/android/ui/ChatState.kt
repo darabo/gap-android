@@ -1,7 +1,7 @@
-package com.gap.android.ui
+package com.bitchat.android.ui
 
 import android.util.Log
-import com.gap.android.model.BitchatMessage
+import com.bitchat.android.model.BitchatMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -124,8 +124,8 @@ class ChatState(
     val showAppInfo: StateFlow<Boolean> = _showAppInfo.asStateFlow()
     
     // Location channels state (for Nostr geohash features)
-    private val _selectedLocationChannel = MutableStateFlow<com.gap.android.geohash.ChannelID?>(com.gap.android.geohash.ChannelID.Mesh)
-    val selectedLocationChannel: StateFlow<com.gap.android.geohash.ChannelID?> = _selectedLocationChannel.asStateFlow()
+    private val _selectedLocationChannel = MutableStateFlow<com.bitchat.android.geohash.ChannelID?>(com.bitchat.android.geohash.ChannelID.Mesh)
+    val selectedLocationChannel: StateFlow<com.bitchat.android.geohash.ChannelID?> = _selectedLocationChannel.asStateFlow()
     
     private val _isTeleported = MutableStateFlow<Boolean>(false)
     val isTeleported: StateFlow<Boolean> = _isTeleported.asStateFlow()
@@ -303,7 +303,7 @@ class ChatState(
         _showAppInfo.value = show
     }
     
-    fun setSelectedLocationChannel(channel: com.gap.android.geohash.ChannelID?) {
+    fun setSelectedLocationChannel(channel: com.bitchat.android.geohash.ChannelID?) {
         _selectedLocationChannel.value = channel
     }
     

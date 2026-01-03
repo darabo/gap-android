@@ -46,7 +46,7 @@
     <string name="notification_summary_more">và %1$d khác</string>
     <string name="notification_messages_from_people">%1$d tin nhắn từ %2$d người</string>
     <string name="notification_more_conversations">và %1$d cuộc trò chuyện khác</string>
-    <string name="notification_active_peers_title">👥 bitchatter gần đó!</string>
+    <string name="notification_active_peers_title">👥 gapchatter gần đó!</string>
     <string name="notification_active_peers_one">1 người gần đó</string>
     <string name="notification_active_peers_many">%1$d người gần đó</string>
     <string name="notification_new_messages">Tin nhắn mới</string>
