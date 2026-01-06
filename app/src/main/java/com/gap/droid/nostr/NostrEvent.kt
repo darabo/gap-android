@@ -8,15 +8,18 @@ import java.security.MessageDigest
 /**
  * Nostr Event structure following NIP-01
  * Compatible with iOS implementation
+ * 
+ * IMPORTANT: All fields must have @SerializedName annotations to prevent
+ * ProGuard/R8 obfuscation from breaking JSON serialization.
  */
 data class NostrEvent(
-    var id: String = "",
-    val pubkey: String,
+    @SerializedName("id") var id: String = "",
+    @SerializedName("pubkey") val pubkey: String,
     @SerializedName("created_at") val createdAt: Int,
-    val kind: Int,
-    val tags: List<List<String>>,
-    val content: String,
-    var sig: String? = null
+    @SerializedName("kind") val kind: Int,
+    @SerializedName("tags") val tags: List<List<String>>,
+    @SerializedName("content") val content: String,
+    @SerializedName("sig") var sig: String? = null
 ) {
     
     companion object {

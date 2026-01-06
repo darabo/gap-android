@@ -631,10 +631,20 @@ class NostrRelayManager private constructor() {
     
     private fun sendToRelay(event: NostrEvent, webSocket: WebSocket, relayUrl: String) {
         try {
+            // DEBUG: Validate event has required fields before sending
+            if (event.id.isEmpty()) {
+                Log.e(TAG, "🔴 CRITICAL: Attempting to send event without id! kind=${event.kind} pubkey=${event.pubkey.take(16)}...")
+            }
+            if (event.sig.isNullOrEmpty()) {
+                Log.e(TAG, "🔴 CRITICAL: Attempting to send event without signature! kind=${event.kind} id=${event.id.take(16)}...")
+            }
+            
             val request = NostrRequest.Event(event)
             val message = gson.toJson(request, NostrRequest::class.java)
             
-            Log.v(TAG, "📤 Sending Nostr event (kind: ${event.kind}) to relay: $relayUrl")
+            // DEBUG: Log the actual JSON being sent
+            Log.v(TAG, "🔍 DEBUG JSON: $message")
+            Log.v(TAG, "📤 Sending Nostr event (kind: ${event.kind}, id=${event.id.take(16)}...) to relay: $relayUrl")
             
             val success = webSocket.send(message)
             if (success) {

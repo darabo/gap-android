@@ -53,6 +53,15 @@
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
     <uses-feature android:name="android.hardware.bluetooth" android:required="true" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- WiFi Aware (NAN) - optional, app works without it -->
+    <uses-feature android:name="android.hardware.wifi.aware" android:required="false" />
+
+    <!-- WiFi Aware permissions -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="tiramisu" />
 
     <permission
         android:name="com.gap.droid.permission.FORCE_FINISH"
