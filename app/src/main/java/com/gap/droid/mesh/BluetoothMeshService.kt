@@ -44,6 +44,7 @@ class BluetoothMeshService(private val context: Context) {
     
     // Core components - each handling specific responsibilities
     private val encryptionService = EncryptionService(context)
+    fun getEncryptionService(): EncryptionService = encryptionService
 
     // My peer identification - derived from persisted Noise identity fingerprint (first 16 hex chars)
     val myPeerID: String = encryptionService.getIdentityFingerprint().take(16)

@@ -115,6 +115,21 @@ class ChatViewModel(
     // Media file sending manager
     private val mediaSendingManager = MediaSendingManager(state, messageManager, channelManager, meshService)
     
+    // WiFi Aware high-bandwidth mesh (optional - runs alongside BLE when available)
+    private val wifiAwareService: com.gap.droid.wifiaware.WiFiAwareService? by lazy {
+        if (com.gap.droid.wifiaware.WiFiAwareAvailability.isSupported(getApplication())) {
+            com.gap.droid.wifiaware.WiFiAwareService(
+                context = getApplication(),
+                encryptionService = meshService.getEncryptionService()
+            ).also { service ->
+                Log.i(TAG, "WiFi Aware service initialized")
+            }
+        } else {
+            Log.i(TAG, "WiFi Aware not supported on this device")
+            null
+        }
+    }
+    
     // Delegate handler for mesh callbacks
     private val meshDelegateHandler = MeshDelegateHandler(
         state = state,
@@ -282,6 +297,33 @@ class ChatViewModel(
         
         // Initialize new geohash architecture
         geohashViewModel.initialize()
+        
+        // Start WiFi Aware service
+        wifiAwareService?.run {
+            onMessageReceived = { packet, peerID ->
+                // Inject incoming WiFi Aware packets into the main mesh processing pipeline
+                // This handles deduplication, routing, and decryption via the existing logic
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        meshService.connectionManager.delegate?.onPacketReceived(packet, peerID, null)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error injecting WiFi Aware packet: ${e.message}")
+                    }
+                }
+            }
+            start()
+            
+            // Wire up outbound messages from BLE mesh to WiFi Aware
+            // This ensures messages sent via BLE logic also go out over high-bandwidth WiFi Aware
+            meshService.connectionManager.onPacketOutbound = { packet, targetPeerID ->
+                if (targetPeerID != null) {
+                    sendPacketToPeer(targetPeerID, packet)
+                } else {
+                    sendPacket(packet)
+                }
+            }
+        }
+    }
 
         // Initialize favorites persistence service
         com.gap.droid.favorites.FavoritesPersistenceService.initialize(getApplication())
@@ -304,6 +346,17 @@ class ChatViewModel(
     override fun onCleared() {
         super.onCleared()
         // Note: Mesh service lifecycle is now managed by MainActivity
+        
+        // Stop WiFi Aware service
+        wifiAwareService?.run {
+            stop()
+            onMessageReceived = null
+        }
+        
+        // Clear outbound hook to prevent leaks (meshService might outlive ViewModel)
+        try {
+            meshService.connectionManager.onPacketOutbound = null
+        } catch (_: Exception) { }
     }
     
     // MARK: - Nickname Management

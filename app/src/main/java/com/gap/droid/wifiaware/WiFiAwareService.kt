@@ -9,7 +9,7 @@ import android.net.wifi.aware.*
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.gap.droid.noise.NoiseSessionManager
+import com.gap.droid.crypto.EncryptionService
 import com.gap.droid.protocol.BitchatPacket
 import com.gap.droid.protocol.BinaryProtocol
 import com.gap.droid.protocol.MessageType
@@ -30,7 +30,7 @@ import java.net.Socket
  */
 class WiFiAwareService(
     private val context: Context,
-    private val noiseSessionManager: NoiseSessionManager
+    private val encryptionService: EncryptionService
 ) {
     
     companion object {
@@ -38,6 +38,90 @@ class WiFiAwareService(
         private const val SERVICE_NAME = "gapmash"
         private const val SERVICE_INFO = "GapMashMesh"
         private const val PSK_PASSPHRASE = "gapmash-mesh-v1"
+    }
+  
+    // ... [omitted unchanged lines] ...
+  
+    private fun initiateNoiseHandshake(peerId: String, socket: Socket) {
+        scope.launch {
+            try {
+                // Create Noise handshake initiator
+                val handshakeData = encryptionService.initiateHandshake(peerId)
+                
+                if (handshakeData != null) {
+                    // Wrap in BitchatPacket
+                    val packet = BitchatPacket(
+                        version = 1u,
+                        type = MessageType.NOISE_HANDSHAKE.value,
+                        senderID = localSenderID,
+                        recipientID = null,
+                        timestamp = System.currentTimeMillis().toULong(),
+                        payload = handshakeData,
+                        signature = null,
+                        ttl = 0u // Handshakes are not relayed
+                    )
+                    
+                    val data = BinaryProtocol.encode(packet) ?: run {
+                        Log.e(TAG, "Failed to encode handshake packet")
+                        return@run
+                    }
+                    
+                    socket.getOutputStream().apply {
+                        write(data)
+                        flush()
+                    }
+                    
+                    Log.d(TAG, "Noise handshake initiated with $peerId")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Noise handshake failed: ${e.message}")
+            }
+        }
+    }
+    
+    private fun handleNoiseHandshake(peerId: String, packet: BitchatPacket) {
+        try {
+            // Process handshake and get response if any
+            // Note: EncryptionService takes (data, peerID), unlike NoiseSessionManager which took (peerID, data)
+            val response = encryptionService.processHandshakeMessage(packet.payload, peerId)
+            
+            if (response != null) {
+                // Send response packet
+                val responsePacket = BitchatPacket(
+                    version = 1u,
+                    type = MessageType.NOISE_HANDSHAKE.value,
+                    senderID = localSenderID,
+                    recipientID = packet.senderID,
+                    timestamp = System.currentTimeMillis().toULong(),
+                    payload = response,
+                    signature = null,
+                    ttl = 0u
+                )
+                
+                val socket = activeConnections[peerId]
+                if (socket != null) {
+                    scope.launch {
+                        val data = BinaryProtocol.encode(responsePacket)
+                        if (data != null) {
+                            try {
+                                socket.getOutputStream().apply {
+                                    write(data)
+                                    flush()
+                                }
+                                Log.i(TAG, "Noise handshake response sent to $peerId")
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Failed to send handshake response: ${e.message}")
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Handshake complete
+                Log.i(TAG, "Noise handshake completed with $peerId")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error handling Noise handshake: ${e.message}")
+        }
     }
     
     // WiFi Aware components
