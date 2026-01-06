@@ -6,6 +6,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.gap.droid.favorites.FavoritesPersistenceService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -307,10 +308,10 @@ class ChatViewModel(
                     try {
                         meshService.connectionManager.delegate?.onPacketReceived(packet, peerID, null)
                     } catch (e: Exception) {
-                        Log.e(TAG, "Error injecting WiFi Aware packet: ${e.message}")
-                    }
                 }
             }
+            } // Close onMessageReceived lambda - REAL this time
+            
             start()
             
             // Wire up outbound messages from BLE mesh to WiFi Aware
@@ -323,7 +324,6 @@ class ChatViewModel(
                 }
             }
         }
-    }
 
         // Initialize favorites persistence service
         com.gap.droid.favorites.FavoritesPersistenceService.initialize(getApplication())

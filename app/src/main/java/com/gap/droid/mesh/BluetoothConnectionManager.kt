@@ -88,8 +88,158 @@ class BluetoothConnectionManager(
     // Public property for address-peer mapping
     val addressPeerMap get() = connectionTracker.addressPeerMap
 
-    // ... [abbreviated] ...
+    // Expose first-announce helpers to higher layers
+    fun noteAnnounceReceived(address: String) { connectionTracker.noteAnnounceReceived(address) }
+    fun hasSeenFirstAnnounce(address: String): Boolean = connectionTracker.hasSeenFirstAnnounce(address)
+    
+    init {
+        powerManager.delegate = this
+        // Observe debug settings to enforce role state while active
+        try {
+            val dbg = com.gap.droid.ui.debug.DebugSettingsManager.getInstance()
+            // Role enable/disable
+            connectionScope.launch {
+                dbg.gattServerEnabled.collect { enabled ->
+                    if (!isActive) return@collect
+                    if (enabled) startServer() else stopServer()
+                }
+            }
+            connectionScope.launch {
+                dbg.gattClientEnabled.collect { enabled ->
+                    if (!isActive) return@collect
+                    if (enabled) startClient() else stopClient()
+                }
+            }
+            // Connection caps: enforce on change
+            connectionScope.launch {
+                dbg.maxConnectionsOverall.collect {
+                    if (!isActive) return@collect
+                    connectionTracker.enforceConnectionLimits()
+                    // Also enforce server side best-effort
+                    serverManager.enforceServerLimit(dbg.maxServerConnections.value)
+                }
+            }
+            connectionScope.launch {
+                dbg.maxClientConnections.collect {
+                    if (!isActive) return@collect
+                    connectionTracker.enforceConnectionLimits()
+                }
+            }
+            connectionScope.launch {
+                dbg.maxServerConnections.collect {
+                    if (!isActive) return@collect
+                    serverManager.enforceServerLimit(dbg.maxServerConnections.value)
+                }
+            }
+        } catch (_: Exception) { }
+    }
+    
+    /**
+     * Start all Bluetooth services with power optimization
+     */
+    fun startServices(): Boolean {
+        Log.i(TAG, "Starting power-optimized Bluetooth services...")
+        
+        if (!permissionManager.hasBluetoothPermissions()) {
+            Log.e(TAG, "Missing Bluetooth permissions")
+            return false
+        }
+        
+        if (bluetoothAdapter?.isEnabled != true) {
+            Log.e(TAG, "Bluetooth is not enabled")
+            return false
+        }
+        
+        try {
+            isActive = true
+            Log.d(TAG, "ConnectionManager activated (permissions and adapter OK)")
+            
+            // Start all component managers
+            connectionScope.launch {
+                // Start connection tracker first
+                connectionTracker.start()
+                
+                // Start power manager
+                powerManager.start()
+                
+                // Start server/client based on debug settings
+                val dbg = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance() } catch (_: Exception) { null }
+                val startServer = dbg?.gattServerEnabled?.value != false
+                val startClient = dbg?.gattClientEnabled?.value != false
 
+                if (startServer) {
+                    if (!serverManager.start()) {
+                        Log.e(TAG, "Failed to start server manager")
+                        this@BluetoothConnectionManager.isActive = false
+                        return@launch
+                    }
+                    Log.d(TAG, "GATT Server started")
+                } else {
+                    Log.i(TAG, "GATT Server disabled by debug settings; not starting")
+                }
+
+                if (startClient) {
+                    if (!clientManager.start()) {
+                        Log.e(TAG, "Failed to start client manager")
+                        this@BluetoothConnectionManager.isActive = false
+                        return@launch
+                    }
+                    Log.d(TAG, "GATT Client started")
+                } else {
+                    Log.i(TAG, "GATT Client disabled by debug settings; not starting")
+                }
+                
+                Log.i(TAG, "Bluetooth services started successfully")
+            }
+            
+            return true
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start Bluetooth services: ${e.message}")
+            isActive = false
+            return false
+        }
+    }
+    
+    /**
+     * Stop all Bluetooth services with proper cleanup
+     */
+    fun stopServices() {
+        Log.i(TAG, "Stopping power-optimized Bluetooth services")
+        
+        isActive = false
+        
+        connectionScope.launch {
+            Log.d(TAG, "Stopping client/server and power components...")
+            // Stop component managers
+            clientManager.stop()
+            serverManager.stop()
+            
+            // Stop power manager
+            powerManager.stop()
+            
+            // Stop connection tracker
+            connectionTracker.stop()
+            
+            // Cancel the coroutine scope
+            connectionScope.cancel()
+            
+            Log.i(TAG, "All Bluetooth services stopped")
+        }
+    }
+
+    /**
+     * Indicates whether this instance can be safely reused for a future start.
+     * Returns false if its coroutine scope has been cancelled.
+     */
+    fun isReusable(): Boolean {
+        val active = connectionScope.isActive
+        if (!active) {
+            Log.d(TAG, "BluetoothConnectionManager isReusable=false (scope cancelled)")
+        }
+        return active
+    }
+    
     /**
      * Broadcast packet to connected devices with connection limit enforcement
      * Automatically fragments large packets to fit within BLE MTU limits

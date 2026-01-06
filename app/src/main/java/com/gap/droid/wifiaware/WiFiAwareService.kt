@@ -61,9 +61,10 @@ class WiFiAwareService(
                         ttl = 0u // Handshakes are not relayed
                     )
                     
-                    val data = BinaryProtocol.encode(packet) ?: run {
+                    
+                    val data: ByteArray = BinaryProtocol.encode(packet) ?: run {
                         Log.e(TAG, "Failed to encode handshake packet")
-                        return@run
+                        return@launch
                     }
                     
                     socket.getOutputStream().apply {
@@ -83,7 +84,9 @@ class WiFiAwareService(
         try {
             // Process handshake and get response if any
             // Note: EncryptionService takes (data, peerID), unlike NoiseSessionManager which took (peerID, data)
-            val response = encryptionService.processHandshakeMessage(packet.payload, peerId)
+            // Payload is Any in packet, needs to be ByteArray for handshake
+            val payloadBytes = packet.payload as? ByteArray ?: throw IllegalArgumentException("Handshake payload must be ByteArray")
+            val response = encryptionService.processHandshakeMessage(payloadBytes, peerId)
             
             if (response != null) {
                 // Send response packet
@@ -568,86 +571,9 @@ class WiFiAwareService(
         }
     }
     
-    // MARK: - Noise Handshake
-    
-    private fun initiateNoiseHandshake(peerId: String, socket: Socket) {
-        scope.launch {
-            try {
-                // Create Noise handshake initiator
-                val handshakeData = noiseSessionManager.initiateHandshake(peerId)
-                
-                // Wrap in BitchatPacket
-                val packet = BitchatPacket(
-                    version = 1u,
-                    type = MessageType.NOISE_HANDSHAKE.value,
-                    senderID = localSenderID,
-                    recipientID = null,
-                    timestamp = System.currentTimeMillis().toULong(),
-                    payload = handshakeData,
-                    signature = null,
-                    ttl = 0u // Handshakes are not relayed
-                )
-                
-                val data = BinaryProtocol.encode(packet) ?: run {
-                    Log.e(TAG, "Failed to encode handshake packet")
-                    return@launch
-                }
-                
-                socket.getOutputStream().apply {
-                    write(data)
-                    flush()
-                }
-                
-                Log.d(TAG, "Noise handshake initiated with $peerId")
-            } catch (e: Exception) {
-                Log.e(TAG, "Noise handshake failed: ${e.message}")
-            }
-        }
-    }
-    
-    private fun handleNoiseHandshake(peerId: String, packet: BitchatPacket) {
-        try {
-            // Process handshake and get response if any
-            val response = noiseSessionManager.processHandshakeMessage(peerId, packet.payload)
-            
-            if (response != null) {
-                // Send response packet
-                val responsePacket = BitchatPacket(
-                    version = 1u,
-                    type = MessageType.NOISE_HANDSHAKE.value,
-                    senderID = localSenderID,
-                    recipientID = packet.senderID,
-                    timestamp = System.currentTimeMillis().toULong(),
-                    payload = response,
-                    signature = null,
-                    ttl = 0u
-                )
-                
-                val socket = activeConnections[peerId]
-                if (socket != null) {
-                    scope.launch {
-                        val data = BinaryProtocol.encode(responsePacket)
-                        if (data != null) {
-                            try {
-                                socket.getOutputStream().apply {
-                                    write(data)
-                                    flush()
-                                }
-                                Log.i(TAG, "Noise handshake response sent to $peerId")
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Failed to send handshake response: ${e.message}")
-                            }
-                        }
-                    }
-                }
-            } else {
-                // Handshake complete
-                Log.i(TAG, "Noise handshake completed with $peerId")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error handling Noise handshake: ${e.message}")
-        }
-    }
+        
+    // (Noise handshake methods are implemented above using EncryptionService)
+
     
     // MARK: - Utility
     
