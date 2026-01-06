@@ -29,6 +29,13 @@ Or you can:
 
 This project is released into the public domain. See the [LICENSE](LICENSE.md) file for details.
 
+## 📖 User Guides
+
+New to Gap Mesh? Start here:
+
+- 🇺🇸 **[English User Guide](docs/USER_GUIDE_EN.md)** – Complete guide for beginners
+- 🇮🇷 **[راهنمای فارسی](docs/USER_GUIDE_FA.md)** – راهنمای کامل به زبان فارسی
+
 ## Features
 
 - **✅ Cross-Platform Compatible**: Full protocol compatibility with iOS bitchat
@@ -56,18 +63,21 @@ This project is released into the public domain. See the [LICENSE](LICENSE.md) f
 ### Build Instructions
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/permissionlesstech/bitchat-android.git
    cd bitchat-android
    ```
 
 2. **Open in Android Studio:**
+
    ```bash
    # Open Android Studio and select "Open an Existing Project"
    # Navigate to the bitchat-android directory
    ```
 
 3. **Build the project:**
+
    ```bash
    ./gradlew build
    ```
@@ -156,12 +166,14 @@ The app requires the following permissions (automatically requested):
 ## Security & Privacy
 
 ### Encryption
+
 - **Private Messages**: X25519 key exchange + AES-256-GCM encryption
 - **Channel Messages**: Argon2id password derivation + AES-256-GCM
 - **Digital Signatures**: Ed25519 for message authenticity
 - **Forward Secrecy**: New key pairs generated each session
 
 ### Privacy Features
+
 - **No Registration**: No accounts, emails, or phone numbers required
 - **Ephemeral by Default**: Messages exist only in device memory
 - **Cover Traffic**: Random delays and dummy messages prevent traffic analysis
@@ -171,11 +183,13 @@ The app requires the following permissions (automatically requested):
 ## Performance & Efficiency
 
 ### Message Compression
+
 - **LZ4 Compression**: Automatic compression for messages >100 bytes
 - **30-70% bandwidth savings** on typical text messages
 - **Smart compression**: Skips already-compressed data
 
 ### Battery Optimization
+
 - **Adaptive Power Modes**: Automatically adjusts based on battery level
   - Performance mode: Full features when charging or >60% battery
   - Balanced mode: Default operation (30-60% battery)
@@ -185,6 +199,7 @@ The app requires the following permissions (automatically requested):
 - **Configurable scanning**: Duty cycle adapts to battery state
 
 ### Network Efficiency
+
 - **Optimized Bloom filters**: Faster duplicate detection with less memory
 - **Message aggregation**: Batches small messages to reduce transmissions
 - **Adaptive connection limits**: Adjusts peer connections based on power mode
@@ -192,19 +207,23 @@ The app requires the following permissions (automatically requested):
 ## Technical Architecture
 
 ### Binary Protocol
+
 bitchat uses an efficient binary protocol optimized for Bluetooth LE:
+
 - Compact packet format with 1-byte type field
 - TTL-based message routing (max 7 hops)
 - Automatic fragmentation for large messages
 - Message deduplication via unique IDs
 
 ### Mesh Networking
+
 - Each device acts as both client and peripheral
 - Automatic peer discovery and connection management
 - Store-and-forward for offline message delivery
 - Adaptive duty cycling for battery optimization
 
 ### Android-Specific Optimizations
+
 - **Coroutine Architecture**: Asynchronous operations for mesh networking
 - **Kotlin Coroutines**: Thread-safe concurrent mesh operations
 - **EncryptedSharedPreferences**: Secure storage for user settings
@@ -235,6 +254,7 @@ bitchat uses an efficient binary protocol optimized for Bluetooth LE:
 ### Binary Protocol Compatibility
 
 The Android implementation maintains 100% binary protocol compatibility with iOS:
+
 - **Header Format**: Identical 13-byte header structure
 - **Packet Types**: Same message types and routing logic
 - **Encryption**: Identical cryptographic algorithms and key exchange
@@ -246,6 +266,7 @@ The Android implementation maintains 100% binary protocol compatibility with iOS
 ### Preparation
 
 1. **Update version information:**
+
    ```kotlin
    // In app/build.gradle.kts
    defaultConfig {
@@ -255,6 +276,7 @@ The Android implementation maintains 100% binary protocol compatibility with iOS
    ```
 
 2. **Create a signed release build:**
+
    ```bash
    ./gradlew assembleRelease
    ```
