@@ -15,9 +15,9 @@ object AppConstants {
         const val STALE_PEER_TIMEOUT_MS: Long = 180_000L // 3 minutes
         const val PEER_CLEANUP_INTERVAL_MS: Long = 60_000L
 
-        // BLE connection tracking
-        const val CONNECTION_RETRY_DELAY_MS: Long = 5_000L
-        const val MAX_CONNECTION_ATTEMPTS: Int = 3
+        // BLE connection tracking (tuned for budget device stability)
+        const val CONNECTION_RETRY_DELAY_MS: Long = 3_000L  // Faster reconnection
+        const val MAX_CONNECTION_ATTEMPTS: Int = 6           // More retry attempts
         const val CONNECTION_CLEANUP_DELAY_MS: Long = 500L
         const val CONNECTION_CLEANUP_INTERVAL_MS: Long = 30_000L
         const val BROADCAST_CLEANUP_DELAY_MS: Long = 500L
@@ -79,8 +79,8 @@ object AppConstants {
         const val MEDIUM_BATTERY_PERCENT: Int = 50
         const val SCAN_ON_DURATION_NORMAL_MS: Long = 8_000L
         const val SCAN_OFF_DURATION_NORMAL_MS: Long = 2_000L
-        const val SCAN_ON_DURATION_POWER_SAVE_MS: Long = 2_000L
-        const val SCAN_OFF_DURATION_POWER_SAVE_MS: Long = 28_000L
+        const val SCAN_ON_DURATION_POWER_SAVE_MS: Long = 4_000L   // Longer scan window for budget devices
+        const val SCAN_OFF_DURATION_POWER_SAVE_MS: Long = 26_000L  // Adjusted to maintain 30s cycle
         const val SCAN_ON_DURATION_ULTRA_LOW_MS: Long = 1_000L
         const val SCAN_OFF_DURATION_ULTRA_LOW_MS: Long = 29_000L
         const val MAX_CONNECTIONS_NORMAL: Int = 8
