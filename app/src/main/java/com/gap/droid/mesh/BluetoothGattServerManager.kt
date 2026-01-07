@@ -11,7 +11,9 @@ import android.util.Log
 import com.gap.droid.protocol.BitchatPacket
 import com.gap.droid.util.AppConstants
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -27,9 +29,7 @@ class BluetoothGattServerManager(
     private val delegate: BluetoothConnectionManagerDelegate?
 ) {
     
-    companion object {
-        private const val TAG = "BluetoothGattServerManager"
-    }
+
     
     // Core Bluetooth components
     private val bluetoothManager: BluetoothManager = 
@@ -44,6 +44,21 @@ class BluetoothGattServerManager(
     
     // State management
     private var isActive = false
+    
+    // Advertising restart timer for MediaTek and other problematic devices
+    private var advertisingRestartJob: Job? = null
+    private var advertisingRetryCount = 0
+    private var isAdvertisingStarted = false
+    
+    companion object {
+        private const val TAG = "BluetoothGattServerManager"
+        // Restart advertising every 30 seconds to ensure visibility on devices with buggy BLE stacks
+        private const val ADVERTISING_RESTART_INTERVAL_MS = 30_000L
+        // Maximum retry attempts for failed advertising
+        private const val MAX_ADVERTISING_RETRIES = 3
+        // Delay between retry attempts
+        private const val ADVERTISING_RETRY_DELAY_MS = 2_000L
+    }
 
     // Enforce a server connection limit by canceling the oldest connections (best-effort)
     fun enforceServerLimit(maxServer: Int) {
@@ -107,6 +122,7 @@ class BluetoothGattServerManager(
     fun stop() {
         if (!isActive) {
             // Idempotent stop
+            stopAdvertisingRestartTimer()
             stopAdvertising()
             // Ensure server is closed if present
             gattServer?.close()
@@ -118,6 +134,7 @@ class BluetoothGattServerManager(
         isActive = false
 
         connectionScope.launch {
+            stopAdvertisingRestartTimer()
             stopAdvertising()
             
             // Try to cancel any active connections explicitly before closing
@@ -364,11 +381,29 @@ class BluetoothGattServerManager(
                 val mode = try {
                     powerManager.getPowerInfo().split("Current Mode: ")[1].split("\n")[0]
                 } catch (_: Exception) { "unknown" }
-                Log.i(TAG, "Advertising started (power mode: $mode)")
+                Log.i(TAG, "Advertising started successfully (power mode: $mode)")
+                isAdvertisingStarted = true
+                advertisingRetryCount = 0  // Reset retry count on success
+                // Start the automatic restart timer
+                startAdvertisingRestartTimer()
             }
             
             override fun onStartFailure(errorCode: Int) {
-                Log.e(TAG, "Advertising failed: $errorCode")
+                Log.e(TAG, "Advertising failed with error code: $errorCode")
+                isAdvertisingStarted = false
+                // Attempt retry if we haven't exceeded max retries
+                if (advertisingRetryCount < MAX_ADVERTISING_RETRIES && isActive) {
+                    advertisingRetryCount++
+                    Log.i(TAG, "Retrying advertising (attempt $advertisingRetryCount of $MAX_ADVERTISING_RETRIES)")
+                    connectionScope.launch {
+                        delay(ADVERTISING_RETRY_DELAY_MS)
+                        if (isActive) {
+                            startAdvertising()
+                        }
+                    }
+                } else {
+                    Log.e(TAG, "Advertising failed after $MAX_ADVERTISING_RETRIES attempts, giving up")
+                }
             }
         }
         
@@ -395,6 +430,47 @@ class BluetoothGattServerManager(
     }
     
     /**
+     * Start automatic advertising restart timer.
+     * This helps devices with buggy BLE stacks (like MediaTek) maintain visibility.
+     */
+    private fun startAdvertisingRestartTimer() {
+        advertisingRestartJob?.cancel()
+        advertisingRestartJob = connectionScope.launch {
+            while (isActive) {
+                delay(ADVERTISING_RESTART_INTERVAL_MS)
+                if (isActive && isAdvertisingStarted) {
+                    Log.d(TAG, "Advertising restart timer triggered - restarting to maintain visibility")
+                    stopAdvertisingInternal()
+                    delay(500) // Brief pause before restarting
+                    startAdvertising()
+                }
+            }
+        }
+    }
+    
+    /**
+     * Stop the advertising restart timer
+     */
+    private fun stopAdvertisingRestartTimer() {
+        advertisingRestartJob?.cancel()
+        advertisingRestartJob = null
+    }
+    
+    /**
+     * Internal stop advertising without stopping the timer
+     */
+    @Suppress("DEPRECATION")
+    private fun stopAdvertisingInternal() {
+        if (!permissionManager.hasBluetoothPermissions() || bleAdvertiser == null) return
+        try {
+            advertiseCallback?.let { cb -> bleAdvertiser.stopAdvertising(cb) }
+            isAdvertisingStarted = false
+        } catch (e: Exception) {
+            Log.w(TAG, "Error stopping advertising: ${e.message}")
+        }
+    }
+    
+    /**
      * Restart advertising (for power mode changes)
      */
     fun restartAdvertising() {
@@ -405,8 +481,9 @@ class BluetoothGattServerManager(
             return
         }
 
+        advertisingRetryCount = 0  // Reset retry count on manual restart
         connectionScope.launch {
-            stopAdvertising()
+            stopAdvertisingInternal()
             delay(100)
             startAdvertising()
         }

@@ -32,6 +32,7 @@ class BluetoothGattClientManager(
     
     companion object {
         private const val TAG = "BluetoothGattClientManager"
+        private const val SCAN_RESTART_INTERVAL_MS = 25000L // Restart scan every 25 seconds to work around buggy BLE stacks
     }
     
     // Core Bluetooth components
@@ -57,6 +58,8 @@ class BluetoothGattClientManager(
 
     // Scan management
     private var scanCallback: ScanCallback? = null
+    private var unfilteredScanCallback: ScanCallback? = null  // Fallback for devices where filtered scans don't work
+    private var scanRestartJob: Job? = null  // Automatic scan restart timer
     
     // Scan rate limiting to prevent "scanning too frequently" errors
     private var lastScanStartTime = 0L
@@ -195,6 +198,8 @@ class BluetoothGattClientManager(
     
     /**
      * Start scanning with rate limiting
+     * Uses dual scanning strategy: filtered scan for fast discovery + unfiltered fallback for buggy device.
+     * Also starts automatic restart timer to work around scan stalling on some devices.
      */
     @Suppress("DEPRECATION")
     private fun startScanning() {
@@ -224,6 +229,7 @@ class BluetoothGattClientManager(
             return
         }
         
+        // ========== PRIMARY SCAN: Filtered by service UUID ==========
         val scanFilter = ScanFilter.Builder()
             .setServiceUuid(ParcelUuid(AppConstants.Mesh.Gatt.SERVICE_UUID))
             .build()
@@ -234,40 +240,39 @@ class BluetoothGattClientManager(
         
         scanCallback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
-                // Log.d(TAG, "Scan result received: ${result.device.address}")
                 handleScanResult(result)
             }
             
             override fun onBatchScanResults(results: MutableList<ScanResult>) {
-                Log.d(TAG, "Batch scan results received: ${results.size} devices")
+                Log.d(TAG, "Filtered scan: batch received ${results.size} devices")
                 results.forEach { result ->
                     handleScanResult(result)
                 }
             }
             
             override fun onScanFailed(errorCode: Int) {
-                Log.e(TAG, "Scan failed: $errorCode")
-                isCurrentlyScanning = false
-                lastScanStopTime = System.currentTimeMillis()
-                
-                when (errorCode) {
-                    1 -> Log.e(TAG, "SCAN_FAILED_ALREADY_STARTED")
-                    2 -> Log.e(TAG, "SCAN_FAILED_APPLICATION_REGISTRATION_FAILED") 
-                    3 -> Log.e(TAG, "SCAN_FAILED_INTERNAL_ERROR")
-                    4 -> Log.e(TAG, "SCAN_FAILED_FEATURE_UNSUPPORTED")
-                    5 -> Log.e(TAG, "SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES")
-                    6 -> {
-                        Log.e(TAG, "SCAN_FAILED_SCANNING_TOO_FREQUENTLY")
-                        Log.w(TAG, "Scan failed due to rate limiting - will retry after delay")
-                        connectionScope.launch {
-                            delay(10000) // Wait 10 seconds before retrying
-                            if (isActive) {
-                                startScanning()
-                            }
-                        }
-                    }
-                    else -> Log.e(TAG, "Unknown scan failure code: $errorCode")
+                handleScanFailure("Filtered", errorCode)
+            }
+        }
+        
+        // ========== FALLBACK SCAN: Unfiltered for devices where hardware filtering is buggy ==========
+        // Some devices (MediaTek/Oppo/older Android) silently drop filtered scan results.
+        // This unfiltered scan catches those devices; handleScanResult() does software filtering.
+        unfilteredScanCallback = object : ScanCallback() {
+            override fun onScanResult(callbackType: Int, result: ScanResult) {
+                // handleScanResult already checks for our service UUID
+                handleScanResult(result)
+            }
+            
+            override fun onBatchScanResults(results: MutableList<ScanResult>) {
+                Log.d(TAG, "Unfiltered scan: batch received ${results.size} devices")
+                results.forEach { result ->
+                    handleScanResult(result)
                 }
+            }
+            
+            override fun onScanFailed(errorCode: Int) {
+                handleScanFailure("Unfiltered", errorCode)
             }
         }
         
@@ -275,12 +280,81 @@ class BluetoothGattClientManager(
             lastScanStartTime = currentTime
             isCurrentlyScanning = true
             
+            // Start filtered scan (fast, low battery)
             bleScanner.startScan(scanFilters, powerManager.getScanSettings(), scanCallback)
-            Log.d(TAG, "BLE scan started successfully")
+            Log.d(TAG, "Filtered BLE scan started successfully")
+            
+            // Start unfiltered fallback scan (for buggy devices like Oppo A15)
+            val unfilteredSettings = android.bluetooth.le.ScanSettings.Builder()
+                .setScanMode(android.bluetooth.le.ScanSettings.SCAN_MODE_BALANCED)
+                .setReportDelay(500)  // Batch results to reduce processing overhead
+                .build()
+            bleScanner.startScan(null, unfilteredSettings, unfilteredScanCallback)
+            Log.d(TAG, "Unfiltered fallback BLE scan started successfully")
+            
+            // Start automatic scan restart timer to work around stalling on some devices
+            startScanRestartTimer()
+            
         } catch (e: Exception) {
             Log.e(TAG, "Exception starting scan: ${e.message}")
             isCurrentlyScanning = false
         }
+    }
+    
+    /**
+     * Handle scan failure with standardized logging
+     */
+    private fun handleScanFailure(scanType: String, errorCode: Int) {
+        Log.e(TAG, "$scanType scan failed: $errorCode")
+        
+        when (errorCode) {
+            1 -> Log.e(TAG, "SCAN_FAILED_ALREADY_STARTED")
+            2 -> Log.e(TAG, "SCAN_FAILED_APPLICATION_REGISTRATION_FAILED") 
+            3 -> Log.e(TAG, "SCAN_FAILED_INTERNAL_ERROR")
+            4 -> Log.e(TAG, "SCAN_FAILED_FEATURE_UNSUPPORTED")
+            5 -> Log.e(TAG, "SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES")
+            6 -> {
+                Log.e(TAG, "SCAN_FAILED_SCANNING_TOO_FREQUENTLY")
+                Log.w(TAG, "Scan failed due to rate limiting - will retry after delay")
+                isCurrentlyScanning = false
+                lastScanStopTime = System.currentTimeMillis()
+                connectionScope.launch {
+                    delay(10000) // Wait 10 seconds before retrying
+                    if (isActive) {
+                        startScanning()
+                    }
+                }
+            }
+            else -> Log.e(TAG, "Unknown scan failure code: $errorCode")
+        }
+    }
+    
+    /**
+     * Start timer to automatically restart scanning every 25 seconds.
+     * Many Android devices (especially older/budget ones) stop delivering scan results
+     * after ~30 seconds. Restarting the scan works around this bug.
+     */
+    private fun startScanRestartTimer() {
+        scanRestartJob?.cancel()
+        scanRestartJob = connectionScope.launch {
+            while (isActive) {
+                delay(SCAN_RESTART_INTERVAL_MS)
+                if (isActive && isCurrentlyScanning) {
+                    Log.d(TAG, "Scan restart timer triggered - restarting scan to prevent stalling")
+                    stopScanning()
+                    delay(500) // Brief pause before restarting
+                    startScanning()
+                }
+            }
+        }
+    }
+    
+    /**
+     * Stop the scan restart timer
+     */
+    private fun stopScanRestartTimer() {
+        scanRestartJob?.cancel()
+        scanRestartJob = null
     }
     
     /**
@@ -290,18 +364,33 @@ class BluetoothGattClientManager(
     private fun stopScanning() {
         if (!permissionManager.hasBluetoothPermissions() || bleScanner == null) return
         
+        // Stop the restart timer first
+        stopScanRestartTimer()
+        
         if (isCurrentlyScanning) {
+            // Stop filtered scan
             try {
                 scanCallback?.let { 
                     bleScanner.stopScan(it)
-                    Log.d(TAG, "BLE scan stopped successfully")
+                    Log.d(TAG, "Filtered BLE scan stopped")
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "Error stopping scan: ${e.message}")
+                Log.w(TAG, "Error stopping filtered scan: ${e.message}")
+            }
+            
+            // Stop unfiltered fallback scan
+            try {
+                unfilteredScanCallback?.let {
+                    bleScanner.stopScan(it)
+                    Log.d(TAG, "Unfiltered fallback BLE scan stopped")
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Error stopping unfiltered scan: ${e.message}")
             }
             
             isCurrentlyScanning = false
             lastScanStopTime = System.currentTimeMillis()
+            Log.d(TAG, "All BLE scans stopped successfully")
         }
     }
     
