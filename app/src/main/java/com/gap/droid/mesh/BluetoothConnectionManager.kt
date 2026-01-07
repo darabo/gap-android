@@ -37,7 +37,18 @@ class BluetoothConnectionManager(
     // Component managers
     private val permissionManager = BluetoothPermissionManager(context)
     private val connectionTracker = BluetoothConnectionTracker(connectionScope, powerManager)
-    private val packetBroadcaster = BluetoothPacketBroadcaster(connectionScope, connectionTracker, fragmentManager)
+    private val packetBroadcaster = BluetoothPacketBroadcaster(connectionScope, connectionTracker, fragmentManager).apply {
+        // Wire up automatic GATT server restart when broadcaster detects dead server
+        onGattServerNeedsRestart = {
+            Log.w(TAG, "GATT server needs restart (DeadObjectException detected), triggering recovery...")
+            connectionScope.launch {
+                serverManager.stop()
+                delay(500) // Brief pause to let Bluetooth stack recover
+                serverManager.start()
+                Log.i(TAG, "GATT server restarted after DeadObjectException recovery")
+            }
+        }
+    }
     
     // Delegate for component managers to call back to main manager
     private val componentDelegate = object : BluetoothConnectionManagerDelegate {

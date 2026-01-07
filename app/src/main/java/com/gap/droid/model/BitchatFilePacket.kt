@@ -25,8 +25,8 @@ data class BitchatFilePacket(
     val content: ByteArray
 ) {
     private enum class TLVType(val v: UByte) {
-        FILE_NAME(0x01u), FILE_SIZE(0x02u), MIME_TYPE(0x03u), CONTENT(0x04u);
-        companion object { fun from(value: UByte) = values().find { it.v == value } }
+        FILE_NAME(0x01u), FILE_SIZE(0x02u), MIME_TYPE(0x03u), CONTENT(0x04u), SHA256(0x05u);
+        companion object { fun from(value: UByte) = entries.find { it.v == value } }
     }
 
     fun encode(): ByteArray? {
@@ -91,8 +91,10 @@ data class BitchatFilePacket(
                 var mime: String? = null
                 var contentBytes: ByteArray? = null
                 while (off + 3 <= data.size) { // minimum TLV header size (type + 2 bytes length)
-                    val t = TLVType.from(data[off].toUByte()) ?: return null
+                    val typeRaw = data[off].toUByte()
+                    val t = TLVType.from(typeRaw)
                     off += 1
+                    
                     // CONTENT uses 4-byte length; others use 2-byte length
                     val len: Int
                     if (t == TLVType.CONTENT) {
@@ -107,6 +109,13 @@ data class BitchatFilePacket(
                     if (len < 0 || off + len > data.size) return null
                     val value = data.copyOfRange(off, off + len)
                     off += len
+                    
+                    // Skip unknown TLV types gracefully for forward compatibility
+                    if (t == null) {
+                        android.util.Log.d("BitchatFilePacket", "⏭️ Skipping unknown TLV type 0x${typeRaw.toString(16).padStart(2, '0')}, len=$len")
+                        continue
+                    }
+                    
                     when (t) {
                         TLVType.FILE_NAME -> name = String(value, Charsets.UTF_8)
                         TLVType.FILE_SIZE -> {
@@ -121,6 +130,10 @@ data class BitchatFilePacket(
                                 // If multiple CONTENT TLVs appear, concatenate for tolerance
                                 contentBytes = (contentBytes!! + value)
                             }
+                        }
+                        TLVType.SHA256 -> {
+                            // iOS sends SHA256 for integrity verification; log but don't validate (optional)
+                            android.util.Log.d("BitchatFilePacket", "📋 Received SHA256 hash: ${value.size} bytes")
                         }
                     }
                 }

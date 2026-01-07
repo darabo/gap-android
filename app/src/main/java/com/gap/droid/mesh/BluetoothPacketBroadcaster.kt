@@ -49,6 +49,13 @@ class BluetoothPacketBroadcaster(
         private const val TAG = "BluetoothPacketBroadcaster"
         private const val CLEANUP_DELAY = com.gap.droid.util.AppConstants.Mesh.BROADCAST_CLEANUP_DELAY_MS
     }
+    
+    // Callback to signal that the GATT server needs restart (e.g., after DeadObjectException)
+    var onGattServerNeedsRestart: (() -> Unit)? = null
+    
+    // Track if we've already triggered a restart to avoid spamming
+    @Volatile
+    private var gattRestartTriggered = false
 
     // Optional nickname resolver injected by higher layer (peerID -> nickname?)
     private var nicknameResolver: ((String) -> String?)? = null
@@ -394,6 +401,23 @@ class BluetoothPacketBroadcaster(
                 val result = gattServer?.notifyCharacteristicChanged(device, char, false) ?: false
                 result
             } ?: false
+        } catch (e: android.os.DeadObjectException) {
+            // GATT server is dead - immediate cleanup and trigger restart
+            Log.e(TAG, "GATT server dead for ${device.address}, cleaning up and triggering restart")
+            connectionTracker.removeSubscribedDevice(device)
+            connectionTracker.addressPeerMap.remove(device.address)
+            
+            // Trigger GATT server restart once (avoid spam)
+            if (!gattRestartTriggered) {
+                gattRestartTriggered = true
+                connectionScope.launch {
+                    onGattServerNeedsRestart?.invoke()
+                    // Reset flag after delay to allow future restarts
+                    delay(5000)
+                    gattRestartTriggered = false
+                }
+            }
+            false
         } catch (e: Exception) {
             Log.w(TAG, "Error sending to server connection ${device.address}: ${e.message}")
             connectionScope.launch {

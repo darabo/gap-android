@@ -135,6 +135,22 @@ class MeshForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // CRITICAL: When started via startForegroundService(), we MUST call startForeground()
+        // within 5 seconds or Android kills the app with RemoteServiceException.
+        // We call it immediately here, then demote if permissions are missing.
+        if (intent?.action == ACTION_START || intent?.action == ACTION_UPDATE_NOTIFICATION || intent?.action == null) {
+            if (!isInForeground && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                try {
+                    val notification = buildNotification(meshService?.getActivePeerCount() ?: 0)
+                    startForegroundCompat(notification)
+                    isInForeground = true
+                    android.util.Log.d("MeshForegroundService", "Immediately promoted to foreground")
+                } catch (e: Exception) {
+                    android.util.Log.e("MeshForegroundService", "Failed to start foreground: ${e.message}")
+                }
+            }
+        }
+
         if (isShuttingDown && intent?.action == ACTION_START) {
             AppShutdownCoordinator.cancelPendingShutdown()
             isShuttingDown = false
@@ -189,12 +205,8 @@ class MeshForegroundService : Service() {
         // Ensure mesh is running (only after permissions are granted)
         ensureMeshStarted()
 
-        // Promote exactly once when eligible, otherwise stay background (or stop)
-        if (MeshServicePreferences.isBackgroundEnabled(true) && hasAllRequiredPermissions() && !isInForeground) {
-            val notification = buildNotification(meshService?.getActivePeerCount() ?: 0)
-            startForegroundCompat(notification)
-            isInForeground = true
-        }
+        // Note: startForeground() is already called at the top of this method to satisfy
+        // Android's 5-second requirement. The periodic loop will demote us if not eligible.
 
         // Periodically refresh the notification with live network size
         if (updateJob == null) {
