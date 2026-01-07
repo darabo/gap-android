@@ -43,18 +43,37 @@ class BluetoothMeshService(private val context: Context) {
     }
     
     // Core components - each handling specific responsibilities
+
+    // Handles cryptographic operations (keys, signing, encryption)
     private val encryptionService = EncryptionService(context)
     fun getEncryptionService(): EncryptionService = encryptionService
 
     // My peer identification - derived from persisted Noise identity fingerprint (first 16 hex chars)
+    // This is the unique ID used to identify this device in the mesh.
     val myPeerID: String = encryptionService.getIdentityFingerprint().take(16)
+
+    // Manages the list of known peers and their state
     private val peerManager = PeerManager()
+
+    // Handles fragmentation of large messages into smaller packets and reassembly
     private val fragmentManager = FragmentManager()
+
+    // Handles security checks, signature verification, and deduplication
     private val securityManager = SecurityManager(encryptionService, myPeerID)
+
+    // Manages store-and-forward functionality for offline messaging
     private val storeForwardManager = StoreForwardManager()
+
+    // Processes high-level message logic (handling specific message types)
     private val messageHandler = MessageHandler(myPeerID, context.applicationContext)
+
+    // Manages Bluetooth Low Energy (BLE) connections and GATT operations
     internal val connectionManager = BluetoothConnectionManager(context, myPeerID, fragmentManager) // Made internal for access
+
+    // Routes incoming packets to the appropriate handler
     private val packetProcessor = PacketProcessor(myPeerID)
+
+    // Manages gossip protocol for syncing message history
     private lateinit var gossipSyncManager: GossipSyncManager
     // Service-level notification manager for background (no-UI) DMs
     private val serviceNotificationManager = com.gap.droid.ui.NotificationManager(

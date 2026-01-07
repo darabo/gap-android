@@ -169,14 +169,15 @@ data class BitchatPacket(
 }
 
 /**
- * Binary Protocol implementation - supports v1 and v2, backward compatible
+ * Binary Protocol implementation - supports v1 and v2, backward compatible.
+ * Handles encoding and decoding of BitchatPacket objects to/from byte arrays.
  */
 object BinaryProtocol {
-    private const val HEADER_SIZE_V1 = 13
-    private const val HEADER_SIZE_V2 = 15
-    private const val SENDER_ID_SIZE = 8
-    private const val RECIPIENT_ID_SIZE = 8
-    private const val SIGNATURE_SIZE = 64
+    private const val HEADER_SIZE_V1 = 13 // Bytes in header for protocol v1
+    private const val HEADER_SIZE_V2 = 15 // Bytes in header for protocol v2
+    private const val SENDER_ID_SIZE = 8  // Sender ID size in bytes
+    private const val RECIPIENT_ID_SIZE = 8 // Recipient ID size in bytes
+    private const val SIGNATURE_SIZE = 64 // Ed25519 signature size in bytes
 
     object Flags {
         const val HAS_RECIPIENT: UByte = 0x01u

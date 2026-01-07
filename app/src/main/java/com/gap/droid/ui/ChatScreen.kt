@@ -29,8 +29,13 @@ import com.gap.droid.model.BitchatMessage
 import com.gap.droid.ui.media.FullScreenImageViewer
 
 /**
- * Main ChatScreen - REFACTORED to use component-based architecture
- * This is now a coordinator that orchestrates the following UI components:
+ * Main ChatScreen - REFACTORED to use component-based architecture.
+ * This Composable acts as the main container for the chat UI, coordinating
+ * various sub-components like the header, message list, input area, and sidebar.
+ *
+ * It observes the ChatViewModel state and passes data down to the UI components.
+ *
+ * Key Components:
  * - ChatHeader: App bar, navigation, peer counter
  * - MessageComponents: Message display and formatting
  * - InputComponents: Message input and command suggestions
