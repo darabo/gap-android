@@ -13,6 +13,9 @@ class BitchatApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        // Initialize device tier detection first (determines BLE parameters for budget/flagship)
+        try { com.gap.droid.util.DeviceTierManager.initialize(this) } catch (_: Exception) { }
+
         // Initialize Tor first so any early network goes over Tor
         try {
             val torProvider = ArtiTorManager.getInstance()

@@ -15,9 +15,14 @@ object AppConstants {
         const val STALE_PEER_TIMEOUT_MS: Long = 180_000L // 3 minutes
         const val PEER_CLEANUP_INTERVAL_MS: Long = 60_000L
 
-        // BLE connection tracking (tuned for budget device stability)
-        const val CONNECTION_RETRY_DELAY_MS: Long = 3_000L  // Faster reconnection
-        const val MAX_CONNECTION_ATTEMPTS: Int = 6           // More retry attempts
+        // BLE connection tracking - flagship defaults
+        const val CONNECTION_RETRY_DELAY_MS: Long = 3_000L  // Fast reconnection for flagship
+        const val MAX_CONNECTION_ATTEMPTS: Int = 6           // Standard retry attempts
+        
+        // BLE connection tracking - budget device overrides (MediaTek, low RAM, etc.)
+        const val CONNECTION_RETRY_DELAY_BUDGET_MS: Long = 5_000L  // Longer delay for budget BLE stacks
+        const val MAX_CONNECTION_ATTEMPTS_BUDGET: Int = 8           // More retries for unstable connections
+        
         const val CONNECTION_CLEANUP_DELAY_MS: Long = 500L
         const val CONNECTION_CLEANUP_INTERVAL_MS: Long = 30_000L
         const val BROADCAST_CLEANUP_DELAY_MS: Long = 500L

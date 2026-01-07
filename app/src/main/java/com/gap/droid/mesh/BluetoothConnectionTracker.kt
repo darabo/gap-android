@@ -20,10 +20,16 @@ class BluetoothConnectionTracker(
     
     companion object {
         private const val TAG = "BluetoothConnectionTracker"
-        private const val CONNECTION_RETRY_DELAY = com.gap.droid.util.AppConstants.Mesh.CONNECTION_RETRY_DELAY_MS
-        private const val MAX_CONNECTION_ATTEMPTS = com.gap.droid.util.AppConstants.Mesh.MAX_CONNECTION_ATTEMPTS
+        // Static cleanup constants (not tier-dependent)
         private const val CLEANUP_DELAY = com.gap.droid.util.AppConstants.Mesh.CONNECTION_CLEANUP_DELAY_MS
         private const val CLEANUP_INTERVAL = com.gap.droid.util.AppConstants.Mesh.CONNECTION_CLEANUP_INTERVAL_MS // 30 seconds
+        
+        // Dynamic tier-aware parameters accessed via DeviceTierManager
+        private val connectionRetryDelay: Long
+            get() = com.gap.droid.util.DeviceTierManager.connectionRetryDelayMs
+        
+        private val maxConnectionAttempts: Int
+            get() = com.gap.droid.util.DeviceTierManager.maxConnectionAttempts
     }
     
     // Connection tracking - reduced memory footprint
@@ -55,18 +61,19 @@ class BluetoothConnectionTracker(
     )
     
     /**
-     * Connection attempt tracking with automatic expiry
+     * Connection attempt tracking with automatic expiry.
+     * Uses dynamic tier-aware parameters from DeviceTierManager.
      */
     data class ConnectionAttempt(
         val attempts: Int,
         val lastAttempt: Long = System.currentTimeMillis()
     ) {
         fun isExpired(): Boolean = 
-            System.currentTimeMillis() - lastAttempt > CONNECTION_RETRY_DELAY * 2
+            System.currentTimeMillis() - lastAttempt > connectionRetryDelay * 2
         
         fun shouldRetry(): Boolean = 
-            attempts < MAX_CONNECTION_ATTEMPTS && 
-            System.currentTimeMillis() - lastAttempt > CONNECTION_RETRY_DELAY
+            attempts < maxConnectionAttempts && 
+            System.currentTimeMillis() - lastAttempt > connectionRetryDelay
     }
     
     /**
