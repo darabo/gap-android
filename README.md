@@ -10,9 +10,9 @@ A secure, decentralized, peer-to-peer messaging app that works over Bluetooth me
 
 This is the **Android port** of the original [Gap Mesh iOS app](https://github.com/darabo/gapmesh-ios), maintaining 100% protocol compatibility for cross-platform communication.
 
-## Install bitchat
+## Install Gap Mesh
 
-You can download the latest version of Gap Mesh for Android from the [GitHub Releases page](https://github.com/permissionlesstech/darabo/gap-android/releases).
+You can download the latest version of Gap Mesh for Android from the [GitHub Releases page (Google Play Store soon)](https://github.com/darabo/gap-android/releases).
 
 
 **Instructions:**
