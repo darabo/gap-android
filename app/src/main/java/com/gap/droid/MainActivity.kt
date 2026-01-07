@@ -45,18 +45,29 @@ import com.gap.droid.services.VerificationService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * MainActivity is the primary entry point for the user interface.
+ * It handles the app lifecycle, permission requests, onboarding flow, and sets up the main UI (ChatScreen).
+ */
 class MainActivity : OrientationAwareActivity() {
 
+    // Managers for handling various system states and permissions
     private lateinit var permissionManager: PermissionManager
     private lateinit var onboardingCoordinator: OnboardingCoordinator
     private lateinit var bluetoothStatusManager: BluetoothStatusManager
     private lateinit var locationStatusManager: LocationStatusManager
     private lateinit var batteryOptimizationManager: BatteryOptimizationManager
     
-    // Core mesh service - provided by the foreground service holder
+    // Core mesh service - provided by the foreground service holder.
+    // This service handles the Bluetooth mesh networking logic.
     private lateinit var meshService: BluetoothMeshService
+
+    // ViewModel for the Main Activity (handles onboarding state, etc.)
     private val mainViewModel: MainViewModel by viewModels()
+
+    // ViewModel for the Chat UI (handles messages, contacts, etc.)
     private val chatViewModel: ChatViewModel by viewModels { 
+        // Factory to inject the application context and mesh service into the ChatViewModel
         object : ViewModelProvider.Factory {
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
@@ -156,7 +167,8 @@ class MainActivity : OrientationAwareActivity() {
             }
         }
         
-        // Collect state changes in a lifecycle-aware manner
+        // Collect state changes in a lifecycle-aware manner.
+        // This ensures we only collect flow updates when the activity is started.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainViewModel.onboardingState.collect { state ->
@@ -165,8 +177,8 @@ class MainActivity : OrientationAwareActivity() {
             }
         }
         
-        // Only start onboarding process if we're in the initial CHECKING state
-        // This prevents restarting onboarding on configuration changes
+        // Only start onboarding process if we're in the initial CHECKING state.
+        // This prevents restarting the onboarding flow when the screen rotates (configuration changes).
         if (mainViewModel.onboardingState.value == OnboardingState.CHECKING) {
             checkOnboardingStatus()
         }

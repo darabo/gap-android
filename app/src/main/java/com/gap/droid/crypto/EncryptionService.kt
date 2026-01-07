@@ -18,6 +18,12 @@ import java.util.concurrent.ConcurrentHashMap
  * 
  * This is the main interface for all encryption/decryption operations in bitchat.
  * It now uses the Noise protocol for secure transport encryption with proper session management.
+ *
+ * Responsibilities:
+ * - Managing cryptographic keys (Identity keys, Signing keys)
+ * - Encrypting/Decrypting messages (Private and Channel messages)
+ * - Handling the Noise protocol handshake
+ * - Managing secure sessions with peers
  */
 open class EncryptionService(private val context: Context) {
     
@@ -26,13 +32,15 @@ open class EncryptionService(private val context: Context) {
         private const val ED25519_PRIVATE_KEY_PREF = "ed25519_signing_private_key"
     }
     
-    // Core Noise encryption service
+    // Core Noise encryption service - handles the low-level Noise protocol operations
     private val noiseService: NoiseEncryptionService by lazy { NoiseEncryptionService(context) }
     
     // Session tracking for established connections
+    // Maps peerID to their identity fingerprint
     private val establishedSessions = ConcurrentHashMap<String, String>() // peerID -> fingerprint
     
-    // Ed25519 signing keys (separate from Noise static keys)
+    // Ed25519 signing keys (separate from Noise static keys).
+    // These keys are used for signing packets (like identity announcements) to prove authenticity.
     private lateinit var ed25519PrivateKey: Ed25519PrivateKeyParameters
     private lateinit var ed25519PublicKey: Ed25519PublicKeyParameters
     
