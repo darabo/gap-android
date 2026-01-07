@@ -22,10 +22,9 @@ Gap Mesh is a **messaging app that works without the internet**. It connects you
 
 ### Step 1: Install the App
 
-Download Gap Mesh from:
+Download and install directly from thr [GitHub Releases page (Google Play Store soon.)](https://github.com/darabo/gap-android/releases)
 
-- **Google Play Store**: Search for "Gap Mesh"
-- **Direct Download**: Available on our GitHub releases page
+![qr code](https://raw.githubusercontent.com/darabo/gap-android/refs/heads/main/IMG_6338.jpeg)
 
 ### Step 2: Grant Permissions
 
