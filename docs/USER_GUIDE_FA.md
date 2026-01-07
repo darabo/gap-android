@@ -22,10 +22,10 @@
 
 ### مرحله ۱: نصب برنامه
 
-گپ مش را از این منابع دانلود کنید:
+مستقیماً از [صفحهٔ Releases گیت‌هاب (به‌زودی در Google Play Store.)](https://github.com/darabo/gap-android/releases) دانلود و نصب کنید
 
-- **گوگل پلی استور**: جستجوی "Gap Mesh"
-- **دانلود مستقیم**: از صفحه ریلیز گیت‌هاب ما
+![qr code](https://raw.githubusercontent.com/darabo/gap-android/refs/heads/main/IMG_6338.jpeg)
+
 
 ### مرحله ۲: اعطای دسترسی‌ها
 
