@@ -708,16 +708,11 @@ class BluetoothMeshService(private val context: Context) {
 
     /**
      * Send a file over mesh as a broadcast MESSAGE (public mesh timeline/channels).
+     * Accepts pre-encoded TLV payload to avoid double encoding.
      */
-    fun sendFileBroadcast(file: com.gap.droid.model.BitchatFilePacket) {
+    fun sendFileBroadcast(payload: ByteArray) {
         try {
-            Log.d(TAG, "📤 sendFileBroadcast: name=${file.fileName}, size=${file.fileSize}")
-            val payload = file.encode()
-            if (payload == null) {
-                Log.e(TAG, "❌ Failed to encode file packet in sendFileBroadcast")
-                return
-            }
-            Log.d(TAG, "📦 Encoded payload: ${payload.size} bytes")
+            Log.d(TAG, "📤 sendFileBroadcast: ${payload.size} bytes")
         serviceScope.launch {
             val packet = BitchatPacket(
                 version = 2u,  // FILE_TRANSFER uses v2 for 4-byte payload length to support large files
@@ -737,29 +732,22 @@ class BluetoothMeshService(private val context: Context) {
         }
             } catch (e: Exception) {
             Log.e(TAG, "❌ sendFileBroadcast failed: ${e.message}", e)
-            Log.e(TAG, "❌ File: name=${file.fileName}, size=${file.fileSize}")
         }
     }
 
     /**
-     * Send a file as an encrypted private message using Noise protocol
+     * Send a file as an encrypted private message using Noise protocol.
+     * Accepts pre-encoded TLV payload to avoid double encoding.
+     * Encryption is performed here via Noise protocol.
      */
-    fun sendFilePrivate(recipientPeerID: String, file: com.gap.droid.model.BitchatFilePacket) {
+    fun sendFilePrivate(recipientPeerID: String, filePayload: ByteArray) {
         try {
-            Log.d(TAG, "📤 sendFilePrivate (ENCRYPTED): to=$recipientPeerID, name=${file.fileName}, size=${file.fileSize}")
+            Log.d(TAG, "📤 sendFilePrivate (ENCRYPTED): to=$recipientPeerID, size=${filePayload.size}")
             
             serviceScope.launch {
                 // Check if we have an established Noise session
                 if (encryptionService.hasEstablishedSession(recipientPeerID)) {
                     try {
-                        // Encode the file packet as TLV
-                        val filePayload = file.encode()
-                        if (filePayload == null) {
-                            Log.e(TAG, "❌ Failed to encode file packet for private send")
-                            return@launch
-                        }
-                        Log.d(TAG, "📦 Encoded file TLV: ${filePayload.size} bytes")
-                        
                         // Create NoisePayload wrapper (type byte + file TLV data) - same as iOS
                         val noisePayload = com.gap.droid.model.NoisePayload(
                             type = com.gap.droid.model.NoisePayloadType.FILE_TRANSFER,
@@ -804,7 +792,6 @@ class BluetoothMeshService(private val context: Context) {
             }
         } catch (e: Exception) {
             Log.e(TAG, "❌ sendFilePrivate failed: ${e.message}", e)
-            Log.e(TAG, "❌ File: to=$recipientPeerID, name=${file.fileName}, size=${file.fileSize}")
         }
     }
 

@@ -67,6 +67,10 @@ class BluetoothGattClientManager(
     private var isCurrentlyScanning = false
     private val scanRateLimit = 5000L // Minimum 5 seconds between scan start attempts
     
+    // Debounce tracking for throttled connection log messages (reduce log spam)
+    private var lastThrottledLogDevice: String? = null
+    private var lastThrottledLogTime = 0L
+    
     // RSSI monitoring state
     private var rssiMonitoringJob: Job? = null
     
@@ -451,7 +455,13 @@ class BluetoothGattClientManager(
         
         // Check if connection attempt is allowed
         if (!connectionTracker.isConnectionAttemptAllowed(deviceAddress)) {
-            Log.d(TAG, "Connection to $deviceAddress not allowed due to recent attempts")
+            // Debounce repeated log messages for same device to reduce log spam
+            val now = System.currentTimeMillis()
+            if (deviceAddress != lastThrottledLogDevice || now - lastThrottledLogTime > 500) {
+                Log.d(TAG, "Connection to $deviceAddress not allowed due to recent attempts")
+                lastThrottledLogDevice = deviceAddress
+                lastThrottledLogTime = now
+            }
             return
         }
         

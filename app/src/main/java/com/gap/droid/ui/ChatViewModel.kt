@@ -114,7 +114,7 @@ class ChatViewModel(
     val verifiedFingerprints = verificationHandler.verifiedFingerprints
 
     // Media file sending manager
-    private val mediaSendingManager = MediaSendingManager(state, messageManager, channelManager, meshService)
+    private val mediaSendingManager = MediaSendingManager(state, messageManager, channelManager, meshService, viewModelScope)
     
     // WiFi Aware high-bandwidth mesh (optional - runs alongside BLE when available)
     private val wifiAwareService: com.gap.droid.wifiaware.WiFiAwareService? by lazy {

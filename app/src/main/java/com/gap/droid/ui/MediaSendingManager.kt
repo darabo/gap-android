@@ -7,6 +7,10 @@ import com.gap.droid.model.BitchatMessage
 import com.gap.droid.model.BitchatMessageType
 import java.util.Date
 import java.security.MessageDigest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Handles media file sending operations (voice notes, images, generic files)
@@ -16,7 +20,8 @@ class MediaSendingManager(
     private val state: ChatState,
     private val messageManager: MessageManager,
     private val channelManager: ChannelManager,
-    private val meshService: BluetoothMeshService
+    private val meshService: BluetoothMeshService,
+    private val scope: CoroutineScope
 ) {
     companion object {
         private const val TAG = "MediaSendingManager"
@@ -29,162 +34,182 @@ class MediaSendingManager(
 
     /**
      * Send a voice note (audio file)
+     * File I/O is performed off the main thread to prevent frame drops.
      */
     fun sendVoiceNote(toPeerIDOrNull: String?, channelOrNull: String?, filePath: String) {
-        try {
-            val file = java.io.File(filePath)
-            if (!file.exists()) {
-                Log.e(TAG, "❌ File does not exist: $filePath")
-                return
-            }
-            Log.d(TAG, "📁 File exists: size=${file.length()} bytes, name=${file.name}")
-            
-            if (file.length() > MAX_FILE_SIZE) {
-                Log.e(TAG, "❌ File too large: ${file.length()} bytes (max: $MAX_FILE_SIZE)")
-                return
-            }
+        scope.launch {
+            try {
+                // Read and encode file on IO dispatcher to avoid blocking main thread
+                val (filePacket, payload) = withContext(Dispatchers.IO) {
+                    val file = java.io.File(filePath)
+                    if (!file.exists()) {
+                        Log.e(TAG, "❌ File does not exist: $filePath")
+                        return@withContext null to null
+                    }
+                    Log.d(TAG, "📁 File exists: size=${file.length()} bytes")
+                    
+                    if (file.length() > MAX_FILE_SIZE) {
+                        Log.e(TAG, "❌ File too large: ${file.length()} bytes (max: $MAX_FILE_SIZE)")
+                        return@withContext null to null
+                    }
 
-            val filePacket = BitchatFilePacket(
-                fileName = file.name,
-                fileSize = file.length(),
-                mimeType = "audio/mp4",
-                content = file.readBytes()
-            )
+                    val packet = BitchatFilePacket(
+                        fileName = file.name,
+                        fileSize = file.length(),
+                        mimeType = "audio/mp4",
+                        content = file.readBytes()
+                    )
+                    val encoded = packet.encode()
+                    packet to encoded
+                }
+                
+                if (filePacket == null || payload == null) return@launch
 
-            if (toPeerIDOrNull != null) {
-                sendPrivateFile(toPeerIDOrNull, filePacket, filePath, BitchatMessageType.Audio)
-            } else {
-                sendPublicFile(channelOrNull, filePacket, filePath, BitchatMessageType.Audio)
+                if (toPeerIDOrNull != null) {
+                    sendPrivateFile(toPeerIDOrNull, filePacket, payload, filePath, BitchatMessageType.Audio)
+                } else {
+                    sendPublicFile(channelOrNull, filePacket, payload, filePath, BitchatMessageType.Audio)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send voice note: ${e.message}")
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to send voice note: ${e.message}")
         }
     }
 
     /**
      * Send an image file
+     * File I/O is performed off the main thread to prevent frame drops.
      */
     fun sendImageNote(toPeerIDOrNull: String?, channelOrNull: String?, filePath: String) {
-        try {
-            Log.d(TAG, "🔄 Starting image send: $filePath")
-            val file = java.io.File(filePath)
-            if (!file.exists()) {
-                Log.e(TAG, "❌ File does not exist: $filePath")
-                return
-            }
-            Log.d(TAG, "📁 File exists: size=${file.length()} bytes, name=${file.name}")
-            
-            if (file.length() > MAX_FILE_SIZE) {
-                Log.e(TAG, "❌ File too large: ${file.length()} bytes (max: $MAX_FILE_SIZE)")
-                return
-            }
+        scope.launch {
+            try {
+                Log.d(TAG, "🔄 Starting image send")
+                
+                // Read and encode file on IO dispatcher to avoid blocking main thread
+                val (filePacket, payload) = withContext(Dispatchers.IO) {
+                    val file = java.io.File(filePath)
+                    if (!file.exists()) {
+                        Log.e(TAG, "❌ File does not exist")
+                        return@withContext null to null
+                    }
+                    Log.d(TAG, "📁 File exists: size=${file.length()} bytes")
+                    
+                    if (file.length() > MAX_FILE_SIZE) {
+                        Log.e(TAG, "❌ File too large: ${file.length()} bytes (max: $MAX_FILE_SIZE)")
+                        return@withContext null to null
+                    }
 
-            val filePacket = BitchatFilePacket(
-                fileName = file.name,
-                fileSize = file.length(),
-                mimeType = "image/jpeg",
-                content = file.readBytes()
-            )
+                    val packet = BitchatFilePacket(
+                        fileName = file.name,
+                        fileSize = file.length(),
+                        mimeType = "image/jpeg",
+                        content = file.readBytes()
+                    )
+                    val encoded = packet.encode()
+                    packet to encoded
+                }
+                
+                if (filePacket == null || payload == null) return@launch
 
-            if (toPeerIDOrNull != null) {
-                sendPrivateFile(toPeerIDOrNull, filePacket, filePath, BitchatMessageType.Image)
-            } else {
-                sendPublicFile(channelOrNull, filePacket, filePath, BitchatMessageType.Image)
+                if (toPeerIDOrNull != null) {
+                    sendPrivateFile(toPeerIDOrNull, filePacket, payload, filePath, BitchatMessageType.Image)
+                } else {
+                    sendPublicFile(channelOrNull, filePacket, payload, filePath, BitchatMessageType.Image)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Image send failed: ${e.message}")
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "❌ CRITICAL: Image send failed completely", e)
-            Log.e(TAG, "❌ Image path: $filePath")
-            Log.e(TAG, "❌ Error details: ${e.message}")
-            Log.e(TAG, "❌ Error type: ${e.javaClass.simpleName}")
         }
     }
 
     /**
      * Send a generic file
+     * File I/O is performed off the main thread to prevent frame drops.
      */
     fun sendFileNote(toPeerIDOrNull: String?, channelOrNull: String?, filePath: String) {
-        try {
-            Log.d(TAG, "🔄 Starting file send: $filePath")
-            val file = java.io.File(filePath)
-            if (!file.exists()) {
-                Log.e(TAG, "❌ File does not exist: $filePath")
-                return
-            }
-            Log.d(TAG, "📁 File exists: size=${file.length()} bytes, name=${file.name}")
-            
-            if (file.length() > MAX_FILE_SIZE) {
-                Log.e(TAG, "❌ File too large: ${file.length()} bytes (max: $MAX_FILE_SIZE)")
-                return
-            }
+        scope.launch {
+            try {
+                Log.d(TAG, "🔄 Starting file send")
+                
+                // Read and encode file on IO dispatcher to avoid blocking main thread
+                val result = withContext(Dispatchers.IO) {
+                    val file = java.io.File(filePath)
+                    if (!file.exists()) {
+                        Log.e(TAG, "❌ File does not exist")
+                        return@withContext null
+                    }
+                    Log.d(TAG, "📁 File exists: size=${file.length()} bytes")
+                    
+                    if (file.length() > MAX_FILE_SIZE) {
+                        Log.e(TAG, "❌ File too large: ${file.length()} bytes (max: $MAX_FILE_SIZE)")
+                        return@withContext null
+                    }
 
-            // Use the real MIME type based on extension; fallback to octet-stream
-            val mimeType = try { 
-                com.gap.droid.features.file.FileUtils.getMimeTypeFromExtension(file.name) 
-            } catch (_: Exception) { 
-                "application/octet-stream" 
-            }
-            Log.d(TAG, "🏷️ MIME type: $mimeType")
+                    // Use the real MIME type based on extension; fallback to octet-stream
+                    val mimeType = try { 
+                        com.gap.droid.features.file.FileUtils.getMimeTypeFromExtension(file.name) 
+                    } catch (_: Exception) { 
+                        "application/octet-stream" 
+                    }
 
-            // Try to preserve the original file name if our copier prefixed it earlier
-            val originalName = run {
-                val name = file.name
-                val base = name.substringBeforeLast('.')
-                val ext = name.substringAfterLast('.', "").let { if (it.isNotBlank()) ".${it}" else "" }
-                val stripped = Regex("^send_\\d+_(.+)$").matchEntire(base)?.groupValues?.getOrNull(1) ?: base
-                stripped + ext
-            }
-            Log.d(TAG, "📝 Original filename: $originalName")
+                    // Try to preserve the original file name if our copier prefixed it earlier
+                    val originalName = run {
+                        val name = file.name
+                        val base = name.substringBeforeLast('.')
+                        val ext = name.substringAfterLast('.', "").let { if (it.isNotBlank()) ".$it" else "" }
+                        val stripped = Regex("^send_\\d+_(.+)$").matchEntire(base)?.groupValues?.getOrNull(1) ?: base
+                        stripped + ext
+                    }
 
-            val filePacket = BitchatFilePacket(
-                fileName = originalName,
-                fileSize = file.length(),
-                mimeType = mimeType,
-                content = file.readBytes()
-            )
-            Log.d(TAG, "📦 Created file packet successfully")
+                    val packet = BitchatFilePacket(
+                        fileName = originalName,
+                        fileSize = file.length(),
+                        mimeType = mimeType,
+                        content = file.readBytes()
+                    )
+                    val encoded = packet.encode()
+                    
+                    val messageType = when {
+                        mimeType.lowercase().startsWith("image/") -> BitchatMessageType.Image
+                        mimeType.lowercase().startsWith("audio/") -> BitchatMessageType.Audio
+                        else -> BitchatMessageType.File
+                    }
+                    
+                    Triple(packet, encoded, messageType)
+                }
+                
+                if (result == null) return@launch
+                val (filePacket, payload, messageType) = result
+                if (payload == null) return@launch
 
-            val messageType = when {
-                mimeType.lowercase().startsWith("image/") -> BitchatMessageType.Image
-                mimeType.lowercase().startsWith("audio/") -> BitchatMessageType.Audio
-                else -> BitchatMessageType.File
+                if (toPeerIDOrNull != null) {
+                    sendPrivateFile(toPeerIDOrNull, filePacket, payload, filePath, messageType)
+                } else {
+                    sendPublicFile(channelOrNull, filePacket, payload, filePath, messageType)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ File send failed: ${e.message}")
             }
-
-            if (toPeerIDOrNull != null) {
-                sendPrivateFile(toPeerIDOrNull, filePacket, filePath, messageType)
-            } else {
-                sendPublicFile(channelOrNull, filePacket, filePath, messageType)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "❌ CRITICAL: File send failed completely", e)
-            Log.e(TAG, "❌ File path: $filePath")
-            Log.e(TAG, "❌ Error details: ${e.message}")
-            Log.e(TAG, "❌ Error type: ${e.javaClass.simpleName}")
         }
     }
 
     /**
-     * Send a file privately (encrypted)
+     * Send a file privately (encrypted via Noise protocol)
+     * Payload is pre-encoded to avoid double encoding.
      */
     private fun sendPrivateFile(
         toPeerID: String,
         filePacket: BitchatFilePacket,
+        payload: ByteArray,
         filePath: String,
         messageType: BitchatMessageType
     ) {
-        val payload = filePacket.encode()
-        if (payload == null) {
-            Log.e(TAG, "❌ Failed to encode file packet for private send")
-            return
-        }
-        Log.d(TAG, "🔒 Encoded private packet: ${payload.size} bytes")
+        Log.d(TAG, "🔒 Sending private file: ${payload.size} bytes")
 
         val transferId = sha256Hex(payload)
-        val contentHash = sha256Hex(filePacket.content)
-
-        Log.d(TAG, "📤 FILE_TRANSFER send (private): name='${filePacket.fileName}', size=${filePacket.fileSize}, mime='${filePacket.mimeType}', sha256=$contentHash, to=${toPeerID.take(8)} transferId=${transferId.take(16)}…")
 
         val msg = BitchatMessage(
-            id = java.util.UUID.randomUUID().toString().uppercase(), // Generate unique ID for each message
+            id = java.util.UUID.randomUUID().toString().uppercase(),
             sender = state.getNicknameValue() ?: "me",
             content = filePath,
             type = messageType,
@@ -208,34 +233,28 @@ class MediaSendingManager(
             com.gap.droid.model.DeliveryStatus.PartiallyDelivered(0, 100)
         )
         
-        Log.d(TAG, "📤 Calling meshService.sendFilePrivate to $toPeerID")
-        meshService.sendFilePrivate(toPeerID, filePacket)
-        Log.d(TAG, "✅ File send completed successfully")
+        Log.d(TAG, "📤 Sending encrypted file to peer")
+        meshService.sendFilePrivate(toPeerID, payload)
+        Log.d(TAG, "✅ Private file send completed")
     }
 
     /**
      * Send a file publicly (broadcast or channel)
+     * Payload is pre-encoded to avoid double encoding.
      */
     private fun sendPublicFile(
         channelOrNull: String?,
         filePacket: BitchatFilePacket,
+        payload: ByteArray,
         filePath: String,
         messageType: BitchatMessageType
     ) {
-        val payload = filePacket.encode()
-        if (payload == null) {
-            Log.e(TAG, "❌ Failed to encode file packet for broadcast send")
-            return
-        }
-        Log.d(TAG, "🔓 Encoded broadcast packet: ${payload.size} bytes")
+        Log.d(TAG, "🔓 Sending public file: ${payload.size} bytes")
         
         val transferId = sha256Hex(payload)
-        val contentHash = sha256Hex(filePacket.content)
-        
-        Log.d(TAG, "📤 FILE_TRANSFER send (broadcast): name='${filePacket.fileName}', size=${filePacket.fileSize}, mime='${filePacket.mimeType}', sha256=$contentHash, transferId=${transferId.take(16)}…")
 
         val message = BitchatMessage(
-            id = java.util.UUID.randomUUID().toString().uppercase(), // Generate unique ID for each message
+            id = java.util.UUID.randomUUID().toString().uppercase(),
             sender = state.getNicknameValue() ?: meshService.myPeerID,
             content = filePath,
             type = messageType,
@@ -262,9 +281,9 @@ class MediaSendingManager(
             com.gap.droid.model.DeliveryStatus.PartiallyDelivered(0, 100)
         )
         
-        Log.d(TAG, "📤 Calling meshService.sendFileBroadcast")
-        meshService.sendFileBroadcast(filePacket)
-        Log.d(TAG, "✅ File broadcast completed successfully")
+        Log.d(TAG, "📤 Broadcasting file")
+        meshService.sendFileBroadcast(payload)
+        Log.d(TAG, "✅ File broadcast completed")
     }
 
     /**
