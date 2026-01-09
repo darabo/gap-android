@@ -35,9 +35,9 @@ class WiFiAwareService(
     
     companion object {
         private const val TAG = "WiFiAwareService"
-        private const val SERVICE_NAME = "gapmash"
-        private const val SERVICE_INFO = "GapMashMesh"
-        private const val PSK_PASSPHRASE = "gapmash-mesh-v1"
+        private const val SERVICE_NAME = "gapmesh"
+        private const val SERVICE_INFO = "GapMeshMesh"
+        private const val PSK_PASSPHRASE = "gapmesh-mesh-v1"
     }
   
     // ... [omitted unchanged lines] ...

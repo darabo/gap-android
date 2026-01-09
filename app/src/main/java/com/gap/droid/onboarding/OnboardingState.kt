@@ -1,6 +1,7 @@
 package com.gap.droid.onboarding
 
 enum class OnboardingState {
+    LANGUAGE_SELECTION,
     CHECKING,
     BLUETOOTH_CHECK,
     LOCATION_CHECK,
@@ -12,3 +13,4 @@ enum class OnboardingState {
     COMPLETE,
     ERROR
 }
+

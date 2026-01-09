@@ -65,20 +65,25 @@ fun BitchatTheme(
     val view = LocalView.current
     SideEffect {
         (view.context as? Activity)?.window?.let { window ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                window.insetsController?.setSystemBarsAppearance(
-                    if (!shouldUseDark) WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS else 0,
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                )
-            } else {
+            // On Android 15+ (SDK 35), enableEdgeToEdge() handles system bar configuration
+            // These APIs are deprecated in SDK 35, so we only use them on older versions
+            if (Build.VERSION.SDK_INT < 35) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    window.insetsController?.setSystemBarsAppearance(
+                        if (!shouldUseDark) WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS else 0,
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    window.decorView.systemUiVisibility = if (!shouldUseDark) {
+                        View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                    } else 0
+                }
                 @Suppress("DEPRECATION")
-                window.decorView.systemUiVisibility = if (!shouldUseDark) {
-                    View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-                } else 0
-            }
-            window.navigationBarColor = colorScheme.background.toArgb()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                window.isNavigationBarContrastEnforced = false
+                window.navigationBarColor = colorScheme.background.toArgb()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    window.isNavigationBarContrastEnforced = false
+                }
             }
         }
     }

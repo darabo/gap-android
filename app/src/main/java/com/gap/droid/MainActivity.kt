@@ -29,6 +29,8 @@ import com.gap.droid.onboarding.BatteryOptimizationStatus
 import com.gap.droid.onboarding.BackgroundLocationPermissionScreen
 import com.gap.droid.onboarding.InitializationErrorScreen
 import com.gap.droid.onboarding.InitializingScreen
+import com.gap.droid.onboarding.LanguagePreferenceManager
+import com.gap.droid.onboarding.LanguageSelectionScreen
 import com.gap.droid.onboarding.LocationCheckScreen
 import com.gap.droid.onboarding.LocationStatus
 import com.gap.droid.onboarding.LocationStatusManager
@@ -165,10 +167,19 @@ class MainActivity : OrientationAwareActivity() {
             }
         }
         
-        // Only start onboarding process if we're in the initial CHECKING state
+        // Only start onboarding process if we're in the initial LANGUAGE_SELECTION or CHECKING state
         // This prevents restarting onboarding on configuration changes
-        if (mainViewModel.onboardingState.value == OnboardingState.CHECKING) {
-            checkOnboardingStatus()
+        if (mainViewModel.onboardingState.value == OnboardingState.CHECKING ||
+            mainViewModel.onboardingState.value == OnboardingState.LANGUAGE_SELECTION) {
+            // Initialize language preference manager early
+            LanguagePreferenceManager.init(applicationContext)
+            
+            // Check if language has been set before proceeding with normal onboarding
+            if (!LanguagePreferenceManager.isLanguageSet(applicationContext)) {
+                mainViewModel.updateOnboardingState(OnboardingState.LANGUAGE_SELECTION)
+            } else {
+                checkOnboardingStatus()
+            }
         }
     }
     
@@ -207,6 +218,16 @@ class MainActivity : OrientationAwareActivity() {
         }
 
         when (onboardingState) {
+            OnboardingState.LANGUAGE_SELECTION -> {
+                LanguageSelectionScreen(
+                    onLanguageSelected = { _ ->
+                        // Proceed to normal onboarding after language is selected
+                        mainViewModel.updateOnboardingState(OnboardingState.CHECKING)
+                        checkOnboardingStatus()
+                    }
+                )
+            }
+            
             OnboardingState.PERMISSION_REQUESTING -> {
                 InitializingScreen(modifier)
             }

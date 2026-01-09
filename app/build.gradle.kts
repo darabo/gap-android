@@ -13,7 +13,7 @@ android {
         applicationId = "com.gap.droid"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 44
+        versionCode = 45
         versionName = "1.8.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -46,11 +46,15 @@ android {
         }
     }
 
-    // APK splits for GitHub releases - creates arm64, x86_64, and universal APKs
-    // AAB for Play Store handles architecture distribution automatically
+    // APK splits for GitHub/F-Droid releases - creates arm64, x86_64, and universal APKs
+    // Disabled for App Bundle builds (Play Store) since AAB handles architecture automatically
+    // See: https://issuetracker.google.com/402800800
     splits {
         abi {
-            isEnable = true
+            // Disable splits when building App Bundle to avoid conflict
+            isEnable = project.gradle.startParameter.taskNames.none { 
+                it.contains("bundle", ignoreCase = true) 
+            }
             reset()
             include("arm64-v8a", "x86_64")
             isUniversalApk = true  // For F-Droid and fallback
@@ -134,6 +138,10 @@ dependencies {
 
     // Security preferences
     implementation(libs.androidx.security.crypto)
+    
+    // WorkManager for Android 15+ boot-complete FGS workaround
+    implementation(libs.androidx.work.runtime.ktx)
+
     
     // EXIF orientation handling for images
     implementation("androidx.exifinterface:exifinterface:1.3.7")

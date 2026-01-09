@@ -40,6 +40,7 @@ import com.gap.droid.core.ui.component.button.CloseButton
 import com.gap.droid.net.TorMode
 import com.gap.droid.net.TorPreferenceManager
 import com.gap.droid.net.ArtiTorManager
+import com.gap.droid.onboarding.LanguagePreferenceManager
 
 /**
  * Feature row for displaying app capabilities
@@ -368,6 +369,46 @@ fun AboutSheet(
                                         label = stringResource(R.string.about_dark),
                                         selected = themePref.isDark,
                                         onClick = { com.gap.droid.ui.theme.ThemePreferenceManager.set(context, com.gap.droid.ui.theme.ThemePreference.Dark) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Language Selection Section
+                    item(key = "language") {
+                        val currentLanguage by LanguagePreferenceManager.currentLanguage.collectAsState()
+                        
+                        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            Text(
+                                text = stringResource(R.string.about_language).uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                letterSpacing = 0.5.sp,
+                                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                            )
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = colorScheme.surface,
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    ThemeChip(
+                                        label = stringResource(R.string.language_english),
+                                        selected = currentLanguage == LanguagePreferenceManager.AppLanguage.ENGLISH,
+                                        onClick = { LanguagePreferenceManager.setLanguage(context, LanguagePreferenceManager.AppLanguage.ENGLISH) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    ThemeChip(
+                                        label = stringResource(R.string.language_farsi),
+                                        selected = currentLanguage == LanguagePreferenceManager.AppLanguage.FARSI,
+                                        onClick = { LanguagePreferenceManager.setLanguage(context, LanguagePreferenceManager.AppLanguage.FARSI) },
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
