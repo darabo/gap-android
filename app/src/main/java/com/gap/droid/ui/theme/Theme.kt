@@ -1,4 +1,4 @@
-package com.gap.droid.ui.theme
+package com.gapmesh.droid.ui.theme
 
 import android.app.Activity
 import android.os.Build

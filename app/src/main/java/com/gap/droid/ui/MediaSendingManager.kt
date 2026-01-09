@@ -1,10 +1,10 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.util.Log
-import com.gap.droid.mesh.BluetoothMeshService
-import com.gap.droid.model.BitchatFilePacket
-import com.gap.droid.model.BitchatMessage
-import com.gap.droid.model.BitchatMessageType
+import com.gapmesh.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.model.BitchatFilePacket
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.model.BitchatMessageType
 import java.util.Date
 import java.security.MessageDigest
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +25,7 @@ class MediaSendingManager(
 ) {
     companion object {
         private const val TAG = "MediaSendingManager"
-        private const val MAX_FILE_SIZE = com.gap.droid.util.AppConstants.Media.MAX_FILE_SIZE_BYTES // 50MB limit
+        private const val MAX_FILE_SIZE = com.gapmesh.droid.util.AppConstants.Media.MAX_FILE_SIZE_BYTES // 50MB limit
     }
 
     // Track in-flight transfer progress: transferId -> messageId and reverse
@@ -147,7 +147,7 @@ class MediaSendingManager(
 
                     // Use the real MIME type based on extension; fallback to octet-stream
                     val mimeType = try { 
-                        com.gap.droid.features.file.FileUtils.getMimeTypeFromExtension(file.name) 
+                        com.gapmesh.droid.features.file.FileUtils.getMimeTypeFromExtension(file.name) 
                     } catch (_: Exception) { 
                         "application/octet-stream" 
                     }
@@ -230,7 +230,7 @@ class MediaSendingManager(
         // Seed progress so delivery icons render for media
         messageManager.updateMessageDeliveryStatus(
             msg.id,
-            com.gap.droid.model.DeliveryStatus.PartiallyDelivered(0, 100)
+            com.gapmesh.droid.model.DeliveryStatus.PartiallyDelivered(0, 100)
         )
         
         Log.d(TAG, "📤 Sending encrypted file to peer")
@@ -278,7 +278,7 @@ class MediaSendingManager(
         // Seed progress so animations start immediately
         messageManager.updateMessageDeliveryStatus(
             message.id,
-            com.gap.droid.model.DeliveryStatus.PartiallyDelivered(0, 100)
+            com.gapmesh.droid.model.DeliveryStatus.PartiallyDelivered(0, 100)
         )
         
         Log.d(TAG, "📤 Broadcasting file")
@@ -334,13 +334,13 @@ class MediaSendingManager(
     /**
      * Handle transfer progress events
      */
-    fun handleTransferProgressEvent(evt: com.gap.droid.mesh.TransferProgressEvent) {
+    fun handleTransferProgressEvent(evt: com.gapmesh.droid.mesh.TransferProgressEvent) {
         val msgId = synchronized(transferMessageMap) { transferMessageMap[evt.transferId] }
         if (msgId != null) {
             if (evt.completed) {
                 messageManager.updateMessageDeliveryStatus(
                     msgId,
-                    com.gap.droid.model.DeliveryStatus.Delivered(to = "mesh", at = java.util.Date())
+                    com.gapmesh.droid.model.DeliveryStatus.Delivered(to = "mesh", at = java.util.Date())
                 )
                 synchronized(transferMessageMap) {
                     val msgIdRemoved = transferMessageMap.remove(evt.transferId)
@@ -349,7 +349,7 @@ class MediaSendingManager(
             } else {
                 messageManager.updateMessageDeliveryStatus(
                     msgId,
-                    com.gap.droid.model.DeliveryStatus.PartiallyDelivered(evt.sent, evt.total)
+                    com.gapmesh.droid.model.DeliveryStatus.PartiallyDelivered(evt.sent, evt.total)
                 )
             }
         }

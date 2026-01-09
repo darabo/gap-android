@@ -1,4 +1,4 @@
-package com.gap.droid.onboarding
+package com.gapmesh.droid.onboarding
 
 import android.content.Context
 import androidx.compose.foundation.Image
@@ -22,10 +22,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
-import com.gap.droid.R
+import com.gapmesh.droid.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gap.droid.service.MeshServicePreferences
-import com.gap.droid.ui.ChatViewModel
+import com.gapmesh.droid.service.MeshServicePreferences
+import com.gapmesh.droid.ui.ChatViewModel
 
 @Composable
 fun TutorialScreen(

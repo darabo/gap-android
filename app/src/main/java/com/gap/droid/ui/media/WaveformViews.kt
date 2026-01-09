@@ -1,4 +1,4 @@
-package com.gap.droid.ui.media
+package com.gapmesh.droid.ui.media
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,9 +18,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
-import com.gap.droid.features.voice.AudioWaveformExtractor
-import com.gap.droid.features.voice.VoiceWaveformCache
-import com.gap.droid.features.voice.resampleWave
+import com.gapmesh.droid.features.voice.AudioWaveformExtractor
+import com.gapmesh.droid.features.voice.VoiceWaveformCache
+import com.gapmesh.droid.features.voice.resampleWave
 
 @Composable
 fun ScrollingWaveformRecorder(

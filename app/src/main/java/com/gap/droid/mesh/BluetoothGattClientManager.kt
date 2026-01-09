@@ -1,4 +1,4 @@
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import android.bluetooth.*
 import android.bluetooth.le.BluetoothLeScanner
@@ -8,15 +8,15 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.os.ParcelUuid
 import android.util.Log
-import com.gap.droid.protocol.BitchatPacket
-import com.gap.droid.util.AppConstants
+import com.gapmesh.droid.protocol.BitchatPacket
+import com.gapmesh.droid.util.AppConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
 import kotlinx.coroutines.Job
-import com.gap.droid.ui.debug.DebugSettingsManager
-import com.gap.droid.ui.debug.DebugScanResult
+import com.gapmesh.droid.ui.debug.DebugSettingsManager
+import com.gapmesh.droid.ui.debug.DebugScanResult
 
 /**
  * Manages GATT client operations, scanning, and client-side connections
@@ -83,7 +83,7 @@ class BluetoothGattClientManager(
     fun start(): Boolean {
         // Respect debug setting
         try {
-            if (!com.gap.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value) {
+            if (!com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value) {
                 Log.i(TAG, "Client start skipped: GATT Client disabled in debug settings")
                 return false
             }
@@ -157,7 +157,7 @@ class BluetoothGattClientManager(
      * Handle scan state changes from power manager
      */
     fun onScanStateChanged(shouldScan: Boolean) {
-        val enabled = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
+        val enabled = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
         if (shouldScan && enabled) {
             startScanning()
         } else {
@@ -208,7 +208,7 @@ class BluetoothGattClientManager(
     @Suppress("DEPRECATION")
     private fun startScanning() {
         // Respect debug setting
-        val enabled = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
+        val enabled = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
         if (!permissionManager.hasBluetoothPermissions() || bleScanner == null || !isActive || !enabled) return
         
         // Rate limit scan starts to prevent "scanning too frequently" errors
@@ -640,7 +640,7 @@ class BluetoothGattClientManager(
      */
     fun restartScanning() {
         // Respect debug setting
-        val enabled = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
+        val enabled = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
         if (!isActive || !enabled) return
         
         connectionScope.launch {

@@ -1,4 +1,4 @@
-package com.gap.droid.service
+package com.gapmesh.droid.service
 
 import android.content.BroadcastReceiver
 import android.content.Context

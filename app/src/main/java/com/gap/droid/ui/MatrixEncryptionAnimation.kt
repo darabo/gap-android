@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -74,14 +74,14 @@ object PoWMiningTracker {
  */
 @Composable
 fun MessageWithMatrixAnimation(
-    message: com.gap.droid.model.BitchatMessage,
-    messages: List<com.gap.droid.model.BitchatMessage> = emptyList(),
+    message: com.gapmesh.droid.model.BitchatMessage,
+    messages: List<com.gapmesh.droid.model.BitchatMessage> = emptyList(),
     currentUserNickname: String,
-    meshService: com.gap.droid.mesh.BluetoothMeshService,
+    meshService: com.gapmesh.droid.mesh.BluetoothMeshService,
     colorScheme: androidx.compose.material3.ColorScheme,
     timeFormatter: java.text.SimpleDateFormat,
     onNicknameClick: ((String) -> Unit)?,
-    onMessageLongPress: ((com.gap.droid.model.BitchatMessage) -> Unit)?,
+    onMessageLongPress: ((com.gapmesh.droid.model.BitchatMessage) -> Unit)?,
     onImageClick: ((String, List<String>, Int) -> Unit)?,
     modifier: Modifier = Modifier
 ) {
@@ -122,9 +122,9 @@ fun MessageWithMatrixAnimation(
  */
 @Composable
 private fun AnimatedMessageDisplay(
-    message: com.gap.droid.model.BitchatMessage,
+    message: com.gapmesh.droid.model.BitchatMessage,
     currentUserNickname: String,
-    meshService: com.gap.droid.mesh.BluetoothMeshService,
+    meshService: com.gapmesh.droid.mesh.BluetoothMeshService,
     colorScheme: androidx.compose.material3.ColorScheme,
     timeFormatter: java.text.SimpleDateFormat,
     modifier: Modifier = Modifier
@@ -239,9 +239,9 @@ private fun AnimatedMessageDisplay(
  * Identical to formatMessageAsAnnotatedString but excludes timestamp and PoW badge
  */
 private fun formatMessageAsAnnotatedStringWithoutTimestamp(
-    message: com.gap.droid.model.BitchatMessage,
+    message: com.gapmesh.droid.model.BitchatMessage,
     currentUserNickname: String,
-    meshService: com.gap.droid.mesh.BluetoothMeshService,
+    meshService: com.gapmesh.droid.mesh.BluetoothMeshService,
     colorScheme: androidx.compose.material3.ColorScheme
 ): AnnotatedString {
     // Get the full formatted text first

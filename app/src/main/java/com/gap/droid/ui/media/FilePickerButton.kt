@@ -1,4 +1,4 @@
-package com.gap.droid.ui.media
+package com.gapmesh.droid.ui.media
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -15,8 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
-import com.gap.droid.R
-import com.gap.droid.features.file.FileUtils
+import com.gapmesh.droid.R
+import com.gapmesh.droid.features.file.FileUtils
 
 @Composable
 fun FilePickerButton(

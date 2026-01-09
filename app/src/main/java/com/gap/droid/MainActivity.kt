@@ -1,4 +1,4 @@
-package com.gap.droid
+package com.gapmesh.droid
 
 import android.content.Intent
 import android.os.Bundle
@@ -18,38 +18,52 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.Lifecycle
-import com.gap.droid.mesh.BluetoothMeshService
-import com.gap.droid.onboarding.BluetoothCheckScreen
-import com.gap.droid.onboarding.BluetoothStatus
-import com.gap.droid.onboarding.BluetoothStatusManager
-import com.gap.droid.onboarding.BatteryOptimizationManager
-import com.gap.droid.onboarding.BatteryOptimizationPreferenceManager
-import com.gap.droid.onboarding.BatteryOptimizationScreen
-import com.gap.droid.onboarding.BatteryOptimizationStatus
-import com.gap.droid.onboarding.BackgroundLocationPermissionScreen
-import com.gap.droid.onboarding.InitializationErrorScreen
-import com.gap.droid.onboarding.InitializingScreen
-import com.gap.droid.onboarding.LanguagePreferenceManager
-import com.gap.droid.onboarding.LanguageSelectionScreen
-import com.gap.droid.onboarding.LocationCheckScreen
-import com.gap.droid.onboarding.LocationStatus
-import com.gap.droid.onboarding.LocationStatusManager
-import com.gap.droid.onboarding.OnboardingCoordinator
-import com.gap.droid.onboarding.OnboardingState
-import com.gap.droid.onboarding.PermissionExplanationScreen
-import com.gap.droid.onboarding.PermissionManager
-import com.gap.droid.ui.ChatScreen
-import com.gap.droid.ui.ChatViewModel
-import com.gap.droid.ui.OrientationAwareActivity
-import com.gap.droid.ui.theme.BitchatTheme
-import com.gap.droid.nostr.PoWPreferenceManager
-import com.gap.droid.services.VerificationService
-import com.gap.droid.service.MeshServicePreferences
+import com.gapmesh.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.onboarding.BluetoothCheckScreen
+import com.gapmesh.droid.onboarding.BluetoothStatus
+import com.gapmesh.droid.onboarding.BluetoothStatusManager
+import com.gapmesh.droid.onboarding.BatteryOptimizationManager
+import com.gapmesh.droid.onboarding.BatteryOptimizationPreferenceManager
+import com.gapmesh.droid.onboarding.BatteryOptimizationScreen
+import com.gapmesh.droid.onboarding.BatteryOptimizationStatus
+import com.gapmesh.droid.onboarding.BackgroundLocationPermissionScreen
+import com.gapmesh.droid.onboarding.InitializationErrorScreen
+import com.gapmesh.droid.onboarding.InitializingScreen
+import com.gapmesh.droid.onboarding.LanguagePreferenceManager
+import com.gapmesh.droid.onboarding.LanguageSelectionScreen
+import com.gapmesh.droid.onboarding.LocationCheckScreen
+import com.gapmesh.droid.onboarding.LocationStatus
+import com.gapmesh.droid.onboarding.LocationStatusManager
+import com.gapmesh.droid.onboarding.OnboardingCoordinator
+import com.gapmesh.droid.onboarding.OnboardingState
+import com.gapmesh.droid.onboarding.PermissionExplanationScreen
+import com.gapmesh.droid.onboarding.PermissionManager
+import com.gapmesh.droid.ui.ChatScreen
+import com.gapmesh.droid.ui.ChatViewModel
+import com.gapmesh.droid.ui.OrientationAwareActivity
+import com.gapmesh.droid.ui.theme.BitchatTheme
+import com.gapmesh.droid.nostr.PoWPreferenceManager
+import com.gapmesh.droid.services.VerificationService
+import com.gapmesh.droid.service.MeshServicePreferences
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : OrientationAwareActivity() {
 
+    /**
+     * # Onboarding State Machine
+     * 
+     * The app startup flow is controlled by `OnboardingState`.
+     * It ensures a strict sequence of checks before the user can chat:
+     * 
+     * 1. **Language:** Select English/Farsi (if not set).
+     * 2. **Permissions:** Grant Location/Bluetooth permissions (critical for Mesh).
+     * 3. **Bluetooth Check:** Ensure Bluetooth adapter is ON.
+     * 4. **Location Check:** Ensure Location services are ON (required for BLE scanning on Android).
+     * 5. **Battery Optimization:** Request to disable it (so app runs in background).
+     * 6. **Tutorial:** Show how to use the app.
+     * 7. **Complete:** Ready to chat!
+     */
     private lateinit var permissionManager: PermissionManager
     private lateinit var onboardingCoordinator: OnboardingCoordinator
     private lateinit var bluetoothStatusManager: BluetoothStatusManager
@@ -70,7 +84,7 @@ class MainActivity : OrientationAwareActivity() {
     
     private val forceFinishReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
-            if (intent.action == com.gap.droid.util.AppConstants.UI.ACTION_FORCE_FINISH) {
+            if (intent.action == com.gapmesh.droid.util.AppConstants.UI.ACTION_FORCE_FINISH) {
                 android.util.Log.i("MainActivity", "Received force finish broadcast, closing UI")
                 finishAffinity()
             }
@@ -81,12 +95,12 @@ class MainActivity : OrientationAwareActivity() {
         super.onCreate(savedInstanceState)
         
         // Register receiver for force finish signal from shutdown coordinator
-        val filter = android.content.IntentFilter(com.gap.droid.util.AppConstants.UI.ACTION_FORCE_FINISH)
+        val filter = android.content.IntentFilter(com.gapmesh.droid.util.AppConstants.UI.ACTION_FORCE_FINISH)
         if (android.os.Build.VERSION.SDK_INT >= 33) {
             registerReceiver(
                 forceFinishReceiver,
                 filter,
-                com.gap.droid.util.AppConstants.UI.PERMISSION_FORCE_FINISH,
+                com.gapmesh.droid.util.AppConstants.UI.PERMISSION_FORCE_FINISH,
                 null,
                 android.content.Context.RECEIVER_NOT_EXPORTED
             )
@@ -95,7 +109,7 @@ class MainActivity : OrientationAwareActivity() {
             registerReceiver(
                 forceFinishReceiver,
                 filter,
-                com.gap.droid.util.AppConstants.UI.PERMISSION_FORCE_FINISH,
+                com.gapmesh.droid.util.AppConstants.UI.PERMISSION_FORCE_FINISH,
                 null
             )
         }
@@ -107,7 +121,7 @@ class MainActivity : OrientationAwareActivity() {
             return
         }
 
-        com.gap.droid.service.AppShutdownCoordinator.cancelPendingShutdown()
+        com.gapmesh.droid.service.AppShutdownCoordinator.cancelPendingShutdown()
         
         // Enable edge-to-edge display for modern Android look
         enableEdgeToEdge()
@@ -115,8 +129,8 @@ class MainActivity : OrientationAwareActivity() {
         // Initialize permission management
         permissionManager = PermissionManager(this)
         // Ensure foreground service is running and get mesh instance from holder
-        try { com.gap.droid.service.MeshForegroundService.start(applicationContext) } catch (_: Exception) { }
-        meshService = com.gap.droid.service.MeshServiceHolder.getOrCreate(applicationContext)
+        try { com.gapmesh.droid.service.MeshForegroundService.start(applicationContext) } catch (_: Exception) { }
+        meshService = com.gapmesh.droid.service.MeshServiceHolder.getOrCreate(applicationContext)
         bluetoothStatusManager = BluetoothStatusManager(
             activity = this,
             context = this,
@@ -309,7 +323,7 @@ class MainActivity : OrientationAwareActivity() {
             }
 
             OnboardingState.TUTORIAL -> {
-                com.gap.droid.onboarding.TutorialScreen(
+                com.gapmesh.droid.onboarding.TutorialScreen(
                     viewModel = chatViewModel,
                     onComplete = {
                          mainViewModel.updateOnboardingState(OnboardingState.COMPLETE)
@@ -381,7 +395,14 @@ class MainActivity : OrientationAwareActivity() {
     }
     
     /**
-     * Check Bluetooth status and proceed with onboarding flow
+     * Check Bluetooth status and proceed with onboarding flow.
+     * 
+     * **Novice Note:**
+     * On Android, we need TWO things for Bluetooth to work:
+     * 1. **Permission:** The user saying "Yes, I allow this app to use Bluetooth" (Manifest permission).
+     * 2. **Adapter State:** The actual Bluetooth radio being turned ON in system settings.
+     * 
+     * This function checks the *Adapter State* (is it ON?).
      */
     private fun checkBluetoothAndProceed() {
         // Log.d("MainActivity", "Checking Bluetooth status")
@@ -434,7 +455,7 @@ class MainActivity : OrientationAwareActivity() {
                 Log.d("MainActivity", "Existing user with required permissions")
                 if (permissionManager.needsBackgroundLocationPermission() &&
                     !permissionManager.isBackgroundLocationGranted() &&
-                    !com.gap.droid.onboarding.BackgroundLocationPreferenceManager.isSkipped(this@MainActivity)
+                    !com.gapmesh.droid.onboarding.BackgroundLocationPreferenceManager.isSkipped(this@MainActivity)
                 ) {
                     mainViewModel.updateOnboardingState(OnboardingState.BACKGROUND_LOCATION_EXPLANATION)
                 } else {
@@ -695,7 +716,7 @@ class MainActivity : OrientationAwareActivity() {
                 Log.d("MainActivity", "PoW preferences initialized")
                 
                 // Initialize Location Notes Manager (extracted to separate file)
-                com.gap.droid.nostr.LocationNotesInitializer.initialize(this@MainActivity)
+                com.gapmesh.droid.nostr.LocationNotesInitializer.initialize(this@MainActivity)
                 
                 // Ensure all permissions are still granted (user might have revoked in settings)
                 if (!permissionManager.areAllPermissionsGranted()) {
@@ -746,7 +767,7 @@ class MainActivity : OrientationAwareActivity() {
             return
         }
 
-        com.gap.droid.service.AppShutdownCoordinator.cancelPendingShutdown()
+        com.gapmesh.droid.service.AppShutdownCoordinator.cancelPendingShutdown()
         
         // Handle notification intents when app is already running
         if (mainViewModel.onboardingState.value == OnboardingState.COMPLETE) {
@@ -758,7 +779,7 @@ class MainActivity : OrientationAwareActivity() {
     override fun onResume() {
         super.onResume()
         // Ensure service is running (in case it was stopped due to background settings)
-        try { com.gap.droid.service.MeshForegroundService.start(applicationContext) } catch (_: Exception) { }
+        try { com.gapmesh.droid.service.MeshForegroundService.start(applicationContext) } catch (_: Exception) { }
 
         // Check Bluetooth and Location status on resume and handle accordingly
         if (mainViewModel.onboardingState.value == OnboardingState.COMPLETE) {
@@ -790,14 +811,14 @@ class MainActivity : OrientationAwareActivity() {
         super.onPause()
         
         // Check background mode preference
-        val keepBackground = com.gap.droid.service.MeshServicePreferences.isBackgroundEnabled()
+        val keepBackground = com.gapmesh.droid.service.MeshServicePreferences.isBackgroundEnabled()
         
         // Only set background state if app is fully initialized
         if (mainViewModel.onboardingState.value == OnboardingState.COMPLETE) {
             // Stop service explicitly if user opted out of background
             if (!keepBackground) {
                  try { 
-                     val i = android.content.Intent(this, com.gap.droid.service.MeshForegroundService::class.java)
+                     val i = android.content.Intent(this, com.gapmesh.droid.service.MeshForegroundService::class.java)
                      stopService(i)
                  } catch(e: Exception) {}
             }
@@ -812,19 +833,19 @@ class MainActivity : OrientationAwareActivity() {
      */
     private fun handleNotificationIntent(intent: Intent) {
         val shouldOpenPrivateChat = intent.getBooleanExtra(
-            com.gap.droid.ui.NotificationManager.EXTRA_OPEN_PRIVATE_CHAT, 
+            com.gapmesh.droid.ui.NotificationManager.EXTRA_OPEN_PRIVATE_CHAT, 
             false
         )
         
         val shouldOpenGeohashChat = intent.getBooleanExtra(
-            com.gap.droid.ui.NotificationManager.EXTRA_OPEN_GEOHASH_CHAT,
+            com.gapmesh.droid.ui.NotificationManager.EXTRA_OPEN_GEOHASH_CHAT,
             false
         )
         
         when {
             shouldOpenPrivateChat -> {
-                val peerID = intent.getStringExtra(com.gap.droid.ui.NotificationManager.EXTRA_PEER_ID)
-                val senderNickname = intent.getStringExtra(com.gap.droid.ui.NotificationManager.EXTRA_SENDER_NICKNAME)
+                val peerID = intent.getStringExtra(com.gapmesh.droid.ui.NotificationManager.EXTRA_PEER_ID)
+                val senderNickname = intent.getStringExtra(com.gapmesh.droid.ui.NotificationManager.EXTRA_SENDER_NICKNAME)
                 
                 if (peerID != null) {
                     Log.d("MainActivity", "Opening private chat with $senderNickname (peerID: $peerID) from notification")
@@ -838,22 +859,22 @@ class MainActivity : OrientationAwareActivity() {
             }
             
             shouldOpenGeohashChat -> {
-                val geohash = intent.getStringExtra(com.gap.droid.ui.NotificationManager.EXTRA_GEOHASH)
+                val geohash = intent.getStringExtra(com.gapmesh.droid.ui.NotificationManager.EXTRA_GEOHASH)
                 
                 if (geohash != null) {
                     Log.d("MainActivity", "Opening geohash chat #$geohash from notification")
                     
                     // Switch to the geohash channel - create appropriate geohash channel level
                     val level = when (geohash.length) {
-                        7 -> com.gap.droid.geohash.GeohashChannelLevel.BLOCK
-                        6 -> com.gap.droid.geohash.GeohashChannelLevel.NEIGHBORHOOD
-                        5 -> com.gap.droid.geohash.GeohashChannelLevel.CITY
-                        4 -> com.gap.droid.geohash.GeohashChannelLevel.PROVINCE
-                        2 -> com.gap.droid.geohash.GeohashChannelLevel.REGION
-                        else -> com.gap.droid.geohash.GeohashChannelLevel.CITY // Default fallback
+                        7 -> com.gapmesh.droid.geohash.GeohashChannelLevel.BLOCK
+                        6 -> com.gapmesh.droid.geohash.GeohashChannelLevel.NEIGHBORHOOD
+                        5 -> com.gapmesh.droid.geohash.GeohashChannelLevel.CITY
+                        4 -> com.gapmesh.droid.geohash.GeohashChannelLevel.PROVINCE
+                        2 -> com.gapmesh.droid.geohash.GeohashChannelLevel.REGION
+                        else -> com.gapmesh.droid.geohash.GeohashChannelLevel.CITY // Default fallback
                     }
-                    val geohashChannel = com.gap.droid.geohash.GeohashChannel(level, geohash)
-                    val channelId = com.gap.droid.geohash.ChannelID.Location(geohashChannel)
+                    val geohashChannel = com.gapmesh.droid.geohash.GeohashChannel(level, geohash)
+                    val channelId = com.gapmesh.droid.geohash.ChannelID.Location(geohashChannel)
                     chatViewModel.selectLocationChannel(channelId)
                     
                     // Update current geohash state for notifications

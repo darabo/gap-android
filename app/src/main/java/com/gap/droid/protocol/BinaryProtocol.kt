@@ -1,4 +1,4 @@
-package com.gap.droid.protocol
+package com.gapmesh.droid.protocol
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
@@ -98,7 +98,7 @@ data class BitchatPacket(
             timestamp = timestamp,
             payload = payload,
             signature = null, // Remove signature for signing
-            ttl = com.gap.droid.util.AppConstants.SYNC_TTL_HOPS, // Use fixed TTL=0 for signing to ensure relay compatibility
+            ttl = com.gapmesh.droid.util.AppConstants.SYNC_TTL_HOPS, // Use fixed TTL=0 for signing to ensure relay compatibility
             route = route // Include route in signed bytes (matches iOS)
         )
         // Disable padding AND compression for signing to ensure deterministic binary representation

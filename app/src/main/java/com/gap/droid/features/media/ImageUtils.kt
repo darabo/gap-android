@@ -1,4 +1,4 @@
-package com.gap.droid.features.media
+package com.gapmesh.droid.features.media
 
 import android.content.Context
 import android.graphics.Bitmap

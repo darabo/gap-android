@@ -1,4 +1,4 @@
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

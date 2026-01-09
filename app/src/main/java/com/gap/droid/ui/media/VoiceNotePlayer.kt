@@ -1,4 +1,4 @@
-package com.gap.droid.ui.media
+package com.gapmesh.droid.ui.media
 
 import android.media.MediaPlayer
 import androidx.compose.foundation.background
@@ -99,7 +99,7 @@ fun VoiceNotePlayer(
             )
         }
         val progressBarColor = progressColor ?: MaterialTheme.colorScheme.primary
-        com.gap.droid.ui.media.WaveformPreview(
+        com.gapmesh.droid.ui.media.WaveformPreview(
             modifier = Modifier
                 .height(24.dp)
                 .weight(1f)

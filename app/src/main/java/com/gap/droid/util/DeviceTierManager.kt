@@ -1,4 +1,4 @@
-package com.gap.droid.util
+package com.gapmesh.droid.util
 
 import android.app.ActivityManager
 import android.content.Context

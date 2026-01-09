@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.gap.droid.R
+import com.gapmesh.droid.R
 
 /**
  * Navigation tabs for the bottom navigation bar

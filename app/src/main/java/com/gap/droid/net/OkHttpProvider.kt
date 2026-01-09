@@ -1,4 +1,4 @@
-package com.gap.droid.net
+package com.gapmesh.droid.net
 
 import okhttp3.OkHttpClient
 import java.net.InetSocketAddress

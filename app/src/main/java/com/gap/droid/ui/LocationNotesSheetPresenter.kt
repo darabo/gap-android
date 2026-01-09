@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gap.droid.geohash.GeohashChannelLevel
-import com.gap.droid.geohash.LocationChannelManager
+import com.gapmesh.droid.geohash.GeohashChannelLevel
+import com.gapmesh.droid.geohash.LocationChannelManager
 
 /**
  * Presenter component for LocationNotesSheet

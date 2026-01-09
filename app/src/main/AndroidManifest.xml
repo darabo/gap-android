@@ -21,7 +21,7 @@
     <!-- Notification permissions -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Signature permission for internal UI shutdown broadcasts -->
-    <uses-permission android:name="com.gap.droid.permission.FORCE_FINISH" />
+    <uses-permission android:name="com.gapmesh.droid.permission.FORCE_FINISH" />
     <!-- Foreground service and boot permissions for long-running background mesh -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!-- Connected device foreground service type for BLE operations (API 34+) -->
@@ -64,7 +64,7 @@
         tools:targetApi="tiramisu" />
 
     <permission
-        android:name="com.gap.droid.permission.FORCE_FINISH"
+        android:name="com.gapmesh.droid.permission.FORCE_FINISH"
         android:protectionLevel="signature" />
 
     <application
@@ -127,7 +127,7 @@
             android:enabled="true"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.gap.droid.action.NOTIFICATION_PERMISSION_GRANTED" />
+                <action android:name="com.gapmesh.droid.action.NOTIFICATION_PERMISSION_GRANTED" />
             </intent-filter>
         </receiver>
 

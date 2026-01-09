@@ -1,8 +1,8 @@
-package com.gap.droid.nostr
+package com.gapmesh.droid.nostr
 
 import android.content.Context
 import android.util.Log
-import com.gap.droid.identity.SecureIdentityStateManager
+import com.gapmesh.droid.identity.SecureIdentityStateManager
 import java.security.MessageDigest
 import java.security.SecureRandom
 

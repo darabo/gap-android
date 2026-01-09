@@ -1,4 +1,4 @@
-package com.gap.droid.wifiaware
+package com.gapmesh.droid.wifiaware
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -9,10 +9,10 @@ import android.net.wifi.aware.*
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.gap.droid.crypto.EncryptionService
-import com.gap.droid.protocol.BitchatPacket
-import com.gap.droid.protocol.BinaryProtocol
-import com.gap.droid.protocol.MessageType
+import com.gapmesh.droid.crypto.EncryptionService
+import com.gapmesh.droid.protocol.BitchatPacket
+import com.gapmesh.droid.protocol.BinaryProtocol
+import com.gapmesh.droid.protocol.MessageType
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.*

@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.content.Intent
 import android.net.Uri
@@ -29,17 +29,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import com.gap.droid.geohash.ChannelID
+import com.gapmesh.droid.geohash.ChannelID
 import kotlinx.coroutines.launch
-import com.gap.droid.geohash.GeohashChannel
-import com.gap.droid.geohash.GeohashChannelLevel
-import com.gap.droid.geohash.LocationChannelManager
-import com.gap.droid.geohash.GeohashBookmarksStore
-import com.gap.droid.ui.theme.BASE_FONT_SIZE
+import com.gapmesh.droid.geohash.GeohashChannel
+import com.gapmesh.droid.geohash.GeohashChannelLevel
+import com.gapmesh.droid.geohash.LocationChannelManager
+import com.gapmesh.droid.geohash.GeohashBookmarksStore
+import com.gapmesh.droid.ui.theme.BASE_FONT_SIZE
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gap.droid.R
-import com.gap.droid.core.ui.component.button.CloseButton
+import com.gapmesh.droid.R
+import com.gapmesh.droid.core.ui.component.button.CloseButton
 
 /**
  * Location Channels Sheet for selecting geohash-based location channels
@@ -709,8 +709,8 @@ private fun splitTitleAndCount(title: String): Pair<String, String?> {
 private fun meshTitleWithCount(viewModel: ChatViewModel): String {
     val meshCount = meshCount(viewModel)
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val peopleText = ctx.resources.getQuantityString(com.gap.droid.R.plurals.people_count, meshCount, meshCount)
-    val meshLabel = stringResource(com.gap.droid.R.string.mesh_label)
+    val peopleText = ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, meshCount, meshCount)
+    val meshLabel = stringResource(com.gapmesh.droid.R.string.mesh_label)
     return "$meshLabel [$peopleText]"
 }
 
@@ -724,14 +724,14 @@ private fun meshCount(viewModel: ChatViewModel): Int {
 @Composable
 private fun geohashTitleWithCount(channel: GeohashChannel, participantCount: Int): String {
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val peopleText = ctx.resources.getQuantityString(com.gap.droid.R.plurals.people_count, participantCount, participantCount)
+    val peopleText = ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, participantCount, participantCount)
     val levelName = when (channel.level) {
-        com.gap.droid.geohash.GeohashChannelLevel.BUILDING -> "Building" // iOS: precision 8 for location notes
-        com.gap.droid.geohash.GeohashChannelLevel.BLOCK -> stringResource(com.gap.droid.R.string.location_level_block)
-        com.gap.droid.geohash.GeohashChannelLevel.NEIGHBORHOOD -> stringResource(com.gap.droid.R.string.location_level_neighborhood)
-        com.gap.droid.geohash.GeohashChannelLevel.CITY -> stringResource(com.gap.droid.R.string.location_level_city)
-        com.gap.droid.geohash.GeohashChannelLevel.PROVINCE -> stringResource(com.gap.droid.R.string.location_level_province)
-        com.gap.droid.geohash.GeohashChannelLevel.REGION -> stringResource(com.gap.droid.R.string.location_level_region)
+        com.gapmesh.droid.geohash.GeohashChannelLevel.BUILDING -> "Building" // iOS: precision 8 for location notes
+        com.gapmesh.droid.geohash.GeohashChannelLevel.BLOCK -> stringResource(com.gapmesh.droid.R.string.location_level_block)
+        com.gapmesh.droid.geohash.GeohashChannelLevel.NEIGHBORHOOD -> stringResource(com.gapmesh.droid.R.string.location_level_neighborhood)
+        com.gapmesh.droid.geohash.GeohashChannelLevel.CITY -> stringResource(com.gapmesh.droid.R.string.location_level_city)
+        com.gapmesh.droid.geohash.GeohashChannelLevel.PROVINCE -> stringResource(com.gapmesh.droid.R.string.location_level_province)
+        com.gapmesh.droid.geohash.GeohashChannelLevel.REGION -> stringResource(com.gapmesh.droid.R.string.location_level_region)
     }
     return "$levelName [$peopleText]"
 }
@@ -739,7 +739,7 @@ private fun geohashTitleWithCount(channel: GeohashChannel, participantCount: Int
 @Composable
 private fun geohashHashTitleWithCount(geohash: String, participantCount: Int): String {
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val peopleText = ctx.resources.getQuantityString(com.gap.droid.R.plurals.people_count, participantCount, participantCount)
+    val peopleText = ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, participantCount, participantCount)
     return "#$geohash [$peopleText]"
 }
 

@@ -1,4 +1,4 @@
-package com.gap.droid.ui.media
+package com.gapmesh.droid.ui.media
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -21,7 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import com.gap.droid.features.media.ImageUtils
+import com.gapmesh.droid.features.media.ImageUtils
 import java.io.File
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -48,7 +48,7 @@ fun ImagePickerButton(
         val path = capturedImagePath
         if (success && !path.isNullOrBlank()) {
             // Downscale + correct orientation, then send; delete original
-            val outPath = com.gap.droid.features.media.ImageUtils.downscalePathAndSaveToAppFiles(context, path)
+            val outPath = com.gapmesh.droid.features.media.ImageUtils.downscalePathAndSaveToAppFiles(context, path)
             if (!outPath.isNullOrBlank()) {
                 onImageReady(outPath)
             }
@@ -86,7 +86,7 @@ fun ImagePickerButton(
     ) {
         Icon(
             imageVector = Icons.Filled.PhotoCamera,
-            contentDescription = stringResource(com.gap.droid.R.string.pick_image),
+            contentDescription = stringResource(com.gapmesh.droid.R.string.pick_image),
             tint = Color.Gray,
             modifier = Modifier.size(20.dp)
         )

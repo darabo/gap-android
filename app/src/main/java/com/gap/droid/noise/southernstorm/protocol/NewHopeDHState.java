@@ -20,20 +20,19 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package com.gap.droid.noise.southernstorm.protocol;
+package com.gapmesh.droid.noise.southernstorm.protocol;
 
 import java.util.Arrays;
 
-import com.gap.droid.noise.southernstorm.crypto.NewHope;
-import com.gap.droid.noise.southernstorm.crypto.NewHopeTor;
+import com.gapmesh.droid.noise.southernstorm.crypto.NewHope;
+import com.gapmesh.droid.noise.southernstorm.crypto.NewHopeTor;
 
 /**
  * Implementation of the New Hope post-quantum algorithm for the Noise protocol.
  */
 final class NewHopeDHState implements DHStateHybrid {
 
-	enum KeyType
-	{
+	enum KeyType {
 		None,
 		AlicePrivate,
 		AlicePublic,
@@ -46,7 +45,7 @@ final class NewHopeDHState implements DHStateHybrid {
 	private byte[] publicKey;
 	private byte[] privateKey;
 	private KeyType keyType;
-	
+
 	/**
 	 * Special version of NewHopeTor that allows explicit random data
 	 * to be specified for test vectors.
@@ -54,15 +53,13 @@ final class NewHopeDHState implements DHStateHybrid {
 	private class NewHopeWithPrivateKey extends NewHopeTor {
 
 		byte[] randomData;
-		
-		public NewHopeWithPrivateKey(byte[] randomData)
-		{
+
+		public NewHopeWithPrivateKey(byte[] randomData) {
 			this.randomData = randomData;
 		}
 
 		@Override
-		protected void randombytes(byte[] buffer)
-		{
+		protected void randombytes(byte[] buffer) {
 			System.arraycopy(randomData, 0, buffer, 0, buffer.length);
 		}
 	}
@@ -76,7 +73,7 @@ final class NewHopeDHState implements DHStateHybrid {
 		privateKey = null;
 		keyType = KeyType.None;
 	}
-	
+
 	private boolean isAlice() {
 		return keyType == KeyType.AlicePrivate || keyType == KeyType.AlicePublic;
 	}
@@ -102,7 +99,7 @@ final class NewHopeDHState implements DHStateHybrid {
 	@Override
 	public int getPrivateKeyLength() {
 		// New Hope doesn't have private keys in the same sense as
-		// Curve25519 and Curve448.  Instead return the number of
+		// Curve25519 and Curve448. Instead return the number of
 		// random bytes that we need to generate each key type.
 		if (isAlice())
 			return 64;
@@ -120,7 +117,7 @@ final class NewHopeDHState implements DHStateHybrid {
 		clearKey();
 		keyType = KeyType.AlicePrivate;
 		nh = new NewHopeTor();
-		publicKey = new byte [NewHope.SENDABYTES];
+		publicKey = new byte[NewHope.SENDABYTES];
 		nh.keygen(publicKey, 0);
 	}
 
@@ -133,14 +130,14 @@ final class NewHopeDHState implements DHStateHybrid {
 		} else if (!(remote instanceof NewHopeDHState)) {
 			throw new IllegalStateException("Mismatched DH objects");
 		}
-		NewHopeDHState r = (NewHopeDHState)remote;
+		NewHopeDHState r = (NewHopeDHState) remote;
 		if (r.isAlice() && r.publicKey != null) {
 			// We have a remote public key for Alice, so generate in Bob mode.
 			clearKey();
 			keyType = KeyType.BobCalculated;
 			nh = new NewHopeTor();
-			publicKey = new byte [NewHope.SENDBBYTES];
-			privateKey = new byte [NewHope.SHAREDBYTES];
+			publicKey = new byte[NewHope.SENDBBYTES];
+			privateKey = new byte[NewHope.SHAREDBYTES];
 			nh.sharedb(privateKey, 0, publicKey, 0, r.publicKey, 0);
 		} else {
 			generateKeyPair();
@@ -152,14 +149,14 @@ final class NewHopeDHState implements DHStateHybrid {
 		if (publicKey != null)
 			System.arraycopy(publicKey, 0, key, offset, getPublicKeyLength());
 		else
-			Arrays.fill(key, 0, getPublicKeyLength(), (byte)0);
+			Arrays.fill(key, 0, getPublicKeyLength(), (byte) 0);
 	}
 
 	@Override
 	public void setPublicKey(byte[] key, int offset) {
 		if (publicKey != null)
 			Noise.destroy(publicKey);
-		publicKey = new byte [getPublicKeyLength()];
+		publicKey = new byte[getPublicKeyLength()];
 		System.arraycopy(key, 0, publicKey, 0, publicKey.length);
 	}
 
@@ -168,7 +165,7 @@ final class NewHopeDHState implements DHStateHybrid {
 		if (privateKey != null)
 			System.arraycopy(privateKey, 0, key, offset, getPrivateKeyLength());
 		else
-			Arrays.fill(key, 0, getPrivateKeyLength(), (byte)0);
+			Arrays.fill(key, 0, getPrivateKeyLength(), (byte) 0);
 	}
 
 	@Override
@@ -179,7 +176,7 @@ final class NewHopeDHState implements DHStateHybrid {
 			keyType = KeyType.AlicePrivate;
 		else
 			keyType = KeyType.BobPrivate;
-		privateKey = new byte [getPrivateKeyLength()];
+		privateKey = new byte[getPrivateKeyLength()];
 		System.arraycopy(key, 0, privateKey, 0, privateKey.length);
 	}
 
@@ -226,7 +223,7 @@ final class NewHopeDHState implements DHStateHybrid {
 	public void calculate(byte[] sharedKey, int offset, DHState publicDH) {
 		if (!(publicDH instanceof NewHopeDHState))
 			throw new IllegalArgumentException("Incompatible DH algorithms");
-		NewHopeDHState other = (NewHopeDHState)publicDH;
+		NewHopeDHState other = (NewHopeDHState) publicDH;
 		if (keyType == KeyType.AlicePrivate) {
 			// Compute the shared key for Alice.
 			nh.shareda(sharedKey, 0, other.publicKey, 0);
@@ -244,32 +241,32 @@ final class NewHopeDHState implements DHStateHybrid {
 			throw new IllegalStateException("Mismatched DH key objects");
 		if (other == this)
 			return;
-		NewHopeDHState dh = (NewHopeDHState)other;
+		NewHopeDHState dh = (NewHopeDHState) other;
 		clearKey();
 		switch (dh.keyType) {
-		case None:
-			break;
+			case None:
+				break;
 
-		case AlicePrivate:
-			if (dh.privateKey != null) {
-				keyType = KeyType.AlicePrivate;
-				privateKey = new byte [dh.privateKey.length];
-				System.arraycopy(dh.privateKey, 0, privateKey, 0, privateKey.length);
-			} else {
-				throw new IllegalStateException("Cannot copy generated key for Alice");
-			}
-			break;
+			case AlicePrivate:
+				if (dh.privateKey != null) {
+					keyType = KeyType.AlicePrivate;
+					privateKey = new byte[dh.privateKey.length];
+					System.arraycopy(dh.privateKey, 0, privateKey, 0, privateKey.length);
+				} else {
+					throw new IllegalStateException("Cannot copy generated key for Alice");
+				}
+				break;
 
-		case BobPrivate:
-		case BobCalculated:
-			throw new IllegalStateException("Cannot copy private key for Bob without public key for Alice");
+			case BobPrivate:
+			case BobCalculated:
+				throw new IllegalStateException("Cannot copy private key for Bob without public key for Alice");
 
-		case AlicePublic:
-		case BobPublic:
-			keyType = dh.keyType;
-			publicKey = new byte [dh.publicKey.length];
-			System.arraycopy(dh.publicKey, 0, publicKey, 0, publicKey.length);
-			break;
+			case AlicePublic:
+			case BobPublic:
+				keyType = dh.keyType;
+				publicKey = new byte[dh.publicKey.length];
+				System.arraycopy(dh.publicKey, 0, publicKey, 0, publicKey.length);
+				break;
 		}
 	}
 
@@ -283,47 +280,48 @@ final class NewHopeDHState implements DHStateHybrid {
 			throw new IllegalStateException("Mismatched DH key objects");
 		if (other == this)
 			return;
-		NewHopeDHState dh = (NewHopeDHState)other;
-		NewHopeDHState remotedh = (NewHopeDHState)remote;
+		NewHopeDHState dh = (NewHopeDHState) other;
+		NewHopeDHState remotedh = (NewHopeDHState) remote;
 		clearKey();
 		switch (dh.keyType) {
-		case None:
-			break;
+			case None:
+				break;
 
-		case AlicePrivate:
-			if (dh.privateKey != null) {
-				// Generate Alice's public and private key now.
-				keyType = KeyType.AlicePrivate;
-				nh = new NewHopeWithPrivateKey(dh.privateKey);
-				publicKey = new byte [NewHope.SENDABYTES];
-				nh.keygen(publicKey, 0);
-			} else {
-				throw new IllegalStateException("Cannot copy generated key for Alice");
-			}
-			break;
+			case AlicePrivate:
+				if (dh.privateKey != null) {
+					// Generate Alice's public and private key now.
+					keyType = KeyType.AlicePrivate;
+					nh = new NewHopeWithPrivateKey(dh.privateKey);
+					publicKey = new byte[NewHope.SENDABYTES];
+					nh.keygen(publicKey, 0);
+				} else {
+					throw new IllegalStateException("Cannot copy generated key for Alice");
+				}
+				break;
 
-		case BobPrivate:
-			if (dh.privateKey != null && remotedh.keyType == KeyType.AlicePublic) {
-				// Now we know the public key for Alice, we can calculate Bob's public and shared keys.
-				keyType = KeyType.BobCalculated;
-				nh = new NewHopeWithPrivateKey(dh.privateKey);
-				publicKey = new byte [NewHope.SENDBBYTES];
-				privateKey = new byte [NewHope.SHAREDBYTES];
-				nh.sharedb(privateKey, 0, publicKey, 0, remotedh.publicKey, 0);
-			} else {
-				throw new IllegalStateException("Cannot copy private key for Bob without public key for Alice");
-			}
-			break;
+			case BobPrivate:
+				if (dh.privateKey != null && remotedh.keyType == KeyType.AlicePublic) {
+					// Now we know the public key for Alice, we can calculate Bob's public and
+					// shared keys.
+					keyType = KeyType.BobCalculated;
+					nh = new NewHopeWithPrivateKey(dh.privateKey);
+					publicKey = new byte[NewHope.SENDBBYTES];
+					privateKey = new byte[NewHope.SHAREDBYTES];
+					nh.sharedb(privateKey, 0, publicKey, 0, remotedh.publicKey, 0);
+				} else {
+					throw new IllegalStateException("Cannot copy private key for Bob without public key for Alice");
+				}
+				break;
 
-		case BobCalculated:
-			throw new IllegalStateException("Cannot copy generated key for Bob");
+			case BobCalculated:
+				throw new IllegalStateException("Cannot copy generated key for Bob");
 
-		case AlicePublic:
-		case BobPublic:
-			keyType = dh.keyType;
-			publicKey = new byte [dh.publicKey.length];
-			System.arraycopy(dh.publicKey, 0, publicKey, 0, publicKey.length);
-			break;
+			case AlicePublic:
+			case BobPublic:
+				keyType = dh.keyType;
+				publicKey = new byte[dh.publicKey.length];
+				System.arraycopy(dh.publicKey, 0, publicKey, 0, publicKey.length);
+				break;
 		}
 	}
 
@@ -332,7 +330,7 @@ final class NewHopeDHState implements DHStateHybrid {
 		if (!(local instanceof NewHopeDHState))
 			return;
 		clearKey();
-		if (((NewHopeDHState)local).keyType == KeyType.AlicePrivate)
+		if (((NewHopeDHState) local).keyType == KeyType.AlicePrivate)
 			keyType = KeyType.BobPublic;
 		else
 			keyType = KeyType.AlicePublic;

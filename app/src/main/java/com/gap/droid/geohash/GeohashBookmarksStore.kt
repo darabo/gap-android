@@ -1,4 +1,4 @@
-package com.gap.droid.geohash
+package com.gapmesh.droid.geohash
 
 import android.content.Context
 import android.location.Geocoder

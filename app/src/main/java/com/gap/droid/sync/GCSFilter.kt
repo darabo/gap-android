@@ -1,4 +1,4 @@
-package com.gap.droid.sync
+package com.gapmesh.droid.sync
 
 import java.security.MessageDigest
 import kotlin.math.ceil

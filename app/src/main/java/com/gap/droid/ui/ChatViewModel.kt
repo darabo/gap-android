@@ -1,46 +1,68 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.app.Application
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.gap.droid.favorites.FavoritesPersistenceService
+import com.gapmesh.droid.favorites.FavoritesPersistenceService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import com.gap.droid.mesh.BluetoothMeshDelegate
-import com.gap.droid.mesh.BluetoothMeshService
-import com.gap.droid.model.BitchatMessage
-import com.gap.droid.model.BitchatMessageType
-import com.gap.droid.nostr.NostrIdentityBridge
-import com.gap.droid.protocol.BitchatPacket
+import com.gapmesh.droid.mesh.BluetoothMeshDelegate
+import com.gapmesh.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.model.BitchatMessageType
+import com.gapmesh.droid.nostr.NostrIdentityBridge
+import com.gapmesh.droid.protocol.BitchatPacket
 
 
 import kotlinx.coroutines.launch
-import com.gap.droid.util.NotificationIntervalManager
+import com.gapmesh.droid.util.NotificationIntervalManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
 import kotlin.random.Random
-import com.gap.droid.services.VerificationService
-import com.gap.droid.identity.SecureIdentityStateManager
-import com.gap.droid.noise.NoiseSession
-import com.gap.droid.nostr.GeohashAliasRegistry
-import com.gap.droid.util.dataFromHexString
-import com.gap.droid.util.hexEncodedString
+import com.gapmesh.droid.services.VerificationService
+import com.gapmesh.droid.identity.SecureIdentityStateManager
+import com.gapmesh.droid.noise.NoiseSession
+import com.gapmesh.droid.nostr.GeohashAliasRegistry
+import com.gapmesh.droid.util.dataFromHexString
+import com.gapmesh.droid.util.hexEncodedString
 import java.security.MessageDigest
 
 /**
- * Refactored ChatViewModel - Main coordinator for bitchat functionality
- * Delegates specific responsibilities to specialized managers while maintaining 100% iOS compatibility
+ * # Architecture Overview
+ *
+ * This ViewModel is the central brain of the app. It coordinates three main communication types:
+ *
+ * 1. **Mesh (Local / Bluetooth):**
+ *    - Devices talk directly to each other without internet.
+ *    - Uses Bluetooth Low Energy (BLE) to find nearby peers.
+ *    - Messages hop from device to device.
+ *
+ * 2. **Nostr (Long-range / Internet):**
+ *    - Uses "Relays" (servers) to store and forward messages.
+ *    - Allows communication when devices are not close but have internet.
+ *
+ * 3. **Geohash (Location-based):**
+ *    - Creates chatrooms based on location (GPS coordinates).
+ *    - Uses Nostr to sync messages between people in the same area.
+ *    - "Teleport" allows viewing other locations.
+ *
+ * ## Key Concepts
+ *
+ * - **Unencrypted vs Encrypted:** Public mesh messages are plain text. Private chats use encryption (Noise Protocol).
+ * - **Identity:** Each user has a Key Pair (Public Key = "ID", Private Key = "Password").
+ *   - **Noise Keys:** Used for secure local mesh sessions.
+ *   - **Nostr Keys:** Used for global identity strings (begins with "npub...").
  */
-class ChatViewModel(
+ class ChatViewModel(
     application: Application,
     val meshService: BluetoothMeshService
 ) : AndroidViewModel(application), BluetoothMeshDelegate {
-    private val debugManager by lazy { try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance() } catch (e: Exception) { null } }
+    private val debugManager by lazy { try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance() } catch (e: Exception) { null } }
 
     companion object {
         private const val TAG = "ChatViewModel"
@@ -117,9 +139,9 @@ class ChatViewModel(
     private val mediaSendingManager = MediaSendingManager(state, messageManager, channelManager, meshService, viewModelScope)
     
     // WiFi Aware high-bandwidth mesh (optional - runs alongside BLE when available)
-    private val wifiAwareService: com.gap.droid.wifiaware.WiFiAwareService? by lazy {
-        if (com.gap.droid.wifiaware.WiFiAwareAvailability.isSupported(getApplication())) {
-            com.gap.droid.wifiaware.WiFiAwareService(
+    private val wifiAwareService: com.gapmesh.droid.wifiaware.WiFiAwareService? by lazy {
+        if (com.gapmesh.droid.wifiaware.WiFiAwareAvailability.isSupported(getApplication())) {
+            com.gapmesh.droid.wifiaware.WiFiAwareService(
                 context = getApplication(),
                 encryptionService = meshService.getEncryptionService()
             ).also { service ->
@@ -189,7 +211,7 @@ class ChatViewModel(
     val showAppInfo: StateFlow<Boolean> = state.showAppInfo
     val showVerificationSheet: StateFlow<Boolean> = state.showVerificationSheet
     val showSecurityVerificationSheet: StateFlow<Boolean> = state.showSecurityVerificationSheet
-    val selectedLocationChannel: StateFlow<com.gap.droid.geohash.ChannelID?> = state.selectedLocationChannel
+    val selectedLocationChannel: StateFlow<com.gapmesh.droid.geohash.ChannelID?> = state.selectedLocationChannel
     val isTeleported: StateFlow<Boolean> = state.isTeleported
     val geohashPeople: StateFlow<List<GeoPerson>> = state.geohashPeople
     val teleportedGeo: StateFlow<Set<String>> = state.teleportedGeo
@@ -200,24 +222,24 @@ class ChatViewModel(
         loadAndInitialize()
         // Hydrate UI state from process-wide AppStateStore to survive Activity recreation
         viewModelScope.launch {
-            try { com.gap.droid.services.AppStateStore.peers.collect { peers ->
+            try { com.gapmesh.droid.services.AppStateStore.peers.collect { peers ->
                 state.setConnectedPeers(peers)
                 state.setIsConnected(peers.isNotEmpty())
             } } catch (_: Exception) { }
         }
         viewModelScope.launch {
-            try { com.gap.droid.services.AppStateStore.publicMessages.collect { msgs ->
+            try { com.gapmesh.droid.services.AppStateStore.publicMessages.collect { msgs ->
                 // Source of truth is AppStateStore; replace to avoid duplicate keys in LazyColumn
                 state.setMessages(msgs)
             } } catch (_: Exception) { }
         }
         viewModelScope.launch {
-            try { com.gap.droid.services.AppStateStore.privateMessages.collect { byPeer ->
+            try { com.gapmesh.droid.services.AppStateStore.privateMessages.collect { byPeer ->
                 // Replace with store snapshot
                 state.setPrivateChats(byPeer)
                 // Recompute unread set using SeenMessageStore for robustness across Activity recreation
                 try {
-                    val seen = com.gap.droid.services.SeenMessageStore.getInstance(getApplication())
+                    val seen = com.gapmesh.droid.services.SeenMessageStore.getInstance(getApplication())
                     val myNick = state.getNicknameValue() ?: meshService.myPeerID
                     val unread = mutableSetOf<String>()
                     byPeer.forEach { (peer, list) ->
@@ -228,14 +250,14 @@ class ChatViewModel(
             } } catch (_: Exception) { }
         }
         viewModelScope.launch {
-            try { com.gap.droid.services.AppStateStore.channelMessages.collect { byChannel ->
+            try { com.gapmesh.droid.services.AppStateStore.channelMessages.collect { byChannel ->
                 // Replace with store snapshot
                 state.setChannelMessages(byChannel)
             } } catch (_: Exception) { }
         }
         // Subscribe to BLE transfer progress and reflect in message deliveryStatus
         viewModelScope.launch {
-            com.gap.droid.mesh.TransferProgressManager.events.collect { evt ->
+            com.gapmesh.droid.mesh.TransferProgressManager.events.collect { evt ->
                 mediaSendingManager.handleTransferProgressEvent(evt)
             }
         }
@@ -282,11 +304,11 @@ class ChatViewModel(
 
         // Bridge DebugSettingsManager -> Chat messages when verbose logging is on
         viewModelScope.launch {
-            com.gap.droid.ui.debug.DebugSettingsManager.getInstance().debugMessages.collect { msgs ->
-                if (com.gap.droid.ui.debug.DebugSettingsManager.getInstance().verboseLoggingEnabled.value) {
+            com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().debugMessages.collect { msgs ->
+                if (com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().verboseLoggingEnabled.value) {
                     // Only show debug logs in the Mesh chat timeline to avoid leaking into geohash chats
                     val selectedLocation = state.selectedLocationChannel.value
-                    if (selectedLocation is com.gap.droid.geohash.ChannelID.Mesh) {
+                    if (selectedLocation is com.gapmesh.droid.geohash.ChannelID.Mesh) {
                         // Append only latest debug message as system message to avoid flooding
                         msgs.lastOrNull()?.let { dm ->
                             messageManager.addSystemMessage(dm.content)
@@ -326,7 +348,7 @@ class ChatViewModel(
         }
 
         // Initialize favorites persistence service
-        com.gap.droid.favorites.FavoritesPersistenceService.initialize(getApplication())
+        com.gapmesh.droid.favorites.FavoritesPersistenceService.initialize(getApplication())
 
         // Load verified fingerprints from secure storage
         verificationHandler.loadVerifiedFingerprints()
@@ -334,7 +356,7 @@ class ChatViewModel(
 
         // Ensure NostrTransport knows our mesh peer ID for embedded packets
         try {
-            val nostrTransport = com.gap.droid.nostr.NostrTransport.getInstance(getApplication())
+            val nostrTransport = com.gapmesh.droid.nostr.NostrTransport.getInstance(getApplication())
             nostrTransport.senderPeerID = meshService.myPeerID
         } catch (_: Exception) { }
 
@@ -375,13 +397,13 @@ class ChatViewModel(
         try {
             val repoField = GeohashViewModel::class.java.getDeclaredField("repo")
             repoField.isAccessible = true
-            val repo = repoField.get(geohashViewModel) as com.gap.droid.nostr.GeohashRepository
+            val repo = repoField.get(geohashViewModel) as com.gapmesh.droid.nostr.GeohashRepository
             val gh = repo.getConversationGeohash(convKey)
             if (!gh.isNullOrEmpty()) {
                 val subMgrField = GeohashViewModel::class.java.getDeclaredField("subscriptionManager")
                 subMgrField.isAccessible = true
-                val subMgr = subMgrField.get(geohashViewModel) as com.gap.droid.nostr.NostrSubscriptionManager
-                val identity = com.gap.droid.nostr.NostrIdentityBridge.deriveIdentity(gh, getApplication())
+                val subMgr = subMgrField.get(geohashViewModel) as com.gapmesh.droid.nostr.NostrSubscriptionManager
+                val identity = com.gapmesh.droid.nostr.NostrIdentityBridge.deriveIdentity(gh, getApplication())
                 val subId = "geo-dm-$gh"
                 val currentDmSubField = GeohashViewModel::class.java.getDeclaredField("currentDmSubId")
                 currentDmSubField.isAccessible = true
@@ -396,7 +418,7 @@ class ChatViewModel(
                         handler = { event ->
                             val dmHandlerField = GeohashViewModel::class.java.getDeclaredField("dmHandler")
                             dmHandlerField.isAccessible = true
-                            val dmHandler = dmHandlerField.get(geohashViewModel) as com.gap.droid.nostr.NostrDirectMessageHandler
+                            val dmHandler = dmHandlerField.get(geohashViewModel) as com.gapmesh.droid.nostr.NostrDirectMessageHandler
                             dmHandler.onGiftWrap(event, gh, identity)
                         }
                     )
@@ -440,7 +462,7 @@ class ChatViewModel(
             // Persistently mark all messages in this conversation as read so Nostr fetches
             // after app restarts won't re-mark them as unread.
             try {
-                val seen = com.gap.droid.services.SeenMessageStore.getInstance(getApplication())
+                val seen = com.gapmesh.droid.services.SeenMessageStore.getInstance(getApplication())
                 val chats = state.getPrivateChatsValue()
                 val messages = chats[peerID] ?: emptyList()
                 messages.forEach { msg ->
@@ -493,13 +515,13 @@ class ChatViewModel(
                 targetKey
             } else {
                 // Resolve to a canonical mesh peer if needed
-                val canonical = com.gap.droid.services.ConversationAliasResolver.resolveCanonicalPeerID(
+                val canonical = com.gapmesh.droid.services.ConversationAliasResolver.resolveCanonicalPeerID(
                     selectedPeerID = targetKey,
                     connectedPeers = state.getConnectedPeersValue(),
                     meshNoiseKeyForPeer = { pid -> meshService.getPeerInfo(pid)?.noisePublicKey },
                     meshHasPeer = { pid -> meshService.getPeerInfo(pid)?.isConnected == true },
-                    nostrPubHexForAlias = { alias -> com.gap.droid.nostr.GeohashAliasRegistry.get(alias) },
-                    findNoiseKeyForNostr = { key -> com.gap.droid.favorites.FavoritesPersistenceService.shared.findNoiseKey(key) }
+                    nostrPubHexForAlias = { alias -> com.gapmesh.droid.nostr.GeohashAliasRegistry.get(alias) },
+                    findNoiseKeyForNostr = { key -> com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.findNoiseKey(key) }
                 )
                 canonical ?: targetKey
             }
@@ -520,6 +542,18 @@ class ChatViewModel(
     
     // MARK: - Message Sending
     
+    /**
+     * Sends a message to the network.
+     * This function decides HOW to send the message based on who writes it and where it goes.
+     *
+     * Routing Logic:
+     * 1. **Commands:** If it starts with "/", it's treated as a command (e.g., /nick, /clear).
+     * 2. **Private Message:** If a private chat is selected, it routes to that specific person.
+     *    - It attempts to send via Mesh first (fast, local).
+     *    - If Mesh fails or isn't established, it falls back to Nostr (requires internet).
+     * 3. **Geohash Channel:** If the user is in a location channel (e.g., "San Francisco"), it sends via Nostr.
+     * 4. **Public Mesh:** Default mode. Broadcasts to all nearby devices via Bluetooth.
+     */
     fun sendMessage(content: String) {
         if (content.isEmpty()) return
         
@@ -527,7 +561,7 @@ class ChatViewModel(
         if (content.startsWith("/")) {
             val selectedLocationForCommand = state.selectedLocationChannel.value
             commandProcessor.processCommand(content, meshService, meshService.myPeerID, { messageContent, mentions, channel ->
-                if (selectedLocationForCommand is com.gap.droid.geohash.ChannelID.Location) {
+                if (selectedLocationForCommand is com.gapmesh.droid.geohash.ChannelID.Location) {
                     // Route command-generated public messages via Nostr in geohash channels
                     geohashViewModel.sendGeohashMessage(
                         messageContent,
@@ -552,13 +586,13 @@ class ChatViewModel(
         
         if (selectedPeer != null) {
             // If the selected peer is a temporary Nostr alias or a noise-hex identity, resolve to a canonical target
-            selectedPeer = com.gap.droid.services.ConversationAliasResolver.resolveCanonicalPeerID(
+            selectedPeer = com.gapmesh.droid.services.ConversationAliasResolver.resolveCanonicalPeerID(
                 selectedPeerID = selectedPeer,
                 connectedPeers = state.getConnectedPeersValue(),
                 meshNoiseKeyForPeer = { pid -> meshService.getPeerInfo(pid)?.noisePublicKey },
                 meshHasPeer = { pid -> meshService.getPeerInfo(pid)?.isConnected == true },
-                nostrPubHexForAlias = { alias -> com.gap.droid.nostr.GeohashAliasRegistry.get(alias) },
-                findNoiseKeyForNostr = { key -> com.gap.droid.favorites.FavoritesPersistenceService.shared.findNoiseKey(key) }
+                nostrPubHexForAlias = { alias -> com.gapmesh.droid.nostr.GeohashAliasRegistry.get(alias) },
+                findNoiseKeyForNostr = { key -> com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.findNoiseKey(key) }
             ).also { canonical ->
                 if (canonical != state.getSelectedPrivateChatPeerValue()) {
                     privateChatManager.startPrivateChat(canonical, meshService)
@@ -574,13 +608,13 @@ class ChatViewModel(
                 meshService.myPeerID
             ) { messageContent, peerID, recipientNicknameParam, messageId ->
                 // Route via MessageRouter (mesh when connected+established, else Nostr)
-                val router = com.gap.droid.services.MessageRouter.getInstance(getApplication(), meshService)
+                val router = com.gapmesh.droid.services.MessageRouter.getInstance(getApplication(), meshService)
                 router.sendPrivate(messageContent, peerID, recipientNicknameParam, messageId)
             }
         } else {
             // Check if we're in a location channel
             val selectedLocationChannel = state.selectedLocationChannel.value
-            if (selectedLocationChannel is com.gap.droid.geohash.ChannelID.Location) {
+            if (selectedLocationChannel is com.gapmesh.droid.geohash.ChannelID.Location) {
                 // Send to geohash channel via Nostr ephemeral event
                 geohashViewModel.sendGeohashMessage(content, selectedLocationChannel.channel, meshService.myPeerID, state.getNicknameValue())
             } else {
@@ -631,6 +665,14 @@ class ChatViewModel(
         return meshService.getPeerNicknames().entries.find { it.value == nickname }?.key
     }
     
+    /**
+     * Mark a peer as a Favorite.
+     * 
+     * Favorites are special because:
+     * 1. They are pinned to the top of the list.
+     * 2. We remember them even when they are offline.
+     * 3. We send them a special "I favorited you" notification so they know!
+     */
     fun toggleFavorite(peerID: String) {
         Log.d("ChatViewModel", "toggleFavorite called for peerID: $peerID")
         privateChatManager.toggleFavorite(peerID)
@@ -651,7 +693,7 @@ class ChatViewModel(
                     try {
                         noiseKey = peerID.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
                         // Prefer nickname from favorites store if available
-                        val rel = com.gap.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKey!!)
+                        val rel = com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKey!!)
                         if (rel != null) nickname = rel.peerNickname
                     } catch (_: Exception) { }
                 }
@@ -659,11 +701,11 @@ class ChatViewModel(
 
             if (noiseKey != null) {
                 // Determine current favorite state from DataManager using fingerprint
-                val identityManager = com.gap.droid.identity.SecureIdentityStateManager(getApplication())
+                val identityManager = com.gapmesh.droid.identity.SecureIdentityStateManager(getApplication())
                 val fingerprint = identityManager.generateFingerprint(noiseKey!!)
                 val isNowFavorite = dataManager.favoritePeers.contains(fingerprint)
 
-                com.gap.droid.favorites.FavoritesPersistenceService.shared.updateFavoriteStatus(
+                com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.updateFavoriteStatus(
                     noisePublicKey = noiseKey!!,
                     nickname = nickname,
                     isFavorite = isNowFavorite
@@ -671,7 +713,7 @@ class ChatViewModel(
 
                 // Send favorite notification via mesh or Nostr with our npub if available
                 try {
-                    val myNostr = com.gap.droid.nostr.NostrIdentityBridge.getCurrentNostrIdentity(getApplication())
+                    val myNostr = com.gapmesh.droid.nostr.NostrIdentityBridge.getCurrentNostrIdentity(getApplication())
                     val announcementContent = if (isNowFavorite) "[FAVORITED]:${myNostr?.npub ?: ""}" else "[UNFAVORITED]:${myNostr?.npub ?: ""}"
                     // Prefer mesh if session established, else try Nostr
                     if (meshService.hasEstablishedSession(peerID)) {
@@ -683,7 +725,7 @@ class ChatViewModel(
                             java.util.UUID.randomUUID().toString()
                         )
                     } else {
-                        val nostrTransport = com.gap.droid.nostr.NostrTransport.getInstance(getApplication())
+                        val nostrTransport = com.gapmesh.droid.nostr.NostrTransport.getInstance(getApplication())
                         nostrTransport.senderPeerID = meshService.myPeerID
                         nostrTransport.sendFavoriteNotification(peerID, isNowFavorite)
                     }
@@ -733,7 +775,7 @@ class ChatViewModel(
         sessionStates.forEach { (peerID, newState) ->
             val old = prevStates[peerID]
             if (old != "established" && newState == "established") {
-                com.gap.droid.services.MessageRouter
+                com.gapmesh.droid.services.MessageRouter
                     .getInstance(getApplication(), meshService)
                     .onSessionEstablished(peerID)
             }
@@ -956,7 +998,7 @@ class ChatViewModel(
         try {
             // Clear geohash bookmarks too (panic should remove everything)
             try {
-                val store = com.gap.droid.geohash.GeohashBookmarksStore.getInstance(getApplication())
+                val store = com.gapmesh.droid.geohash.GeohashBookmarksStore.getInstance(getApplication())
                 store.clearAll()
             } catch (_: Exception) { }
 
@@ -1060,7 +1102,7 @@ class ChatViewModel(
         }
     }
 
-    fun selectLocationChannel(channel: com.gap.droid.geohash.ChannelID) {
+    fun selectLocationChannel(channel: com.gapmesh.droid.geohash.ChannelID) {
         geohashViewModel.selectLocationChannel(channel)
     }
 

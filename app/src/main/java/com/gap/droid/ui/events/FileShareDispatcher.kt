@@ -1,4 +1,4 @@
-package com.gap.droid.ui.events
+package com.gapmesh.droid.ui.events
 
 /**
  * Lightweight dispatcher so lower-level UI (MessageInput) can trigger

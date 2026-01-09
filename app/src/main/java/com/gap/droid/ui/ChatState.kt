@@ -1,7 +1,7 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.util.Log
-import com.gap.droid.model.BitchatMessage
+import com.gapmesh.droid.model.BitchatMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -130,8 +130,8 @@ class ChatState(
     val showSecurityVerificationSheet: StateFlow<Boolean> = _showSecurityVerificationSheet.asStateFlow()
     
     // Location channels state (for Nostr geohash features)
-    private val _selectedLocationChannel = MutableStateFlow<com.gap.droid.geohash.ChannelID?>(com.gap.droid.geohash.ChannelID.Mesh)
-    val selectedLocationChannel: StateFlow<com.gap.droid.geohash.ChannelID?> = _selectedLocationChannel.asStateFlow()
+    private val _selectedLocationChannel = MutableStateFlow<com.gapmesh.droid.geohash.ChannelID?>(com.gapmesh.droid.geohash.ChannelID.Mesh)
+    val selectedLocationChannel: StateFlow<com.gapmesh.droid.geohash.ChannelID?> = _selectedLocationChannel.asStateFlow()
     
     private val _isTeleported = MutableStateFlow<Boolean>(false)
     val isTeleported: StateFlow<Boolean> = _isTeleported.asStateFlow()
@@ -317,7 +317,7 @@ class ChatState(
         _showSecurityVerificationSheet.value = show
     }
     
-    fun setSelectedLocationChannel(channel: com.gap.droid.geohash.ChannelID?) {
+    fun setSelectedLocationChannel(channel: com.gapmesh.droid.geohash.ChannelID?) {
         _selectedLocationChannel.value = channel
     }
     

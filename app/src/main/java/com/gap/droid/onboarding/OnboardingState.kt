@@ -1,4 +1,4 @@
-package com.gap.droid.onboarding
+package com.gapmesh.droid.onboarding
 
 enum class OnboardingState {
     LANGUAGE_SELECTION,

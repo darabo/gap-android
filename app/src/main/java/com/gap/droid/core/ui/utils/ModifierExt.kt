@@ -1,4 +1,4 @@
-package com.gap.droid.core.ui.utils
+package com.gapmesh.droid.core.ui.utils
 
 import androidx.compose.foundation.clickable
 import androidx.compose.runtime.*

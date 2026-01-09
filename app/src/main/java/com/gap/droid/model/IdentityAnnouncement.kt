@@ -1,8 +1,8 @@
-package com.gap.droid.model
+package com.gapmesh.droid.model
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
-import com.gap.droid.util.*
+import com.gapmesh.droid.util.*
 
 /**
  * Identity announcement structure with TLV encoding

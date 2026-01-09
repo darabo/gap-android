@@ -1,10 +1,10 @@
-package com.gap.droid.mesh
-import com.gap.droid.protocol.MessageType
+package com.gapmesh.droid.mesh
+import com.gapmesh.droid.protocol.MessageType
 
 import android.util.Log
-import com.gap.droid.model.RoutedPacket
-import com.gap.droid.protocol.BitchatPacket
-import com.gap.droid.util.toHexString
+import com.gapmesh.droid.model.RoutedPacket
+import com.gapmesh.droid.protocol.BitchatPacket
+import com.gapmesh.droid.util.toHexString
 import kotlinx.coroutines.*
 import kotlin.random.Random
 
@@ -15,14 +15,14 @@ import kotlin.random.Random
  * All packets that aren't specifically addressed to us get processed here.
  */
 class PacketRelayManager(private val myPeerID: String) {
-    private val debugManager by lazy { try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance() } catch (e: Exception) { null } }
+    private val debugManager by lazy { try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance() } catch (e: Exception) { null } }
     
     companion object {
         private const val TAG = "PacketRelayManager"
     }
     
     private fun isRelayEnabled(): Boolean = try {
-        com.gap.droid.ui.debug.DebugSettingsManager.getInstance().packetRelayEnabled.value
+        com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().packetRelayEnabled.value
     } catch (_: Exception) { true }
 
     // Logging moved to BluetoothPacketBroadcaster per actual transmission target

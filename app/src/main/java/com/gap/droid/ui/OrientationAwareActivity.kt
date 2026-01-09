@@ -1,9 +1,9 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.gap.droid.utils.DeviceUtils
+import com.gapmesh.droid.utils.DeviceUtils
 
 /**
  * Base activity that automatically sets orientation based on device type.

@@ -1,4 +1,4 @@
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
@@ -21,15 +21,15 @@ class BluetoothConnectionTracker(
     companion object {
         private const val TAG = "BluetoothConnectionTracker"
         // Static cleanup constants (not tier-dependent)
-        private const val CLEANUP_DELAY = com.gap.droid.util.AppConstants.Mesh.CONNECTION_CLEANUP_DELAY_MS
-        private const val CLEANUP_INTERVAL = com.gap.droid.util.AppConstants.Mesh.CONNECTION_CLEANUP_INTERVAL_MS // 30 seconds
+        private const val CLEANUP_DELAY = com.gapmesh.droid.util.AppConstants.Mesh.CONNECTION_CLEANUP_DELAY_MS
+        private const val CLEANUP_INTERVAL = com.gapmesh.droid.util.AppConstants.Mesh.CONNECTION_CLEANUP_INTERVAL_MS // 30 seconds
         
         // Dynamic tier-aware parameters accessed via DeviceTierManager
         private val connectionRetryDelay: Long
-            get() = com.gap.droid.util.DeviceTierManager.connectionRetryDelayMs
+            get() = com.gapmesh.droid.util.DeviceTierManager.connectionRetryDelayMs
         
         private val maxConnectionAttempts: Int
-            get() = com.gap.droid.util.DeviceTierManager.maxConnectionAttempts
+            get() = com.gapmesh.droid.util.DeviceTierManager.maxConnectionAttempts
     }
     
     // Connection tracking - reduced memory footprint
@@ -248,7 +248,7 @@ class BluetoothConnectionTracker(
      */
     fun enforceConnectionLimits() {
         // Read debug overrides if available
-        val dbg = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance() } catch (_: Exception) { null }
+        val dbg = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance() } catch (_: Exception) { null }
         val maxOverall = dbg?.maxConnectionsOverall?.value ?: powerManager.getMaxConnections()
         val maxClient = dbg?.maxClientConnections?.value ?: maxOverall
         val maxServer = dbg?.maxServerConnections?.value ?: maxOverall

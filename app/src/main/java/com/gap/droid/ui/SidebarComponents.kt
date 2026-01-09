@@ -1,6 +1,6 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
-import com.gap.droid.R
+import com.gapmesh.droid.R
 import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,8 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gap.droid.ui.theme.BASE_FONT_SIZE
-import com.gap.droid.util.hexEncodedString
+import com.gapmesh.droid.ui.theme.BASE_FONT_SIZE
+import com.gapmesh.droid.util.hexEncodedString
 
 
 /**
@@ -115,7 +115,7 @@ fun SidebarOverlay(
                         val selectedLocationChannel by viewModel.selectedLocationChannel.collectAsState()
                         
                         when (selectedLocationChannel) {
-                            is com.gap.droid.geohash.ChannelID.Location -> {
+                            is com.gapmesh.droid.geohash.ChannelID.Location -> {
                                 // Show geohash people list when in location channel
                                 GeohashPeopleList(
                                     viewModel = viewModel,
@@ -240,7 +240,7 @@ fun ChannelsSection(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(com.gap.droid.R.string.cd_leave_channel),
+                        contentDescription = stringResource(com.gapmesh.droid.R.string.cd_leave_channel),
                         modifier = Modifier.size(14.dp),
                         tint = colorScheme.onSurface.copy(alpha = 0.5f)
                     )
@@ -287,7 +287,7 @@ fun PeopleSection(
             )
             Spacer(modifier = Modifier.weight(1f))
             /*
-            if (selectedLocationChannel !is com.gap.droid.geohash.ChannelID.Location) {
+            if (selectedLocationChannel !is com.gapmesh.droid.geohash.ChannelID.Location) {
                 IconButton(onClick = onShowVerification, modifier = Modifier.size(24.dp)) {
                     Icon(
                         imageVector = Icons.Outlined.QrCode,
@@ -361,18 +361,18 @@ fun PeopleSection(
         // Connected peers
         sortedPeers.forEach { pid ->
             val dn = computeDisplayNameForPeerId(pid)
-            val (b, _) = com.gap.droid.ui.splitSuffix(dn)
+            val (b, _) = com.gapmesh.droid.ui.splitSuffix(dn)
             if (b != "You") baseNameCounts[b] = (baseNameCounts[b] ?: 0) + 1
         }
 
         // Offline favorites (exclude ones mapped to connected)
-        val offlineFavorites = com.gap.droid.favorites.FavoritesPersistenceService.shared.getOurFavorites()
+        val offlineFavorites = com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.getOurFavorites()
         offlineFavorites.forEach { fav ->
             val favPeerID = fav.peerNoisePublicKey.hexEncodedString()
             val isMappedToConnected = noiseHexByPeerID.values.any { it.equals(favPeerID, ignoreCase = true) }
             if (!isMappedToConnected) {
                 val dn = peerNicknames[favPeerID] ?: fav.peerNickname
-                val (b, _) = com.gap.droid.ui.splitSuffix(dn)
+                val (b, _) = com.gapmesh.droid.ui.splitSuffix(dn)
                 if (b != "You") baseNameCounts[b] = (baseNameCounts[b] ?: 0) + 1
             }
         }
@@ -388,7 +388,7 @@ fun PeopleSection(
             }
             .forEach { convKey ->
                 val dn = peerNicknames[convKey] ?: (privateChats[convKey]?.lastOrNull()?.sender ?: convKey.take(12))
-                val (b, _) = com.gap.droid.ui.splitSuffix(dn)
+                val (b, _) = com.gapmesh.droid.ui.splitSuffix(dn)
                 if (b != "You") baseNameCounts[b] = (baseNameCounts[b] ?: 0) + 1
             }
 
@@ -408,7 +408,7 @@ fun PeopleSection(
             )
 
             val displayName = if (peerID == nickname) "You" else (peerNicknames[peerID] ?: (privateChats[peerID]?.lastOrNull()?.sender ?: peerID.take(12)))
-            val (bName, _) = com.gap.droid.ui.splitSuffix(displayName)
+            val (bName, _) = com.gapmesh.droid.ui.splitSuffix(displayName)
             val showHash = (baseNameCounts[bName] ?: 0) > 1
 
             val directMap by viewModel.peerDirect.collectAsStateWithLifecycle()
@@ -443,10 +443,10 @@ fun PeopleSection(
 
             // Resolve potential Nostr conversation key for this favorite (for unread detection)
             val nostrConvKey: String? = try {
-                val npubOrHex = com.gap.droid.favorites.FavoritesPersistenceService.shared.findNostrPubkey(fav.peerNoisePublicKey)
+                val npubOrHex = com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.findNostrPubkey(fav.peerNoisePublicKey)
                 if (npubOrHex != null) {
                     val hex = if (npubOrHex.startsWith("npub")) {
-                        val (hrp, data) = com.gap.droid.nostr.Bech32.decode(npubOrHex)
+                        val (hrp, data) = com.gapmesh.droid.nostr.Bech32.decode(npubOrHex)
                         if (hrp == "npub") data.hexEncodedString() else null
                     } else {
                         npubOrHex.lowercase()
@@ -461,7 +461,7 @@ fun PeopleSection(
             // open chat with the connected peerID instead of the noise hex for a seamless window
             val mappedConnectedPeerID = noiseHexByPeerID.entries.firstOrNull { it.value.equals(favPeerID, ignoreCase = true) }?.key
             val dn = peerNicknames[favPeerID] ?: fav.peerNickname
-            val (bName, _) = com.gap.droid.ui.splitSuffix(dn)
+            val (bName, _) = com.gapmesh.droid.ui.splitSuffix(dn)
             val showHash = (baseNameCounts[bName] ?: 0) > 1
             val isVerified = viewModel.isNoisePublicKeyVerified(fav.peerNoisePublicKey, verifiedFingerprints)
 
@@ -512,7 +512,7 @@ fun PeopleSection(
             .forEach { convKey ->
                 val lastSender = privateChats[convKey]?.lastOrNull()?.sender
                 val dn = peerNicknames[convKey] ?: (lastSender ?: convKey.take(12))
-                val (bName, _) = com.gap.droid.ui.splitSuffix(dn)
+                val (bName, _) = com.gapmesh.droid.ui.splitSuffix(dn)
                 val showHash = (baseNameCounts[bName] ?: 0) > 1
 
                 PeerItem(
@@ -557,7 +557,7 @@ private fun PeerItem(
     showHashSuffix: Boolean = true
 ) {
     // Split display name for hashtag suffix support (iOS-compatible)
-    val (baseNameRaw, suffixRaw) = com.gap.droid.ui.splitSuffix(displayName)
+    val (baseNameRaw, suffixRaw) = com.gapmesh.droid.ui.splitSuffix(displayName)
     val baseName = truncateNickname(baseNameRaw)
     val suffix = if (showHashSuffix) suffixRaw else ""
     val isMe = displayName == "You" || peerID == viewModel.nickname.value
@@ -583,7 +583,7 @@ private fun PeerItem(
             // Show mail icon for unread DMs (iOS orange)
             Icon(
                 imageVector = Icons.Filled.Email,
-                contentDescription = stringResource(com.gap.droid.R.string.cd_unread_message),
+                contentDescription = stringResource(com.gapmesh.droid.R.string.cd_unread_message),
                 modifier = Modifier.size(16.dp),
                 tint = Color(0xFFFF9500) // iOS orange
             )
@@ -593,7 +593,7 @@ private fun PeerItem(
                 // Purple globe to indicate Nostr availability
                 Icon(
                     imageVector = Icons.Filled.Public,
-                    contentDescription = stringResource(com.gap.droid.R.string.cd_reachable_via_nostr),
+                    contentDescription = stringResource(com.gapmesh.droid.R.string.cd_reachable_via_nostr),
                     modifier = Modifier.size(16.dp),
                     tint = Color(0xFF9C27B0) // Purple
                 )
@@ -602,7 +602,7 @@ private fun PeerItem(
                 Icon(
                     //painter = androidx.compose.ui.res.painterResource(id = R.drawable.ic_offline_favorite),
                     imageVector = Icons.Outlined.Circle,
-                    contentDescription = stringResource(com.gap.droid.R.string.cd_offline_favorite),
+                    contentDescription = stringResource(com.gapmesh.droid.R.string.cd_offline_favorite),
                     modifier = Modifier.size(16.dp),
                     tint = Color.Gray
                 )

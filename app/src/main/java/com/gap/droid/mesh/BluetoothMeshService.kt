@@ -1,21 +1,21 @@
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import android.content.Context
 import android.util.Log
-import com.gap.droid.crypto.EncryptionService
-import com.gap.droid.model.BitchatMessage
-import com.gap.droid.protocol.MessagePadding
-import com.gap.droid.model.RoutedPacket
-import com.gap.droid.model.IdentityAnnouncement
-import com.gap.droid.model.NoisePayload
-import com.gap.droid.model.NoisePayloadType
-import com.gap.droid.protocol.BitchatPacket
-import com.gap.droid.protocol.MessageType
-import com.gap.droid.protocol.SpecialRecipients
-import com.gap.droid.model.RequestSyncPacket
-import com.gap.droid.sync.GossipSyncManager
-import com.gap.droid.util.toHexString
-import com.gap.droid.services.VerificationService
+import com.gapmesh.droid.crypto.EncryptionService
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.protocol.MessagePadding
+import com.gapmesh.droid.model.RoutedPacket
+import com.gapmesh.droid.model.IdentityAnnouncement
+import com.gapmesh.droid.model.NoisePayload
+import com.gapmesh.droid.model.NoisePayloadType
+import com.gapmesh.droid.protocol.BitchatPacket
+import com.gapmesh.droid.protocol.MessageType
+import com.gapmesh.droid.protocol.SpecialRecipients
+import com.gapmesh.droid.model.RequestSyncPacket
+import com.gapmesh.droid.sync.GossipSyncManager
+import com.gapmesh.droid.util.toHexString
+import com.gapmesh.droid.services.VerificationService
 import kotlinx.coroutines.*
 import java.util.*
 import kotlin.math.sign
@@ -25,21 +25,22 @@ import kotlin.random.Random
  * Bluetooth mesh service - REFACTORED to use component-based architecture
  * 100% compatible with iOS version and maintains exact same UUIDs, packet format, and protocol logic
  * 
- * This is now a coordinator that orchestrates the following components:
- * - PeerManager: Peer lifecycle management
- * - FragmentManager: Message fragmentation and reassembly  
- * - SecurityManager: Security, duplicate detection, encryption
- * - StoreForwardManager: Offline message caching
- * - MessageHandler: Message type processing and relay logic
- * - BluetoothConnectionManager: BLE connections and GATT operations
- * - PacketProcessor: Incoming packet routing
+ * # Service Architecture
+ * 
+ * This class doesn't do the heavy lifting itself. Instead, it acts as a "Manager of Managers":
+ * 
+ * - **ConnectionManager:** Handles the raw Bluetooth GAP/GATT connections (The "Phone Call").
+ * - **PeerManager:** Keeps a list of who is online (The "Address Book").
+ * - **MessageHandler:**Decides what to do with incoming data (The "Mail Sorter").
+ * - **SecurityManager:** Encrypts/Decrypts messages so only the right person reads them (The "Lock").
+ * - **FragmentManager:** Breaks large messages (images) into tiny packets and reassembles them (The "Puzzle Solver").
  */
 class BluetoothMeshService(private val context: Context) {
-    private val debugManager by lazy { try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance() } catch (e: Exception) { null } }
+    private val debugManager by lazy { try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance() } catch (e: Exception) { null } }
     
     companion object {
         private const val TAG = "BluetoothMeshService"
-        private val MAX_TTL: UByte = com.gap.droid.util.AppConstants.MESSAGE_TTL_HOPS
+        private val MAX_TTL: UByte = com.gapmesh.droid.util.AppConstants.MESSAGE_TTL_HOPS
     }
     
     // Core components - each handling specific responsibilities
@@ -57,10 +58,10 @@ class BluetoothMeshService(private val context: Context) {
     private val packetProcessor = PacketProcessor(myPeerID)
     private lateinit var gossipSyncManager: GossipSyncManager
     // Service-level notification manager for background (no-UI) DMs
-    private val serviceNotificationManager = com.gap.droid.ui.NotificationManager(
+    private val serviceNotificationManager = com.gapmesh.droid.ui.NotificationManager(
         context.applicationContext,
         androidx.core.app.NotificationManagerCompat.from(context.applicationContext),
-        com.gap.droid.util.NotificationIntervalManager()
+        com.gapmesh.droid.util.NotificationIntervalManager()
     )
     
     // Service state management
@@ -87,15 +88,15 @@ class BluetoothMeshService(private val context: Context) {
             scope = serviceScope,
             configProvider = object : GossipSyncManager.ConfigProvider {
                 override fun seenCapacity(): Int = try {
-                    com.gap.droid.ui.debug.DebugPreferenceManager.getSeenPacketCapacity(500)
+                    com.gapmesh.droid.ui.debug.DebugPreferenceManager.getSeenPacketCapacity(500)
                 } catch (_: Exception) { 500 }
 
                 override fun gcsMaxBytes(): Int = try {
-                    com.gap.droid.ui.debug.DebugPreferenceManager.getGcsMaxFilterBytes(400)
+                    com.gapmesh.droid.ui.debug.DebugPreferenceManager.getGcsMaxFilterBytes(400)
                 } catch (_: Exception) { 400 }
 
                 override fun gcsTargetFpr(): Double = try {
-                    com.gap.droid.ui.debug.DebugPreferenceManager.getGcsFprPercent(1.0) / 100.0
+                    com.gapmesh.droid.ui.debug.DebugPreferenceManager.getGcsFprPercent(1.0) / 100.0
                 } catch (_: Exception) { 0.01 }
             }
         )
@@ -167,7 +168,7 @@ class BluetoothMeshService(private val context: Context) {
         peerManager.delegate = object : PeerManagerDelegate {
             override fun onPeerListUpdated(peerIDs: List<String>) {
                 // Update process-wide state first
-                try { com.gap.droid.services.AppStateStore.setPeers(peerIDs) } catch (_: Exception) { }
+                try { com.gapmesh.droid.services.AppStateStore.setPeers(peerIDs) } catch (_: Exception) { }
                 // Then notify UI delegate if attached
                 delegate?.didUpdatePeerList(peerIDs)
             }
@@ -356,8 +357,8 @@ class BluetoothMeshService(private val context: Context) {
 
                 // Index existing Nostr mapping by the new peerID if we have it
                 try {
-                    com.gap.droid.favorites.FavoritesPersistenceService.shared.findNostrPubkey(publicKey)?.let { npub ->
-                        com.gap.droid.favorites.FavoritesPersistenceService.shared.updateNostrPublicKeyForPeerID(newPeerID, npub)
+                    com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.findNostrPubkey(publicKey)?.let { npub ->
+                        com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.updateNostrPublicKeyForPeerID(newPeerID, npub)
                     }
                 } catch (_: Exception) { }
                 
@@ -381,13 +382,13 @@ class BluetoothMeshService(private val context: Context) {
                     when {
                         message.isPrivate -> {
                             val peer = message.senderPeerID ?: ""
-                            if (peer.isNotEmpty()) com.gap.droid.services.AppStateStore.addPrivateMessage(peer, message)
+                            if (peer.isNotEmpty()) com.gapmesh.droid.services.AppStateStore.addPrivateMessage(peer, message)
                         }
                         message.channel != null -> {
-                            com.gap.droid.services.AppStateStore.addChannelMessage(message.channel!!, message)
+                            com.gapmesh.droid.services.AppStateStore.addChannelMessage(message.channel!!, message)
                         }
                         else -> {
-                            com.gap.droid.services.AppStateStore.addPublicMessage(message)
+                            com.gapmesh.droid.services.AppStateStore.addPublicMessage(message)
                         }
                     }
                 } catch (_: Exception) { }
@@ -400,7 +401,7 @@ class BluetoothMeshService(private val context: Context) {
                         val senderPeerID = message.senderPeerID
                         if (senderPeerID != null) {
                             val nick = try { peerManager.getPeerNickname(senderPeerID) } catch (_: Exception) { null } ?: senderPeerID
-                            val preview = com.gap.droid.ui.NotificationTextUtils.buildPrivateMessagePreview(message)
+                            val preview = com.gapmesh.droid.ui.NotificationTextUtils.buildPrivateMessagePreview(message)
                             serviceNotificationManager.setAppBackgroundState(true)
                             serviceNotificationManager.showPrivateMessageNotification(senderPeerID, nick, preview)
                         }
@@ -541,7 +542,7 @@ class BluetoothMeshService(private val context: Context) {
                 // Log incoming for debug graphs (do not double-count anywhere else)
                 try {
                     val nick = getPeerNicknames()[peerID]
-                    com.gap.droid.ui.debug.DebugSettingsManager.getInstance().logIncoming(
+                    com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().logIncoming(
                         packetType = packet.type.toString(),
                         fromPeerID = peerID,
                         fromNickname = nick,
@@ -563,7 +564,7 @@ class BluetoothMeshService(private val context: Context) {
                     val addr = device.address
                     val peer = connectionManager.addressPeerMap[addr]
                     val nick = peer?.let { peerManager.getPeerNickname(it) } ?: "unknown"
-                    com.gap.droid.ui.debug.DebugSettingsManager.getInstance()
+                    com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance()
                         .logPeerConnection(peer ?: "unknown", nick, addr, isInbound = !connectionManager.isClientConnection(addr)!!)
                 } catch (_: Exception) { }
             }
@@ -584,7 +585,7 @@ class BluetoothMeshService(private val context: Context) {
                     // Verbose debug: device disconnected
                     try {
                         val nick = peerManager.getPeerNickname(peer) ?: "unknown"
-                        com.gap.droid.ui.debug.DebugSettingsManager.getInstance()
+                        com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance()
                             .logPeerDisconnection(peer, nick, addr)
                     } catch (_: Exception) { }
                 }
@@ -749,8 +750,8 @@ class BluetoothMeshService(private val context: Context) {
                 if (encryptionService.hasEstablishedSession(recipientPeerID)) {
                     try {
                         // Create NoisePayload wrapper (type byte + file TLV data) - same as iOS
-                        val noisePayload = com.gap.droid.model.NoisePayload(
-                            type = com.gap.droid.model.NoisePayloadType.FILE_TRANSFER,
+                        val noisePayload = com.gapmesh.droid.model.NoisePayload(
+                            type = com.gapmesh.droid.model.NoisePayloadType.FILE_TRANSFER,
                             data = filePayload
                         )
                         
@@ -771,7 +772,7 @@ class BluetoothMeshService(private val context: Context) {
                             timestamp = System.currentTimeMillis().toULong(),
                             payload = encrypted,
                             signature = null,
-                            ttl = com.gap.droid.util.AppConstants.MESSAGE_TTL_HOPS
+                            ttl = com.gapmesh.droid.util.AppConstants.MESSAGE_TTL_HOPS
                         )
                         
                         // Sign and send the encrypted packet
@@ -823,7 +824,7 @@ class BluetoothMeshService(private val context: Context) {
             if (encryptionService.hasEstablishedSession(recipientPeerID)) {
                 try {
                     // Create TLV-encoded private message exactly like iOS
-                    val privateMessage = com.gap.droid.model.PrivateMessagePacket(
+                    val privateMessage = com.gapmesh.droid.model.PrivateMessagePacket(
                         messageID = finalMessageID,
                         content = content
                     )
@@ -835,8 +836,8 @@ class BluetoothMeshService(private val context: Context) {
                     }
                     
                     // Create message payload with NoisePayloadType prefix: [type byte] + [TLV data]
-                    val messagePayload = com.gap.droid.model.NoisePayload(
-                        type = com.gap.droid.model.NoisePayloadType.PRIVATE_MESSAGE,
+                    val messagePayload = com.gapmesh.droid.model.NoisePayload(
+                        type = com.gapmesh.droid.model.NoisePayloadType.PRIVATE_MESSAGE,
                         data = tlvData
                     )
                     
@@ -887,27 +888,27 @@ class BluetoothMeshService(private val context: Context) {
             Log.d(TAG, "📖 Sending read receipt for message $messageID to $recipientPeerID")
 
             // Route geohash read receipts via MessageRouter instead of here
-            val geo = runCatching { com.gap.droid.services.MessageRouter.tryGetInstance() }.getOrNull()
+            val geo = runCatching { com.gapmesh.droid.services.MessageRouter.tryGetInstance() }.getOrNull()
             val isGeoAlias = try {
-                val map = com.gap.droid.nostr.GeohashAliasRegistry.snapshot()
+                val map = com.gapmesh.droid.nostr.GeohashAliasRegistry.snapshot()
                 map.containsKey(recipientPeerID)
             } catch (_: Exception) { false }
             if (isGeoAlias && geo != null) {
-                geo.sendReadReceipt(com.gap.droid.model.ReadReceipt(messageID), recipientPeerID)
+                geo.sendReadReceipt(com.gapmesh.droid.model.ReadReceipt(messageID), recipientPeerID)
                 return@launch
             }
 
             try {
                 // Avoid duplicate read receipts: check persistent store first
-                val seenStore = try { com.gap.droid.services.SeenMessageStore.getInstance(context.applicationContext) } catch (_: Exception) { null }
+                val seenStore = try { com.gapmesh.droid.services.SeenMessageStore.getInstance(context.applicationContext) } catch (_: Exception) { null }
                 if (seenStore?.hasRead(messageID) == true) {
                     Log.d(TAG, "Skipping read receipt for $messageID - already marked read")
                     return@launch
                 }
 
                 // Create read receipt payload using NoisePayloadType exactly like iOS
-                val readReceiptPayload = com.gap.droid.model.NoisePayload(
-                    type = com.gap.droid.model.NoisePayloadType.READ_RECEIPT,
+                val readReceiptPayload = com.gapmesh.droid.model.NoisePayload(
+                    type = com.gapmesh.droid.model.NoisePayloadType.READ_RECEIPT,
                     data = messageID.toByteArray(Charsets.UTF_8)
                 )
                 
@@ -923,7 +924,7 @@ class BluetoothMeshService(private val context: Context) {
                     timestamp = System.currentTimeMillis().toULong(),
                     payload = encrypted,
                     signature = null,
-                    ttl = com.gap.droid.util.AppConstants.MESSAGE_TTL_HOPS // Same TTL as iOS messageTTL
+                    ttl = com.gapmesh.droid.util.AppConstants.MESSAGE_TTL_HOPS // Same TTL as iOS messageTTL
                 )
                 
                 // Sign the packet before broadcasting
@@ -972,7 +973,7 @@ class BluetoothMeshService(private val context: Context) {
                     timestamp = System.currentTimeMillis().toULong(),
                     payload = encrypted,
                     signature = null,
-                    ttl = com.gap.droid.util.AppConstants.MESSAGE_TTL_HOPS
+                    ttl = com.gapmesh.droid.util.AppConstants.MESSAGE_TTL_HOPS
                 )
 
                 val signedPacket = signPacketBeforeBroadcast(packet)
@@ -990,7 +991,7 @@ class BluetoothMeshService(private val context: Context) {
     fun sendBroadcastAnnounce() {
         Log.d(TAG, "Sending broadcast announce")
         serviceScope.launch {
-            val nickname = try { com.gap.droid.services.NicknameProvider.getNickname(context, myPeerID) } catch (_: Exception) { myPeerID }
+            val nickname = try { com.gapmesh.droid.services.NicknameProvider.getNickname(context, myPeerID) } catch (_: Exception) { myPeerID }
             
             // Get the static public key for the announcement
             val staticKey = encryptionService.getStaticPublicKey()
@@ -1039,7 +1040,7 @@ class BluetoothMeshService(private val context: Context) {
     fun sendAnnouncementToPeer(peerID: String) {
         if (peerManager.hasAnnouncedToPeer(peerID)) return
         
-        val nickname = try { com.gap.droid.services.NicknameProvider.getNickname(context, myPeerID) } catch (_: Exception) { myPeerID }
+        val nickname = try { com.gapmesh.droid.services.NicknameProvider.getNickname(context, myPeerID) } catch (_: Exception) { myPeerID }
         
         // Get the static public key for the announcement
         val staticKey = encryptionService.getStaticPublicKey()
@@ -1119,7 +1120,7 @@ class BluetoothMeshService(private val context: Context) {
     /**
      * Get session state for a peer (for UI state display)
      */
-    fun getSessionState(peerID: String): com.gap.droid.noise.NoiseSession.NoiseSessionState {
+    fun getSessionState(peerID: String): com.gapmesh.droid.noise.NoiseSession.NoiseSessionState {
         return encryptionService.getSessionState(peerID)
     }
     

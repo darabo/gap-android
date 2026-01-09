@@ -1,8 +1,8 @@
-package com.gap.droid.services
+package com.gapmesh.droid.services
 
 import android.content.Context
 import android.util.Log
-import com.gap.droid.identity.SecureIdentityStateManager
+import com.gapmesh.droid.identity.SecureIdentityStateManager
 import com.google.gson.Gson
 
 /**
@@ -13,7 +13,7 @@ class SeenMessageStore private constructor(private val context: Context) {
     companion object {
         private const val TAG = "SeenMessageStore"
         private const val STORAGE_KEY = "seen_message_store_v1"
-        private const val MAX_IDS = com.gap.droid.util.AppConstants.Services.SEEN_MESSAGE_MAX_IDS
+        private const val MAX_IDS = com.gapmesh.droid.util.AppConstants.Services.SEEN_MESSAGE_MAX_IDS
 
         @Volatile private var INSTANCE: SeenMessageStore? = null
         fun getInstance(appContext: Context): SeenMessageStore {
