@@ -1,4 +1,4 @@
-package com.gap.droid.nostr
+package com.gapmesh.droid.nostr
 
 import android.util.Log
 import com.google.gson.Gson
@@ -42,10 +42,10 @@ class NostrRelayManager private constructor() {
         )
         
         // Exponential backoff configuration (same as iOS)
-        private const val INITIAL_BACKOFF_INTERVAL = com.gap.droid.util.AppConstants.Nostr.INITIAL_BACKOFF_INTERVAL_MS  // 1 second
-        private const val MAX_BACKOFF_INTERVAL = com.gap.droid.util.AppConstants.Nostr.MAX_BACKOFF_INTERVAL_MS    // 5 minutes
-        private const val BACKOFF_MULTIPLIER = com.gap.droid.util.AppConstants.Nostr.BACKOFF_MULTIPLIER
-        private const val MAX_RECONNECT_ATTEMPTS = com.gap.droid.util.AppConstants.Nostr.MAX_RECONNECT_ATTEMPTS
+        private const val INITIAL_BACKOFF_INTERVAL = com.gapmesh.droid.util.AppConstants.Nostr.INITIAL_BACKOFF_INTERVAL_MS  // 1 second
+        private const val MAX_BACKOFF_INTERVAL = com.gapmesh.droid.util.AppConstants.Nostr.MAX_BACKOFF_INTERVAL_MS    // 5 minutes
+        private const val BACKOFF_MULTIPLIER = com.gapmesh.droid.util.AppConstants.Nostr.BACKOFF_MULTIPLIER
+        private const val MAX_RECONNECT_ATTEMPTS = com.gapmesh.droid.util.AppConstants.Nostr.MAX_RECONNECT_ATTEMPTS
         
         // Track gift-wraps we initiated for logging
         private val pendingGiftWrapIDs = ConcurrentHashMap.newKeySet<String>()
@@ -112,11 +112,11 @@ class NostrRelayManager private constructor() {
     
     // Subscription validation timer
     private var subscriptionValidationJob: Job? = null
-    private val SUBSCRIPTION_VALIDATION_INTERVAL = com.gap.droid.util.AppConstants.Nostr.SUBSCRIPTION_VALIDATION_INTERVAL_MS // 30 seconds
+    private val SUBSCRIPTION_VALIDATION_INTERVAL = com.gapmesh.droid.util.AppConstants.Nostr.SUBSCRIPTION_VALIDATION_INTERVAL_MS // 30 seconds
     
     // OkHttp client for WebSocket connections (via provider to honor Tor)
     private val httpClient: OkHttpClient
-        get() = com.gap.droid.net.OkHttpProvider.webSocketClient()
+        get() = com.gapmesh.droid.net.OkHttpProvider.webSocketClient()
     
     private val gson by lazy { NostrRequest.createGson() }
     

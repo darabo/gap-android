@@ -1,15 +1,16 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.content.pm.ActivityInfo
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import com.gap.droid.utils.DeviceUtils
+import androidx.appcompat.app.AppCompatActivity
+import com.gapmesh.droid.utils.DeviceUtils
 
 /**
  * Base activity that automatically sets orientation based on device type.
  * Tablets can rotate to landscape, phones are locked to portrait.
+ * Extends AppCompatActivity to support per-app language settings.
  */
-abstract class OrientationAwareActivity : ComponentActivity() {
+abstract class OrientationAwareActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

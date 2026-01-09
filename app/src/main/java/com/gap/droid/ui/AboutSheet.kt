@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -31,15 +31,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gap.droid.nostr.NostrProofOfWork
-import com.gap.droid.nostr.PoWPreferenceManager
+import com.gapmesh.droid.nostr.NostrProofOfWork
+import com.gapmesh.droid.nostr.PoWPreferenceManager
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gap.droid.R
-import com.gap.droid.core.ui.component.button.CloseButton
-import com.gap.droid.net.TorMode
-import com.gap.droid.net.TorPreferenceManager
-import com.gap.droid.net.ArtiTorManager
+import com.gapmesh.droid.R
+import com.gapmesh.droid.core.ui.component.button.CloseButton
+import com.gapmesh.droid.net.TorMode
+import com.gapmesh.droid.net.TorPreferenceManager
+import com.gapmesh.droid.net.ArtiTorManager
+import com.gapmesh.droid.onboarding.LanguagePreferenceManager
 
 /**
  * Feature row for displaying app capabilities
@@ -205,6 +206,8 @@ fun AboutSheet(
     isPresented: Boolean,
     onDismiss: () -> Unit,
     onShowDebug: (() -> Unit)? = null,
+    nickname: String = "",
+    onNicknameChange: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -340,7 +343,7 @@ fun AboutSheet(
                                 letterSpacing = 0.5.sp,
                                 modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                             )
-                            val themePref by com.gap.droid.ui.theme.ThemePreferenceManager.themeFlow.collectAsState()
+                            val themePref by com.gapmesh.droid.ui.theme.ThemePreferenceManager.themeFlow.collectAsState()
                             Surface(
                                 modifier = Modifier.fillMaxWidth(),
                                 color = colorScheme.surface,
@@ -355,21 +358,115 @@ fun AboutSheet(
                                     ThemeChip(
                                         label = stringResource(R.string.about_system),
                                         selected = themePref.isSystem,
-                                        onClick = { com.gap.droid.ui.theme.ThemePreferenceManager.set(context, com.gap.droid.ui.theme.ThemePreference.System) },
+                                        onClick = { com.gapmesh.droid.ui.theme.ThemePreferenceManager.set(context, com.gapmesh.droid.ui.theme.ThemePreference.System) },
                                         modifier = Modifier.weight(1f)
                                     )
                                     ThemeChip(
                                         label = stringResource(R.string.about_light),
                                         selected = themePref.isLight,
-                                        onClick = { com.gap.droid.ui.theme.ThemePreferenceManager.set(context, com.gap.droid.ui.theme.ThemePreference.Light) },
+                                        onClick = { com.gapmesh.droid.ui.theme.ThemePreferenceManager.set(context, com.gapmesh.droid.ui.theme.ThemePreference.Light) },
                                         modifier = Modifier.weight(1f)
                                     )
                                     ThemeChip(
                                         label = stringResource(R.string.about_dark),
                                         selected = themePref.isDark,
-                                        onClick = { com.gap.droid.ui.theme.ThemePreferenceManager.set(context, com.gap.droid.ui.theme.ThemePreference.Dark) },
+                                        onClick = { com.gapmesh.droid.ui.theme.ThemePreferenceManager.set(context, com.gapmesh.droid.ui.theme.ThemePreference.Dark) },
                                         modifier = Modifier.weight(1f)
                                     )
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Language Selection Section
+                    item(key = "language") {
+                        val currentLanguage by LanguagePreferenceManager.currentLanguage.collectAsState()
+                        
+                        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            Text(
+                                text = stringResource(R.string.about_language).uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                letterSpacing = 0.5.sp,
+                                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                            )
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = colorScheme.surface,
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    ThemeChip(
+                                        label = stringResource(R.string.language_english),
+                                        selected = currentLanguage == LanguagePreferenceManager.AppLanguage.ENGLISH,
+                                        onClick = { LanguagePreferenceManager.setLanguage(context, LanguagePreferenceManager.AppLanguage.ENGLISH) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    ThemeChip(
+                                        label = stringResource(R.string.language_farsi),
+                                        selected = currentLanguage == LanguagePreferenceManager.AppLanguage.FARSI,
+                                        onClick = { LanguagePreferenceManager.setLanguage(context, LanguagePreferenceManager.AppLanguage.FARSI) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Username Section
+                    if (onNicknameChange != null) {
+                        item(key = "username") {
+                            var editedNickname by remember { mutableStateOf(nickname) }
+                            
+                            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                                Text(
+                                    text = stringResource(R.string.change_username).uppercase(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                    letterSpacing = 0.5.sp,
+                                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                                )
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = colorScheme.surface,
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text(
+                                            text = "@",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = colorScheme.primary
+                                        )
+                                        OutlinedTextField(
+                                            value = editedNickname,
+                                            onValueChange = { newValue ->
+                                                editedNickname = newValue
+                                                onNicknameChange(newValue)
+                                            },
+                                            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                                fontFamily = FontFamily.Monospace,
+                                                color = colorScheme.onSurface
+                                            ),
+                                            singleLine = true,
+                                            modifier = Modifier.weight(1f),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedBorderColor = colorScheme.primary,
+                                                unfocusedBorderColor = colorScheme.outline.copy(alpha = 0.5f)
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -380,7 +477,7 @@ fun AboutSheet(
                         LaunchedEffect(Unit) { PoWPreferenceManager.init(context) }
                         val powEnabled by PoWPreferenceManager.powEnabled.collectAsState()
                         val powDifficulty by PoWPreferenceManager.powDifficulty.collectAsState()
-                        var backgroundEnabled by remember { mutableStateOf(com.gap.droid.service.MeshServicePreferences.isBackgroundEnabled(true)) }
+                        var backgroundEnabled by remember { mutableStateOf(com.gapmesh.droid.service.MeshServicePreferences.isBackgroundEnabled(true)) }
                         val torMode = remember { mutableStateOf(TorPreferenceManager.get(context)) }
                         val torProvider = remember { ArtiTorManager.getInstance() }
                         val torStatus by torProvider.statusFlow.collectAsState()
@@ -408,11 +505,11 @@ fun AboutSheet(
                                         checked = backgroundEnabled,
                                         onCheckedChange = { enabled ->
                                             backgroundEnabled = enabled
-                                            com.gap.droid.service.MeshServicePreferences.setBackgroundEnabled(enabled)
+                                            com.gapmesh.droid.service.MeshServicePreferences.setBackgroundEnabled(enabled)
                                             if (!enabled) {
-                                                com.gap.droid.service.MeshForegroundService.stop(context)
+                                                com.gapmesh.droid.service.MeshForegroundService.stop(context)
                                             } else {
-                                                com.gap.droid.service.MeshForegroundService.start(context)
+                                                com.gapmesh.droid.service.MeshForegroundService.start(context)
                                             }
                                         }
                                     )

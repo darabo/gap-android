@@ -1,4 +1,4 @@
-package com.gap.droid.utils
+package com.gapmesh.droid.utils
 
 import android.content.Context
 import android.content.res.Configuration

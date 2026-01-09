@@ -1,4 +1,4 @@
-package com.gap.droid.core.ui.component.button
+package com.gapmesh.droid.core.ui.component.button
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons

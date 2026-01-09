@@ -1,6 +1,6 @@
-package com.gap.droid.model
+package com.gapmesh.droid.model
 
-import com.gap.droid.protocol.BitchatPacket
+import com.gapmesh.droid.protocol.BitchatPacket
 
 /**
  * Represents a routed packet with additional metadata

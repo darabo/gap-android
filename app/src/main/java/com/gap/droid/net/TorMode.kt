@@ -1,4 +1,4 @@
-package com.gap.droid.net
+package com.gapmesh.droid.net
 
 enum class TorMode {
     OFF,

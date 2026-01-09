@@ -1,4 +1,4 @@
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
@@ -20,10 +20,16 @@ class BluetoothConnectionTracker(
     
     companion object {
         private const val TAG = "BluetoothConnectionTracker"
-        private const val CONNECTION_RETRY_DELAY = com.gap.droid.util.AppConstants.Mesh.CONNECTION_RETRY_DELAY_MS
-        private const val MAX_CONNECTION_ATTEMPTS = com.gap.droid.util.AppConstants.Mesh.MAX_CONNECTION_ATTEMPTS
-        private const val CLEANUP_DELAY = com.gap.droid.util.AppConstants.Mesh.CONNECTION_CLEANUP_DELAY_MS
-        private const val CLEANUP_INTERVAL = com.gap.droid.util.AppConstants.Mesh.CONNECTION_CLEANUP_INTERVAL_MS // 30 seconds
+        // Static cleanup constants (not tier-dependent)
+        private const val CLEANUP_DELAY = com.gapmesh.droid.util.AppConstants.Mesh.CONNECTION_CLEANUP_DELAY_MS
+        private const val CLEANUP_INTERVAL = com.gapmesh.droid.util.AppConstants.Mesh.CONNECTION_CLEANUP_INTERVAL_MS // 30 seconds
+        
+        // Dynamic tier-aware parameters accessed via DeviceTierManager
+        private val connectionRetryDelay: Long
+            get() = com.gapmesh.droid.util.DeviceTierManager.connectionRetryDelayMs
+        
+        private val maxConnectionAttempts: Int
+            get() = com.gapmesh.droid.util.DeviceTierManager.maxConnectionAttempts
     }
     
     // Connection tracking - reduced memory footprint
@@ -55,18 +61,19 @@ class BluetoothConnectionTracker(
     )
     
     /**
-     * Connection attempt tracking with automatic expiry
+     * Connection attempt tracking with automatic expiry.
+     * Uses dynamic tier-aware parameters from DeviceTierManager.
      */
     data class ConnectionAttempt(
         val attempts: Int,
         val lastAttempt: Long = System.currentTimeMillis()
     ) {
         fun isExpired(): Boolean = 
-            System.currentTimeMillis() - lastAttempt > CONNECTION_RETRY_DELAY * 2
+            System.currentTimeMillis() - lastAttempt > connectionRetryDelay * 2
         
         fun shouldRetry(): Boolean = 
-            attempts < MAX_CONNECTION_ATTEMPTS && 
-            System.currentTimeMillis() - lastAttempt > CONNECTION_RETRY_DELAY
+            attempts < maxConnectionAttempts && 
+            System.currentTimeMillis() - lastAttempt > connectionRetryDelay
     }
     
     /**
@@ -241,7 +248,7 @@ class BluetoothConnectionTracker(
      */
     fun enforceConnectionLimits() {
         // Read debug overrides if available
-        val dbg = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance() } catch (_: Exception) { null }
+        val dbg = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance() } catch (_: Exception) { null }
         val maxOverall = dbg?.maxConnectionsOverall?.value ?: powerManager.getMaxConnections()
         val maxClient = dbg?.maxClientConnections?.value ?: maxOverall
         val maxServer = dbg?.maxServerConnections?.value ?: maxOverall

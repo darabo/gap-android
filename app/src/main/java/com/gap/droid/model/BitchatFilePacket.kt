@@ -1,4 +1,4 @@
-package com.gap.droid.model
+package com.gapmesh.droid.model
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

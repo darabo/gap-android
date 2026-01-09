@@ -1,4 +1,4 @@
-package com.gap.droid.nostr
+package com.gapmesh.droid.nostr
 
 /**
  * Bech32 encoding/decoding implementation for Nostr

@@ -1,4 +1,4 @@
-package com.gap.droid.util
+package com.gapmesh.droid.util
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertNull

@@ -1,15 +1,15 @@
 
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattServer
 import android.util.Log
-import com.gap.droid.protocol.SpecialRecipients
-import com.gap.droid.model.RoutedPacket
-import com.gap.droid.protocol.MessageType
-import com.gap.droid.util.toHexString
+import com.gapmesh.droid.protocol.SpecialRecipients
+import com.gapmesh.droid.model.RoutedPacket
+import com.gapmesh.droid.protocol.MessageType
+import com.gapmesh.droid.util.toHexString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -47,7 +47,7 @@ class BluetoothPacketBroadcaster(
     
     companion object {
         private const val TAG = "BluetoothPacketBroadcaster"
-        private const val CLEANUP_DELAY = com.gap.droid.util.AppConstants.Mesh.BROADCAST_CLEANUP_DELAY_MS
+        private const val CLEANUP_DELAY = com.gapmesh.droid.util.AppConstants.Mesh.BROADCAST_CLEANUP_DELAY_MS
     }
     
     // Callback to signal that the GATT server needs restart (e.g., after DeadObjectException)
@@ -80,7 +80,7 @@ class BluetoothPacketBroadcaster(
         try {
             val fromNick = incomingPeer?.let { nicknameResolver?.invoke(it) }
             val toNick = toPeer?.let { nicknameResolver?.invoke(it) }
-            val manager = com.gap.droid.ui.debug.DebugSettingsManager.getInstance()
+            val manager = com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance()
             // Always log outgoing for the actual transmission target
             manager.logOutgoing(
                 packetType = typeName,

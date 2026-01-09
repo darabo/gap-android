@@ -1,6 +1,6 @@
-package com.gap.droid.model
+package com.gapmesh.droid.model
 
-import com.gap.droid.protocol.MessageType
+import com.gapmesh.droid.protocol.MessageType
 
 /**
  * FragmentPayload - 100% iOS-compatible fragment payload structure

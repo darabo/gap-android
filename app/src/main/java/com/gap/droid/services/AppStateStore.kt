@@ -1,7 +1,7 @@
-package com.gap.droid.services
+package com.gapmesh.droid.services
 
-import com.gap.droid.model.BitchatMessage
-import com.gap.droid.model.DeliveryStatus
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.model.DeliveryStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

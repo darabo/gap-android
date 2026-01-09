@@ -1,4 +1,4 @@
-package com.gap.droid.ui.debug
+package com.gapmesh.droid.ui.debug
 
 import android.content.Context
 import android.content.SharedPreferences

@@ -4,4 +4,4 @@
  *
  * Reference: http://noiseprotocol.org
  */
-package com.gap.droid.noise.southernstorm.protocol;
+package com.gapmesh.droid.noise.southernstorm.protocol;

@@ -1,6 +1,6 @@
-package com.gap.droid.model
+package com.gapmesh.droid.model
 
-import com.gap.droid.sync.SyncDefaults
+import com.gapmesh.droid.sync.SyncDefaults
 
 /**
  * REQUEST_SYNC payload using GCS (Golomb-Coded Set) parameters.

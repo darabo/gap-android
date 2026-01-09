@@ -1,4 +1,4 @@
-package com.gap.droid.wifiaware
+package com.gapmesh.droid.wifiaware
 
 import android.content.Context
 import android.content.pm.PackageManager

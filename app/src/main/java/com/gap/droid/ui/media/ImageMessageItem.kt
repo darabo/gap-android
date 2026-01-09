@@ -1,4 +1,4 @@
-package com.gap.droid.ui.media
+package com.gapmesh.droid.ui.media
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,9 +27,9 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.text.font.FontFamily
-import com.gap.droid.mesh.BluetoothMeshService
-import com.gap.droid.model.BitchatMessage
-import com.gap.droid.model.BitchatMessageType
+import com.gapmesh.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.model.BitchatMessageType
 import androidx.compose.material3.ColorScheme
 import java.text.SimpleDateFormat
 import java.util.*
@@ -50,7 +50,7 @@ fun ImageMessageItem(
 ) {
     val path = message.content.trim()
     Column(modifier = modifier.fillMaxWidth()) {
-        val headerText = com.gap.droid.ui.formatMessageHeaderAnnotatedString(
+        val headerText = com.gapmesh.droid.ui.formatMessageHeaderAnnotatedString(
             message = message,
             currentUserNickname = currentUserNickname,
             meshService = meshService,
@@ -90,7 +90,7 @@ fun ImageMessageItem(
             val img = bmp.asImageBitmap()
             val aspect = (bmp.width.toFloat() / bmp.height.toFloat()).takeIf { it.isFinite() && it > 0 } ?: 1f
             val progressFraction: Float? = when (val st = message.deliveryStatus) {
-                is com.gap.droid.model.DeliveryStatus.PartiallyDelivered -> if (st.total > 0) st.reached.toFloat() / st.total.toFloat() else 0f
+                is com.gapmesh.droid.model.DeliveryStatus.PartiallyDelivered -> if (st.total > 0) st.reached.toFloat() / st.total.toFloat() else 0f
                 else -> null
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
@@ -115,7 +115,7 @@ fun ImageMessageItem(
                         // Fully revealed image
                         Image(
                             bitmap = img,
-                            contentDescription = stringResource(com.gap.droid.R.string.cd_image),
+                            contentDescription = stringResource(com.gapmesh.droid.R.string.cd_image),
                             modifier = Modifier
                                 .widthIn(max = 300.dp)
                                 .aspectRatio(aspect)
@@ -128,7 +128,7 @@ fun ImageMessageItem(
                         )
                     }
                     // Cancel button overlay during sending
-                    val showCancel = message.sender == currentUserNickname && (message.deliveryStatus is com.gap.droid.model.DeliveryStatus.PartiallyDelivered)
+                    val showCancel = message.sender == currentUserNickname && (message.deliveryStatus is com.gapmesh.droid.model.DeliveryStatus.PartiallyDelivered)
                     if (showCancel) {
                         Box(
                             modifier = Modifier
@@ -139,13 +139,13 @@ fun ImageMessageItem(
                                 .clickable { onCancelTransfer?.invoke(message) },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(imageVector = Icons.Filled.Close, contentDescription = stringResource(com.gap.droid.R.string.cd_cancel), tint = Color.White, modifier = Modifier.size(14.dp))
+                            Icon(imageVector = Icons.Filled.Close, contentDescription = stringResource(com.gapmesh.droid.R.string.cd_cancel), tint = Color.White, modifier = Modifier.size(14.dp))
                         }
                     }
                 }
             }
         } else {
-            Text(text = stringResource(com.gap.droid.R.string.image_unavailable), fontFamily = FontFamily.Monospace, color = Color.Gray)
+            Text(text = stringResource(com.gapmesh.droid.R.string.image_unavailable), fontFamily = FontFamily.Monospace, color = Color.Gray)
         }
     }
 }

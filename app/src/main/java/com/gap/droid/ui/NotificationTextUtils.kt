@@ -1,7 +1,7 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
-import com.gap.droid.model.BitchatMessage
-import com.gap.droid.model.BitchatMessageType
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.model.BitchatMessageType
 
 /**
  * Utilities for building human-friendly notification text/previews.

@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
@@ -10,10 +10,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.gap.droid.model.BitchatMessage
-import com.gap.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.mesh.BluetoothMeshService
 import androidx.compose.material3.ColorScheme
-import com.gap.droid.ui.theme.BASE_FONT_SIZE
+import com.gapmesh.droid.ui.theme.BASE_FONT_SIZE
 import java.text.SimpleDateFormat
 import java.util.*
 

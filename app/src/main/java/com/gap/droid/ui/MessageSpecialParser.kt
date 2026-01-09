@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import androidx.compose.ui.text.AnnotatedString
 import android.util.Patterns
