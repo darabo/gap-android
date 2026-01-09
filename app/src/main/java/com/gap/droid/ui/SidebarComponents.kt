@@ -286,6 +286,7 @@ fun PeopleSection(
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.weight(1f))
+            /*
             if (selectedLocationChannel !is com.gap.droid.geohash.ChannelID.Location) {
                 IconButton(onClick = onShowVerification, modifier = Modifier.size(24.dp)) {
                     Icon(
@@ -296,6 +297,7 @@ fun PeopleSection(
                     )
                 }
             }
+            */
         }
         
         if (connectedPeers.isEmpty()) {

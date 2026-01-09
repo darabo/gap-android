@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -55,28 +56,34 @@ fun isFavoriteReactive(
 }
 
 @Composable
-fun TorStatusDot(
+fun ConnectionStatusDot(
+    selectedLocationChannel: com.gap.droid.geohash.ChannelID?,
+    isConnected: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val torProvider = remember { com.gap.droid.net.ArtiTorManager.getInstance() }
-    val torStatus by torProvider.statusFlow.collectAsState()
-    
-    if (torStatus.mode != com.gap.droid.net.TorMode.OFF) {
-        val dotColor = when {
+    val dotColor = if (selectedLocationChannel is com.gap.droid.geohash.ChannelID.Location) {
+        // Geohash mode: Show Tor connection status
+        val torProvider = remember { com.gap.droid.net.ArtiTorManager.getInstance() }
+        val torStatus by torProvider.statusFlow.collectAsState()
+        
+        when {
+            torStatus.mode == com.gap.droid.net.TorMode.OFF -> Color.Red // Tor required for geohash
             torStatus.running && torStatus.bootstrapPercent < 100 -> Color(0xFFFF9500) // Orange - bootstrapping
             torStatus.running && torStatus.bootstrapPercent >= 100 -> Color(0xFF00C851) // Green - connected
-            else -> Color.Red // Red - error/disconnected
+            else -> Color.Red // Error
         }
-        Canvas(
-            modifier = modifier
-        ) {
-            val radius = size.minDimension / 2
-            drawCircle(
-                color = dotColor,
-                radius = radius,
-                center = Offset(size.width / 2, size.height / 2)
-            )
-        }
+    } else {
+        // Mesh mode: Show mesh connection status
+        if (isConnected) Color(0xFF00C851) else Color.Red
+    }
+
+    Canvas(modifier = modifier) {
+        val radius = size.minDimension / 2
+        drawCircle(
+            color = dotColor,
+            radius = radius,
+            center = Offset(size.width / 2, size.height / 2)
+        )
     }
 }
 
@@ -387,7 +394,7 @@ private fun PrivateChatHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Filled.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.back),
                     modifier = Modifier.size(16.dp),
                     tint = colorScheme.primary
@@ -493,7 +500,7 @@ private fun ChannelHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Filled.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.back),
                     modifier = Modifier.size(16.dp),
                     tint = colorScheme.primary
@@ -586,7 +593,7 @@ private fun MainHeader(
         // Right section with location channels button and peer counter
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp) // Increased spacing
         ) {
 
             // Unread private messages badge (click to open most recent DM)
@@ -607,6 +614,15 @@ private fun MainHeader(
                 LocationChannelsButton(
                     viewModel = viewModel,
                     onClick = onLocationChannelsClick
+                )
+
+                // Connection status dot (Mesh vs Tor)
+                ConnectionStatusDot(
+                    selectedLocationChannel = selectedLocationChannel,
+                    isConnected = isConnected,
+                    modifier = Modifier
+                        .size(12.dp) // Larger visibility as requested
+                        .padding(start = 6.dp, end = 2.dp)
                 )
 
                 // Bookmark toggle for current geohash (not shown for mesh)
@@ -638,29 +654,13 @@ private fun MainHeader(
                 viewModel = viewModel,
                 onClick = onLocationNotesClick
             )
-
-            // Tor status dot when Tor is enabled
-            TorStatusDot(
-                modifier = Modifier
-                    .size(8.dp)
-                    .padding(start = 0.dp, end = 2.dp)
-            )
             
             // PoW status indicator
             PoWStatusIndicator(
                 modifier = Modifier,
                 style = PoWIndicatorStyle.COMPACT
             )
-            Spacer(modifier = Modifier.width(2.dp))
-            PeerCounter(
-                connectedPeers = connectedPeers.filter { it != viewModel.meshService.myPeerID },
-                joinedChannels = joinedChannels,
-                hasUnreadChannels = hasUnreadChannels,
-                isConnected = isConnected,
-                selectedLocationChannel = selectedLocationChannel,
-                geohashPeople = geohashPeople,
-                onClick = onSidebarClick
-            )
+            // PeerCounter removed - now shown in bottom navigation People tab
         }
     }
 }

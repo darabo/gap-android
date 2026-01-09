@@ -41,10 +41,13 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.gap.droid.ui.media.FileMessageItem
 import com.gap.droid.model.BitchatMessageType
 import com.gap.droid.R
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextDecoration
 
 
 // VoiceNotePlayer moved to com.gap.droid.ui.media.VoiceNotePlayer
@@ -148,53 +151,252 @@ fun MessageItem(
     onImageClick: ((String, List<String>, Int) -> Unit)? = null
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val timeFormatter = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
+    val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
     
+    // Determine if this message was sent by self
+    val isSelf = message.senderPeerID == meshService.myPeerID || 
+                 message.sender == currentUserNickname ||
+                 message.sender.startsWith("$currentUserNickname#")
+    
+    // System messages get special treatment
+    if (message.sender == "system") {
+        // Center-aligned system message
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "• ${message.content} •",
+                fontSize = 12.sp,
+                color = Color.Gray,
+                fontStyle = FontStyle.Italic
+            )
+        }
+        return
+    }
+    
+    // Chat bubble layout
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        horizontalAlignment = if (isSelf) Alignment.End else Alignment.Start
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        // Sender name (only for others' messages)
+        if (!isSelf) {
+            val (baseName, suffix) = splitSuffix(message.sender)
+            val haptic = LocalHapticFeedback.current
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.Top
+                modifier = Modifier
+                    .padding(start = 12.dp, bottom = 2.dp)
+                    .clickable { 
+                        if (onNicknameClick != null) {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onNicknameClick(message.originalSender ?: message.sender)
+                        }
+                    },
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Provide a small end padding for own private messages so overlay doesn't cover text
-                val endPad = if (message.isPrivate && message.sender == currentUserNickname) 16.dp else 0.dp
-                // Create a custom layout that combines selectable text with clickable nickname areas
-                MessageTextWithClickableNicknames(
-                    message = message,
-                    messages = messages,
-                    currentUserNickname = currentUserNickname,
-                    meshService = meshService,
-                    colorScheme = colorScheme,
-                    timeFormatter = timeFormatter,
-                    onNicknameClick = onNicknameClick,
-                    onMessageLongPress = onMessageLongPress,
-                    onCancelTransfer = onCancelTransfer,
-                    onImageClick = onImageClick,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = endPad)
+                val isDark = colorScheme.background.red + colorScheme.background.green + colorScheme.background.blue < 1.5f
+                // Use theme-aware colors that work in both light and dark mode
+                val senderColor = if (isDark) {
+                    getPeerColor(message, isDark)
+                } else {
+                    // Darker colors for light mode readability
+                    Color(0xFF1565C0) // Material Blue 800 - readable on white
+                }
+                Text(
+                    text = truncateNickname(baseName),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = senderColor
                 )
-            }
-
-            // Delivery status for private messages (overlay, non-displacing)
-            if (message.isPrivate && message.sender == currentUserNickname) {
-                message.deliveryStatus?.let { status ->
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(top = 2.dp)
-                    ) {
-                        DeliveryStatusIcon(status = status)
-                    }
+                if (suffix.isNotEmpty()) {
+                    Text(
+                        text = suffix,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = senderColor.copy(alpha = 0.6f)
+                    )
                 }
             }
         }
         
-        // Link previews removed; links are now highlighted inline and clickable within the message text
+        // Message bubble
+        val bubbleShape = RoundedCornerShape(
+            topStart = if (isSelf) 16.dp else 4.dp,
+            topEnd = if (isSelf) 4.dp else 16.dp,
+            bottomStart = 16.dp,
+            bottomEnd = 16.dp
+        )
+        
+        val isDarkTheme = colorScheme.background.red + colorScheme.background.green + colorScheme.background.blue < 1.5f
+        
+        val bubbleColor = if (isSelf) {
+            Color(0xFF2E7D32) // Material Green 700 - works in both themes
+        } else {
+            if (isDarkTheme) Color(0xFF3D3D3D) else Color(0xFFE8E8E8) // Gray adapts to theme
+        }
+        
+        val maxBubbleWidth = 0.8f // 80% of screen width
+        
+        Box(
+            modifier = Modifier
+                .widthIn(max = 320.dp)
+                .fillMaxWidth(maxBubbleWidth)
+                .background(bubbleColor, bubbleShape)
+                .pointerInput(message) {
+                    detectTapGestures(
+                        onLongPress = {
+                            onMessageLongPress?.invoke(message)
+                        }
+                    )
+                }
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            // Delegate to special renderers for media types
+            when (message.type) {
+                BitchatMessageType.Image -> {
+                    com.gap.droid.ui.media.ImageMessageItem(
+                        message = message,
+                        messages = messages,
+                        currentUserNickname = currentUserNickname,
+                        meshService = meshService,
+                        colorScheme = colorScheme,
+                        timeFormatter = timeFormatter,
+                        onNicknameClick = onNicknameClick,
+                        onMessageLongPress = onMessageLongPress,
+                        onCancelTransfer = onCancelTransfer,
+                        onImageClick = onImageClick,
+                        modifier = Modifier
+                    )
+                }
+                BitchatMessageType.Audio -> {
+                    com.gap.droid.ui.media.AudioMessageItem(
+                        message = message,
+                        currentUserNickname = currentUserNickname,
+                        meshService = meshService,
+                        colorScheme = colorScheme,
+                        timeFormatter = timeFormatter,
+                        onNicknameClick = null, // Already showing sender above
+                        onMessageLongPress = onMessageLongPress,
+                        onCancelTransfer = onCancelTransfer,
+                        modifier = Modifier
+                    )
+                }
+                BitchatMessageType.File -> {
+                    // File content rendering
+                    val path = message.content.trim()
+                    val packet = try {
+                        val file = java.io.File(path)
+                        if (file.exists()) {
+                            com.gap.droid.model.BitchatFilePacket(
+                                fileName = file.name,
+                                fileSize = file.length(),
+                                mimeType = com.gap.droid.features.file.FileUtils.getMimeTypeFromExtension(file.name),
+                                content = file.readBytes()
+                            )
+                        } else null
+                    } catch (e: Exception) { null }
+                    
+                    if (packet != null) {
+                        FileMessageItem(
+                            packet = packet,
+                            onFileClick = {}
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(R.string.file_unavailable),
+                            color = Color.Gray
+                        )
+                    }
+                }
+                else -> {
+                    // Text message content
+                    Column {
+                        val isDarkTheme = colorScheme.background.red + colorScheme.background.green + colorScheme.background.blue < 1.5f
+                        val textColor = if (isSelf) Color.White else if (isDarkTheme) colorScheme.onSurface else Color.Black
+                        
+                        // Format message content with clickable elements
+                        val annotatedContent = formatBubbleMessageContent(
+                            content = message.content,
+                            mentions = message.mentions,
+                            currentUserNickname = currentUserNickname,
+                            textColor = textColor,
+                            isSelf = isSelf
+                        )
+                        
+                        val context = LocalContext.current
+                        val haptic = LocalHapticFeedback.current
+                        var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+                        
+                        Text(
+                            text = annotatedContent,
+                            fontSize = 15.sp,
+                            color = textColor,
+                            modifier = Modifier.pointerInput(message.id) {
+                                detectTapGestures(
+                                    onTap = { position ->
+                                        val layout = textLayoutResult ?: return@detectTapGestures
+                                        val offset = layout.getOffsetForPosition(position)
+                                        
+                                        // Check for URL clicks
+                                        val urlAnnotations = annotatedContent.getStringAnnotations(
+                                            tag = "url_click",
+                                            start = offset,
+                                            end = offset
+                                        )
+                                        if (urlAnnotations.isNotEmpty()) {
+                                            val raw = urlAnnotations.first().item
+                                            val resolved = if (raw.startsWith("http://", ignoreCase = true) || 
+                                                raw.startsWith("https://", ignoreCase = true)) raw else "https://$raw"
+                                            try {
+                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(resolved))
+                                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                context.startActivity(intent)
+                                            } catch (_: Exception) {}
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        }
+                                    }
+                                )
+                            },
+                            onTextLayout = { textLayoutResult = it }
+                        )
+                        
+                        // Timestamp row
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = timeFormatter.format(message.timestamp),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                // Use colors with good contrast against bubble backgrounds
+                                color = if (isSelf) {
+                                    Color.White.copy(alpha = 0.85f) // White on green bubble
+                                } else {
+                                    // Dark gray text on both light and dark gray bubbles
+                                    if (isDarkTheme) Color(0xFFAAAAAA) else Color(0xFF555555)
+                                }
+                            )
+                            
+                            // Delivery status for own messages
+                            if (isSelf && message.isPrivate) {
+                                message.deliveryStatus?.let { status ->
+                                    DeliveryStatusIcon(status = status)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -519,4 +721,96 @@ fun DeliveryStatusIcon(status: DeliveryStatus) {
             )
         }
     }
+}
+
+/**
+ * Format message content for chat bubble display with clickable URLs and mentions
+ */
+fun formatBubbleMessageContent(
+    content: String,
+    mentions: List<String>?,
+    currentUserNickname: String,
+    textColor: Color,
+    isSelf: Boolean
+): AnnotatedString {
+    val builder = AnnotatedString.Builder()
+    
+    // URL pattern matching
+    val urlPattern = """(https?://[^\s]+|www\.[^\s]+|[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}[^\s]*)""".toRegex()
+    val mentionPattern = """@([\p{L}0-9_]+(?:#[a-fA-F0-9]{4})?)""".toRegex()
+    
+    // Find all matches
+    val urlMatches = urlPattern.findAll(content).toList()
+    val mentionMatches = mentionPattern.findAll(content).toList()
+    
+    // Combine and sort
+    data class Match(val range: IntRange, val type: String, val value: String)
+    val allMatches = mutableListOf<Match>()
+    
+    urlMatches.forEach { allMatches.add(Match(it.range, "url", it.value)) }
+    mentionMatches.forEach { allMatches.add(Match(it.range, "mention", it.value)) }
+    allMatches.sortBy { it.range.first }
+    
+    // Remove overlapping matches (keep first one)
+    val cleanedMatches = mutableListOf<Match>()
+    for (match in allMatches) {
+        val overlaps = cleanedMatches.any { existing ->
+            match.range.first < existing.range.last && match.range.last > existing.range.first
+        }
+        if (!overlaps) cleanedMatches.add(match)
+    }
+    
+    var lastEnd = 0
+    val isMentioned = mentions?.contains(currentUserNickname) == true
+    
+    for (match in cleanedMatches) {
+        // Text before match
+        if (lastEnd < match.range.first) {
+            builder.pushStyle(SpanStyle(
+                color = textColor,
+                fontWeight = if (isMentioned) FontWeight.Bold else FontWeight.Normal
+            ))
+            builder.append(content.substring(lastEnd, match.range.first))
+            builder.pop()
+        }
+        
+        // Match content
+        when (match.type) {
+            "url" -> {
+                builder.pushStyle(SpanStyle(
+                    color = Color(0xFF64B5F6), // Light blue for links
+                    textDecoration = TextDecoration.Underline
+                ))
+                val start = builder.length
+                builder.append(match.value)
+                val end = builder.length
+                builder.addStringAnnotation("url_click", match.value, start, end)
+                builder.pop()
+            }
+            "mention" -> {
+                val mentionName = match.value.removePrefix("@")
+                val isMe = mentionName == currentUserNickname || mentionName.startsWith("$currentUserNickname#")
+                builder.pushStyle(SpanStyle(
+                    color = if (isMe) Color(0xFFFF9500) else Color(0xFF64B5F6),
+                    fontWeight = FontWeight.SemiBold
+                ))
+                builder.append(match.value)
+                builder.pop()
+            }
+        }
+        
+        lastEnd = match.range.last + 1
+    }
+    
+    // Remaining text
+    if (lastEnd < content.length) {
+        builder.pushStyle(SpanStyle(
+            color = textColor,
+            fontWeight = if (isMentioned) FontWeight.Bold else FontWeight.Normal
+        ))
+        builder.append(content.substring(lastEnd))
+        builder.pop()
+    }
+    
+    return builder.toAnnotatedString()
 }

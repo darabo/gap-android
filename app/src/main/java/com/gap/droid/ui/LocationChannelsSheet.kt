@@ -411,6 +411,23 @@ fun LocationChannelsSheet(
                                                 }
                                             }
                                         },
+                                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                        imeAction = androidx.compose.ui.text.input.ImeAction.Go
+                                    ),
+                                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                                        onGo = {
+                                            if (validateGeohash(customGeohash.trim().lowercase().replace("#", ""))) {
+                                                val normalized = customGeohash.trim().lowercase().replace("#", "")
+                                                val level = levelForLength(normalized.length)
+                                                val channel = GeohashChannel(level = level, geohash = normalized)
+                                                locationManager.setTeleported(true)
+                                                locationManager.select(ChannelID.Location(channel))
+                                                onDismiss()
+                                            } else {
+                                                customError = context.getString(R.string.invalid_geohash)
+                                            }
+                                        }
+                                    ),
                                     singleLine = true,
                                     decorationBox = { innerTextField ->
                                         if (customGeohash.isEmpty()) {

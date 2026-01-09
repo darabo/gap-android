@@ -2,7 +2,6 @@ package com.gap.droid.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -46,11 +45,14 @@ fun LocationNotesSheet(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val isDark = isSystemInDarkTheme()
+    val colorScheme = MaterialTheme.colorScheme
     
-    // iOS color scheme
-    val backgroundColor = if (isDark) Color.Black else Color.White
-    val accentGreen = if (isDark) Color.Green else Color(0xFF008000) // dark: green, light: dark green (0, 0.5, 0)
+    // Use MaterialTheme colors to properly follow app theme preference
+    val isDark = colorScheme.background.red + colorScheme.background.green + colorScheme.background.blue < 1.5f
+    
+    // Theme-aware colors
+    val backgroundColor = colorScheme.background
+    val accentGreen = if (isDark) Color(0xFF32D74B) else Color(0xFF248A3D) // Match app's green
     
     // Managers
     val notesManager = remember { LocationNotesManager.getInstance() }
@@ -472,8 +474,9 @@ private fun LocationNotesInputSection(
     backgroundColor: Color,
     onSend: () -> Unit
 ) {
-    val isDark = isSystemInDarkTheme()
     val colorScheme = MaterialTheme.colorScheme
+    // Use theme-aware detection
+    val isDark = colorScheme.background.red + colorScheme.background.green + colorScheme.background.blue < 1.5f
     
     Row(
         modifier = Modifier

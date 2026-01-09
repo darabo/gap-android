@@ -206,6 +206,8 @@ fun AboutSheet(
     isPresented: Boolean,
     onDismiss: () -> Unit,
     onShowDebug: (() -> Unit)? = null,
+    nickname: String = "",
+    onNicknameChange: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -411,6 +413,60 @@ fun AboutSheet(
                                         onClick = { LanguagePreferenceManager.setLanguage(context, LanguagePreferenceManager.AppLanguage.FARSI) },
                                         modifier = Modifier.weight(1f)
                                     )
+                                }
+                            }
+                        }
+                    }
+
+                    // Username Section
+                    if (onNicknameChange != null) {
+                        item(key = "username") {
+                            var editedNickname by remember { mutableStateOf(nickname) }
+                            
+                            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                                Text(
+                                    text = stringResource(R.string.change_username).uppercase(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                    letterSpacing = 0.5.sp,
+                                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                                )
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = colorScheme.surface,
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text(
+                                            text = "@",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = colorScheme.primary
+                                        )
+                                        OutlinedTextField(
+                                            value = editedNickname,
+                                            onValueChange = { newValue ->
+                                                editedNickname = newValue
+                                                onNicknameChange(newValue)
+                                            },
+                                            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                                fontFamily = FontFamily.Monospace,
+                                                color = colorScheme.onSurface
+                                            ),
+                                            singleLine = true,
+                                            modifier = Modifier.weight(1f),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedBorderColor = colorScheme.primary,
+                                                unfocusedBorderColor = colorScheme.outline.copy(alpha = 0.5f)
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }

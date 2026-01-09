@@ -44,6 +44,7 @@ import com.gap.droid.ui.OrientationAwareActivity
 import com.gap.droid.ui.theme.BitchatTheme
 import com.gap.droid.nostr.PoWPreferenceManager
 import com.gap.droid.services.VerificationService
+import com.gap.droid.service.MeshServicePreferences
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -303,6 +304,15 @@ class MainActivity : OrientationAwareActivity() {
                     },
                     onSkip = {
                         onboardingCoordinator.skipBackgroundLocation()
+                    }
+                )
+            }
+
+            OnboardingState.TUTORIAL -> {
+                com.gap.droid.onboarding.TutorialScreen(
+                    viewModel = chatViewModel,
+                    onComplete = {
+                         mainViewModel.updateOnboardingState(OnboardingState.COMPLETE)
                     }
                 )
             }
@@ -708,7 +718,16 @@ class MainActivity : OrientationAwareActivity() {
                 // Small delay to ensure mesh service is fully initialized
                 delay(500)
                 Log.d("MainActivity", "App initialization complete")
-                mainViewModel.updateOnboardingState(OnboardingState.COMPLETE)
+                
+                // Check if tutorial seen
+                val prefs = getSharedPreferences("onboarding_prefs", android.content.Context.MODE_PRIVATE)
+                val tutorialSeen = prefs.getBoolean("tutorial_seen", false)
+                
+                if (!tutorialSeen) {
+                    mainViewModel.updateOnboardingState(OnboardingState.TUTORIAL)
+                } else {
+                    mainViewModel.updateOnboardingState(OnboardingState.COMPLETE)
+                }
             } catch (e: Exception) {
                 Log.e("MainActivity", "Failed to initialize app", e)
                 handleOnboardingFailed("Failed to initialize the app: ${e.message}")
@@ -738,6 +757,9 @@ class MainActivity : OrientationAwareActivity() {
     
     override fun onResume() {
         super.onResume()
+        // Ensure service is running (in case it was stopped due to background settings)
+        try { com.gap.droid.service.MeshForegroundService.start(applicationContext) } catch (_: Exception) { }
+
         // Check Bluetooth and Location status on resume and handle accordingly
         if (mainViewModel.onboardingState.value == OnboardingState.COMPLETE) {
             // Reattach mesh delegate to new ChatViewModel instance after Activity recreation
@@ -766,8 +788,20 @@ class MainActivity : OrientationAwareActivity() {
     
     override fun onPause() {
         super.onPause()
+        
+        // Check background mode preference
+        val keepBackground = com.gap.droid.service.MeshServicePreferences.isBackgroundEnabled()
+        
         // Only set background state if app is fully initialized
         if (mainViewModel.onboardingState.value == OnboardingState.COMPLETE) {
+            // Stop service explicitly if user opted out of background
+            if (!keepBackground) {
+                 try { 
+                     val i = android.content.Intent(this, com.gap.droid.service.MeshForegroundService::class.java)
+                     stopService(i)
+                 } catch(e: Exception) {}
+            }
+            
             // Detach UI delegate so the foreground service can own DM notifications while UI is closed
             try { meshService.delegate = null } catch (_: Exception) { }
         }

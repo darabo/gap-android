@@ -4,9 +4,9 @@ import android.content.Context
 import android.content.SharedPreferences
 
 object MeshServicePreferences {
-    private const val PREFS_NAME = "bitchat_mesh_service_prefs"
+    private const val PREFS_NAME = "app_prefs"
     private const val KEY_AUTO_START = "auto_start_on_boot"
-    private const val KEY_BACKGROUND_ENABLED = "background_enabled"
+    private const val KEY_BACKGROUND_ENABLED = "background_mode_enabled"
 
     private lateinit var prefs: SharedPreferences
 

@@ -23,6 +23,13 @@
     <string name="emergency_clear_hint">برای پاک کردن همهٔ داده‌ها سه بار ضربه بزنید</string>
     <string name="your_network">شبکه</string>
 
+    <!-- ناوبری پایین -->
+    <string name="nav_mesh">گفت‌وگو</string>
+    <string name="nav_location">مکان</string>
+    <string name="nav_people">افراد</string>
+    <string name="nav_settings">تنظیمات</string>
+    <string name="change_username">تغییر نام کاربری</string>
+
     <!-- بهینه‌سازی باتری -->
     <string name="battery_optimization_detected">بهینه‌سازی باتری شناسایی شد</string>
     <string name="battery_optimization_disabled">بهینه‌سازی باتری غیرفعال شد</string>
@@ -416,4 +423,36 @@
     <string name="grant_background_location">اعطای مکان در پس‌زمینه</string>
     <string name="perm_background_location_desc">دسترسی به مکان در پس‌زمینه برای حفظ اتصال مش لازم است.</string>
     <string name="perm_background_location_system">به گپ مش اجازه دهید همیشه به مکان دسترسی داشته باشد</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome">به گپ خوش آمدید</string>
+    <string name="onboarding_identity_desc">هویت دیجیتال شما در مِش.</string>
+    <string name="onboarding_username_label">نام کاربری شما</string>
+    <string name="onboarding_privacy_note">توجه: تغییر نام کاربری از حالت ناشناس ممکن است حریم خصوصی شما را کاهش دهد اگر نام قابل شناسایی انتخاب کنید.</string>
+    <string name="onboarding_bg_title">پس‌زمینه و مِش</string>
+    <string name="onboarding_bg_option">اجرای برنامه در پس‌زمینه؟</string>
+    <string name="onboarding_enabled_rec">فعال (توصیه شده)</string>
+    <string name="onboarding_disabled">غیرفعال</string>
+    <string name="onboarding_bg_enabled_desc">✓ اتصال پایدارتر\n✓ دریافت پیام در حالت قفل\n⚠ مصرف باتری بیشتر</string>
+    <string name="onboarding_bg_disabled_desc">✓ صرفه‌جویی در باتری\n⚠ قطع اتصال هنگام بستن برنامه\n⚠ تأخیر در پیام‌ها</string>
+    <string name="onboarding_mesh_title">مِش چگونه کار می‌کند</string>
+    <string name="onboarding_mesh_desc">گپ یک شبکهٔ آفلاین با بلوتوث ایجاد می‌کند. پیام‌ها بین گوشی‌ها جابه‌جا می‌شوند. همهٔ چت‌ها رمزگذاری شده و هرگز با هیچ سرور مرکزی به اشتراک گذاشته نمی‌شوند.</string>
+    <string name="onboarding_features_title">ویژگی‌ها و وضعیت</string>
+    <string name="onboarding_feature_geo_title">مکانی (Geohash)</string>
+    <string name="onboarding_feature_geo_desc">با افراد در منطقهٔ دقیق خود ارتباط برقرار کنید. نیاز به اتصال Tor (اینترنت) برای همگام‌سازی با شبکهٔ جهانی مکان دارد.</string>
+    <string name="onboarding_feature_notes_title">یادداشت‌های مکانی</string>
+    <string name="onboarding_feature_notes_desc">یادداشت‌های دیجیتال در موقعیت فعلی خود بگذارید. دیگران که از این نقطه بازدید می‌کنند می‌توانند آن‌ها را بخوانند. مثل دیوارنویسی دیجیتال!</string>
+    <string name="onboarding_status_title">آیکون‌های وضعیت اتصال</string>
+    <string name="onboarding_status_green">سبز</string>
+    <string name="onboarding_status_green_desc">متصل / آنلاین</string>
+    <string name="onboarding_status_orange">نارنجی</string>
+    <string name="onboarding_status_orange_desc">در حال اتصال / راه‌اندازی</string>
+    <string name="onboarding_status_red">قرمز</string>
+    <string name="onboarding_status_red_desc">قطع / آفلاین</string>
+    <string name="onboarding_status_desc">نقطهٔ وضعیت پویاست:\n• در چت مِش: وضعیت مِش محلی\n• در چت مکانی: وضعیت Tor</string>
+    <string name="onboarding_emergency_title">پاکسازی اضطراری داده</string>
+    <string name="onboarding_emergency_desc">سه بار روی عنوان گپ مش در سربرگ ضربه بزنید تا همهٔ داده‌ها، کلیدها و پیام‌ها فوراً پاک شوند.</string>
+    <string name="onboarding_next">بعدی</string>
+    <string name="onboarding_get_started">شروع کنید</string>
+
 </resources>

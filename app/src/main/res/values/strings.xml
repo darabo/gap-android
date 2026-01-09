@@ -19,6 +19,12 @@
     <string name="emergency_clear_hint">Triple tap to clear all data</string>
     <string name="your_network">Network</string>
     
+    <!-- Bottom Navigation -->
+    <string name="nav_mesh">Chat</string>
+    <string name="nav_location">Location</string>
+    <string name="nav_people">People</string>
+    <string name="nav_settings">Settings</string>
+    <string name="change_username">Change Username</string>
     <!-- Battery Optimization Strings -->
     <string name="battery_optimization_detected">Battery Optimization Detected</string>
     <string name="battery_optimization_disabled">Battery Optimization Disabled</string>
@@ -457,5 +463,37 @@
     <string name="grant_background_location">Grant Background Location</string>
     <string name="perm_background_location_desc">Background location access is required to maintain mesh connectivity.</string>
     <string name="perm_background_location_system">Allow Gap Mesh to access location all the time</string>
+
+    <!-- Tutorial Onboarding -->
+    <string name="onboarding_welcome">Welcome to Gap</string>
+    <string name="onboarding_identity_desc">Your digital identity on the Mesh.</string>
+    <string name="onboarding_username_label">Your Username</string>
+    <string name="onboarding_privacy_note">Note: Changing your username from the anonymous default may reduce your privacy if you choose a recognizable name.</string>
+    <string name="onboarding_bg_title">Background &amp; Mesh</string>
+    <string name="onboarding_bg_option">Keep App Running in Background?</string>
+    <string name="onboarding_enabled_rec">Enabled (Recommended)</string>
+    <string name="onboarding_disabled">Disabled</string>
+    <string name="onboarding_bg_enabled_desc">✓ More reliable connection\n✓ Receive messages while phone is locked\n⚠ Uses more battery</string>
+    <string name="onboarding_bg_disabled_desc">✓ Saves battery\n⚠ Connection stops when app is closed\n⚠ Messages may be delayed</string>
+    <string name="onboarding_mesh_title">How the Mesh Works</string>
+    <string name="onboarding_mesh_desc">Gap creates an offline network using Bluetooth. Messages hop from phone to phone. All chats are encrypted and never shared with any central server.</string>
+    <string name="onboarding_features_title">Features &amp; Status</string>
+    <string name="onboarding_feature_geo_title">Geohashes (Location Chat)</string>
+    <string name="onboarding_feature_geo_desc">Connect with people in your precise area. Requires Tor connection (needs internet) to sync with the global location grid.</string>
+    <string name="onboarding_feature_notes_title">Location Notes</string>
+    <string name="onboarding_feature_notes_desc">Leave digital notes at your current location. Others who visit this spot can read them. Like a digital graffiti wall!</string>
+    <string name="onboarding_status_title">Connection Status Icons</string>
+    <string name="onboarding_status_green">Green</string>
+    <string name="onboarding_status_green_desc">Connected / Online</string>
+    <string name="onboarding_status_orange">Orange</string>
+    <string name="onboarding_status_orange_desc">Connecting / Bootstrapping</string>
+    <string name="onboarding_status_red">Red</string>
+    <string name="onboarding_status_red_desc">Disconnected / Offline</string>
+    <string name="onboarding_status_desc">The status dot behaves dynamically:\n• In Mesh Chat: Shows local mesh status\n• In Location Chat: Shows Tor status</string>
+    <string name="onboarding_emergency_title">Emergency Data Wipe</string>
+    <string name="onboarding_emergency_desc">Triple-tap the \'Gap Mesh\' title in the header to instantly delete all data, keys, and messages.</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_get_started">Get Started</string>
+
 
 </resources>

@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -75,13 +76,12 @@ fun ImagePickerButton(
         }
     }
 
+    var showMenu by remember { mutableStateOf(false) }
+
     Box(
         modifier = modifier
-            .size(32.dp)
-            .combinedClickable(
-                onClick = { imagePicker.launch("image/*") },
-                onLongClick = { startCameraCapture() }
-            ),
+            .size(40.dp)
+            .clickable { showMenu = true },
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -90,6 +90,40 @@ fun ImagePickerButton(
             tint = Color.Gray,
             modifier = Modifier.size(20.dp)
         )
+        
+        androidx.compose.material3.DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false }
+        ) {
+            androidx.compose.material3.DropdownMenuItem(
+                text = { androidx.compose.material3.Text("Take Photo") },
+                onClick = {
+                    showMenu = false
+                    startCameraCapture()
+                },
+                leadingIcon = { 
+                    Icon(
+                        imageVector = Icons.Filled.Camera,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    ) 
+                }
+            )
+            androidx.compose.material3.DropdownMenuItem(
+                text = { androidx.compose.material3.Text("Choose from Gallery") },
+                onClick = {
+                    showMenu = false
+                    imagePicker.launch("image/*")
+                },
+                leadingIcon = { 
+                    Icon(
+                        imageVector = Icons.Filled.Photo,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    ) 
+                }
+            )
+        }
     }
 
     // No custom preview: native camera UI handles confirmation

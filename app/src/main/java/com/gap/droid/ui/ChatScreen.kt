@@ -59,6 +59,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
     val showAppInfo by viewModel.showAppInfo.collectAsStateWithLifecycle()
     val showVerificationSheet by viewModel.showVerificationSheet.collectAsStateWithLifecycle()
     val showSecurityVerificationSheet by viewModel.showSecurityVerificationSheet.collectAsStateWithLifecycle()
+    val geohashPeople by viewModel.geohashPeople.collectAsStateWithLifecycle()
 
     var messageText by remember { mutableStateOf(TextFieldValue("")) }
     var showPasswordPrompt by remember { mutableStateOf(false) }
@@ -74,6 +75,9 @@ fun ChatScreen(viewModel: ChatViewModel) {
     var initialViewerIndex by remember { mutableStateOf(0) }
     var forceScrollToBottom by remember { mutableStateOf(false) }
     var isScrolledUp by remember { mutableStateOf(false) }
+    
+    // Bottom navigation - removed Settings gear from header since it's in bottom nav now
+    var currentTab by remember { mutableStateOf(BottomNavTab.MESH) }
 
     // Show password dialog when needed
     LaunchedEffect(showPasswordPrompt) {
@@ -239,6 +243,39 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 colorScheme = colorScheme,
                 showMediaButtons = showMediaButtons
             )
+            
+            // Bottom Navigation Bar
+            // Unread count logic: show 0 when on chat tab and viewing latest (not scrolled up)
+            val isViewingMeshChat = currentTab == BottomNavTab.MESH && 
+                                    selectedPrivatePeer == null && 
+                                    currentChannel == null
+            val meshUnreadCount = if (isViewingMeshChat && !isScrolledUp) 0 else 0 // Badge disabled when viewing
+            
+            GapMeshBottomNavigation(
+                currentTab = currentTab,
+                onTabSelected = { tab ->
+                    currentTab = tab
+                    when (tab) {
+                        BottomNavTab.MESH -> {
+                            // Already on mesh - clear any location/private selection
+                            viewModel.endPrivateChat()
+                            viewModel.switchToChannel(null)
+                        }
+                        BottomNavTab.LOCATION -> {
+                            showLocationChannelsSheet = true
+                        }
+                        BottomNavTab.PEOPLE -> {
+                            viewModel.showSidebar()
+                        }
+                        BottomNavTab.SETTINGS -> {
+                            viewModel.showAppInfo()
+                        }
+                    }
+                },
+                unreadMeshCount = meshUnreadCount,
+                unreadLocationCount = hasUnreadChannels.values.sum(),
+                peopleNearbyCount = connectedPeers.size + geohashPeople.size
+            )
         }
 
         // Floating header - positioned absolutely at top, ignores keyboard
@@ -328,10 +365,14 @@ fun ChatScreen(viewModel: ChatViewModel) {
         ) {
             SidebarOverlay(
                 viewModel = viewModel,
-                onDismiss = { viewModel.hideSidebar() },
+                onDismiss = { 
+                    viewModel.hideSidebar()
+                    currentTab = BottomNavTab.MESH // Reset to Chat tab
+                },
                 onShowVerification = {
                     viewModel.showVerificationSheet(fromSidebar = true)
                     viewModel.hideSidebar()
+                    currentTab = BottomNavTab.MESH // Reset to Chat tab
                 },
                 modifier = Modifier.fillMaxSize()
             )
@@ -367,9 +408,15 @@ fun ChatScreen(viewModel: ChatViewModel) {
             passwordInput = ""
         },
         showAppInfo = showAppInfo,
-        onAppInfoDismiss = { viewModel.hideAppInfo() },
+        onAppInfoDismiss = { 
+            viewModel.hideAppInfo()
+            currentTab = BottomNavTab.MESH // Reset to Chat tab
+        },
         showLocationChannelsSheet = showLocationChannelsSheet,
-        onLocationChannelsSheetDismiss = { showLocationChannelsSheet = false },
+        onLocationChannelsSheetDismiss = { 
+            showLocationChannelsSheet = false
+            currentTab = BottomNavTab.MESH // Reset to Chat tab
+        },
         showLocationNotesSheet = showLocationNotesSheet,
         onLocationNotesSheetDismiss = { showLocationNotesSheet = false },
         showUserSheet = showUserSheet,
@@ -541,10 +588,13 @@ private fun ChatDialogs(
 
     // About sheet
     var showDebugSheet by remember { mutableStateOf(false) }
+    val currentNickname by viewModel.nickname.collectAsStateWithLifecycle()
     AboutSheet(
         isPresented = showAppInfo,
         onDismiss = onAppInfoDismiss,
-        onShowDebug = { showDebugSheet = true }
+        onShowDebug = { showDebugSheet = true },
+        nickname = currentNickname,
+        onNicknameChange = { viewModel.setNickname(it) }
     )
     if (showDebugSheet) {
         com.gap.droid.ui.debug.DebugSettingsSheet(

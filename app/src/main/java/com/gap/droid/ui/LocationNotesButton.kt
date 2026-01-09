@@ -1,8 +1,12 @@
 package com.gap.droid.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -10,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -24,6 +29,7 @@ import com.gap.droid.nostr.LocationNotesManager
  * Location Notes button component for MainHeader
  * Shows in mesh mode when location permission granted AND services enabled
  * Icon turns primary color when notes exist, gray otherwise
+ * Made more prominent with larger icon and badge indicator
  */
 @Composable
 fun LocationNotesButton(
@@ -52,16 +58,30 @@ fun LocationNotesButton(
     // Only show in mesh mode when location is authorized (iOS pattern)
     if (selectedLocationChannel is ChannelID.Mesh && locationEnabled) {
         val hasNotes = notesCount > 0
-        IconButton(
-            onClick = onClick,
-            modifier = modifier.size(24.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Description, // "long.text.page.and.pencil" equivalent
-                contentDescription = stringResource(R.string.cd_location_notes),
-                modifier = Modifier.size(16.dp),
-                tint = if (hasNotes) colorScheme.primary else Color.Gray
-            )
+        
+        Box(modifier = modifier) {
+            IconButton(
+                onClick = onClick,
+                modifier = Modifier.size(36.dp) // Larger touch target
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.EditNote, // More recognizable "notes" icon
+                    contentDescription = stringResource(R.string.cd_location_notes),
+                    modifier = Modifier.size(22.dp), // Larger icon
+                    tint = if (hasNotes) Color(0xFF2E7D32) else colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+            
+            // Badge indicator when notes exist
+            if (hasNotes) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .align(Alignment.TopEnd)
+                        .offset(x = (-4).dp, y = 4.dp)
+                        .background(Color(0xFF2E7D32), CircleShape)
+                )
+            }
         }
     }
 }
