@@ -5,13 +5,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.SettingsEthernet
@@ -33,6 +31,7 @@ import com.gapmesh.droid.R
 import androidx.compose.ui.platform.LocalContext
 import com.gapmesh.droid.service.MeshServicePreferences
 import com.gapmesh.droid.service.MeshForegroundService
+import com.gapmesh.droid.core.ui.component.sheet.BitchatBottomSheet
 
 private enum class GraphMode { OVERALL, PER_DEVICE, PER_PEER }
 
@@ -43,7 +42,6 @@ fun DebugSettingsSheet(
     onDismiss: () -> Unit,
     meshService: BluetoothMeshService
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val colorScheme = MaterialTheme.colorScheme
     val manager = remember { DebugSettingsManager.getInstance() }
 
@@ -95,9 +93,8 @@ fun DebugSettingsSheet(
 
     if (!isPresented) return
 
-    ModalBottomSheet(
+    BitchatBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState
     ) {
         // Mark debug sheet visible/invisible to gate heavy work
         LaunchedEffect(Unit) { DebugSettingsManager.getInstance().setDebugSheetVisible(true) }
@@ -107,8 +104,8 @@ fun DebugSettingsSheet(
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 24.dp),
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(top = 80.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {

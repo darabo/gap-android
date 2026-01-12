@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gapmesh.droid.geohash.GeohashChannelLevel
 import com.gapmesh.droid.geohash.LocationChannelManager
+import com.gapmesh.droid.core.ui.component.sheet.BitchatBottomSheet
 
 /**
  * Presenter component for LocationNotesSheet
@@ -62,11 +63,8 @@ private fun LocationNotesErrorSheet(
     onDismiss: () -> Unit,
     locationManager: LocationChannelManager
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(
+    BitchatBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier

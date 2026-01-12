@@ -15,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -29,6 +28,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gapmesh.droid.geohash.GeohashChannelLevel
 import com.gapmesh.droid.geohash.LocationChannelManager
 import com.gapmesh.droid.nostr.LocationNotesManager
+import com.gapmesh.droid.core.ui.component.button.CloseButton
+import com.gapmesh.droid.core.ui.component.sheet.BitchatBottomSheet
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.Calendar
@@ -101,14 +102,10 @@ fun LocationNotesSheet(
             notesManager.cancel()
         }
     }
-    
-    ModalBottomSheet(
+
+    BitchatBottomSheet(
         onDismissRequest = onDismiss,
-        modifier = modifier.statusBarsPadding(),
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        dragHandle = null,
-        containerColor = backgroundColor,
-        contentColor = if (isDark) Color.White else Color.Black
+        modifier = modifier,
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             LazyColumn(
@@ -123,7 +120,6 @@ fun LocationNotesSheet(
                         locationName = displayLocationName,
                         state = state,
                         accentGreen = accentGreen,
-                        backgroundColor = backgroundColor
                     )
                 }
 
@@ -205,7 +201,6 @@ fun LocationNotesSheet(
                         onDraftChange = { draft = it },
                         sendButtonEnabled = sendButtonEnabled,
                         accentGreen = accentGreen,
-                        backgroundColor = backgroundColor,
                         onSend = {
                             val content = draft.trim()
                             if (content.isNotEmpty()) {
@@ -231,12 +226,11 @@ private fun LocationNotesHeader(
     locationName: String?,
     state: LocationNotesManager.State,
     accentGreen: Color,
-    backgroundColor: Color,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(backgroundColor)
+            .padding(horizontal = 16.dp)
             .padding(top = 16.dp, bottom = 12.dp)
     ) {
         // Localized title with ±1 and note count
@@ -472,7 +466,6 @@ private fun LocationNotesInputSection(
     onDraftChange: (String) -> Unit,
     sendButtonEnabled: Boolean,
     accentGreen: Color,
-    backgroundColor: Color,
     onSend: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -482,7 +475,6 @@ private fun LocationNotesInputSection(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(backgroundColor)
             .padding(horizontal = 12.dp, vertical = 8.dp), // Match main chat padding
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp) // Match main chat spacing
