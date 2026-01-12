@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gapmesh.droid.core.ui.component.button.CloseButton
-import com.gapmesh.droid.core.ui.component.sheet.BitchatBottomSheet
 import com.gapmesh.droid.geohash.ChannelID
 import com.gapmesh.droid.ui.theme.BASE_FONT_SIZE
 
@@ -79,10 +78,13 @@ fun MeshPeerListSheet(
     )
 
     if (isPresented) {
-        BitchatBottomSheet(
-            modifier = modifier,
+        ModalBottomSheet(
+            modifier = modifier.statusBarsPadding(),
             onDismissRequest = onDismiss,
             sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.background,
+            dragHandle = null
+
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 LazyColumn(
@@ -851,9 +853,12 @@ private fun PrivateChatSheet(
     )
 
     if (isPresented) {
-        BitchatBottomSheet(
+        ModalBottomSheet(
+            modifier = Modifier.statusBarsPadding(),
             onDismissRequest = onDismiss,
             sheetState = sheetState,
+            containerColor = colorScheme.background,
+            dragHandle = null
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
