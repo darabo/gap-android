@@ -723,7 +723,15 @@ private fun meshCount(viewModel: ChatViewModel): Int {
 @Composable
 private fun geohashTitleWithCount(channel: GeohashChannel, participantCount: Int): String {
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val peopleText = ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, participantCount, participantCount)
+    
+    // For high precision channels (Neighborhood, Block) where we don't broadcast presence,
+    // show "? people" instead of "0 people" to avoid misleading "nobody is here" indication.
+    val isHighPrecision = channel.level.precision > 5
+    val peopleText = if (isHighPrecision && participantCount == 0) {
+        ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, 0, 0).replace("0", "?")
+    } else {
+        ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, participantCount, participantCount)
+    }
     val levelName = when (channel.level) {
         com.gapmesh.droid.geohash.GeohashChannelLevel.BUILDING -> "Building" // iOS: precision 8 for location notes
         com.gapmesh.droid.geohash.GeohashChannelLevel.BLOCK -> stringResource(com.gapmesh.droid.R.string.location_level_block)
@@ -738,7 +746,14 @@ private fun geohashTitleWithCount(channel: GeohashChannel, participantCount: Int
 @Composable
 private fun geohashHashTitleWithCount(geohash: String, participantCount: Int): String {
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val peopleText = ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, participantCount, participantCount)
+    val level = levelForLength(geohash.length)
+    val isHighPrecision = level.precision > 5
+
+    val peopleText = if (isHighPrecision && participantCount == 0) {
+        ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, 0, 0).replace("0", "?")
+    } else {
+        ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, participantCount, participantCount)
+    }
     return "#$geohash [$peopleText]"
 }
 
