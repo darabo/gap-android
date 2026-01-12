@@ -131,6 +131,8 @@
     <string name="about_tor_off">Tor خاموش</string>
     <string name="about_tor_on">Tor روشن</string>
     <string name="about_tor_route">برای حفظ بیشتر حریم خصوصی، ترافیک اینترنت را از طریق Tor مسیریابی کنید.</string>
+    <string name="about_legacy_compat_title">سازگاری با نسخه‌های قدیمی</string>
+    <string name="about_legacy_compat_desc">به برنامه‌های Bitchat اجازه پیدا کردن شما را بدهید. ممکن است نیاز به راه‌اندازی مجدد داشته باشد. غیرفعال‌کردن حریم خصوصی را به حداکثر می‌رساند.</string>
     <string name="about_tor_status">وضعیت Tor: %1$s، بوت‌استرپ %2$d%%</string>
     <string name="about_last">آخرین: %1$s</string>
     <string name="about_emergency_title">پاکسازی اضطراری داده</string>
@@ -223,6 +225,7 @@
     <string name="disable_location_services">غیرفعال‌کردن خدمات مکان</string>
     <string name="enable_location_services">فعال‌کردن خدمات مکان</string>
     <string name="mesh_label">mesh</string>
+    <string name="mesh_network_header">#مِش</string>
     <string name="location_level_block">بلوک</string>
     <string name="location_level_neighborhood">محله</string>
     <string name="location_level_city">شهر</string>
@@ -413,6 +416,13 @@
     <string name="cd_location_notes">یادداشت‌های مکانی</string>
     <string name="app_brand">Gap Mesh/</string>
     <string name="tor_not_available_in_this_build">Tor در این نسخه در دسترس نیست</string>
+
+    <!-- پیام‌های سیستم -->
+    <string name="system_screenshot_public">از صفحه عکس گرفت</string>
+    <string name="system_screenshot_local">شما از صفحه عکس گرفتید</string>
+    <string name="system_tor_starting">در حال راه‌اندازی مخابره...</string>
+    <string name="system_tor_running">مخابره راه‌اندازی شد، تمام چت‌ها برای حفظ حریم خصوصی IP از طریق Tor مسیریابی می‌شوند.</string>
+    <string name="system_tor_restarting">مخابره در حال راه‌اندازی مجدد برای بازیابی اتصال...</string>
     <string name="background_location_required_title">نیاز به مکان در پس‌زمینه</string>
     <string name="background_location_required_subtitle">دسترسی به مکان در پس‌زمینه لازم است</string>
     <string name="background_location_explanation">گپ مش برای حفظ اتصال مش هنگام بستن برنامه به دسترسی مکان در پس‌زمینه نیاز دارد.</string>
@@ -422,7 +432,12 @@
     <string name="background_location_privacy_note">داده‌های مکان هرگز به هیچ سروری ارسال نمی‌شود. فقط برای کشف بلوتوث به صورت محلی استفاده می‌شود.</string>
     <string name="grant_background_location">اعطای مکان در پس‌زمینه</string>
     <string name="perm_background_location_desc">دسترسی به مکان در پس‌زمینه برای حفظ اتصال مش لازم است.</string>
-    <string name="perm_background_location_system">به گپ مش اجازه دهید همیشه به مکان دسترسی داشته باشد</string>
+    <string name="perm_background_location_system">همیشه اجازه داده شود</string>
+
+    <!-- Storage permissions -->
+    <string name="perm_type_storage">حافظه</string>
+    <string name="perm_storage_desc">برای تشخیص اسکرین‌شات و ذخیره رسانه مورد نیاز است.</string>
+    <string name="perm_storage_system">عکس‌ها و ویدیوها / حافظه</string>
 
     <!-- Onboarding -->
     <string name="onboarding_welcome">به گپ خوش آمدید</string>

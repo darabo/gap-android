@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.sp
 import com.gapmesh.droid.core.ui.utils.singleOrTripleClickable
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
@@ -136,11 +138,19 @@ fun NicknameEditor(
     val scrollState = rememberScrollState()
     var isEditing by remember { mutableStateOf(false) }
     var editText by remember { mutableStateOf(value) }
+    val focusRequester = remember { FocusRequester() }
     
     // Update editText when value changes externally
     LaunchedEffect(value) {
         if (!isEditing) {
             editText = value
+        }
+    }
+    
+    // Auto-focus when entering edit mode
+    LaunchedEffect(isEditing) {
+        if (isEditing) {
+            focusRequester.requestFocus()
         }
     }
     
@@ -182,6 +192,7 @@ fun NicknameEditor(
                 modifier = Modifier
                     .widthIn(max = 120.dp)
                     .horizontalScroll(scrollState)
+                    .focusRequester(focusRequester)
             )
             
             Spacer(modifier = Modifier.width(4.dp))
@@ -687,7 +698,7 @@ private fun MainHeader(
                     selectedLocationChannel = selectedLocationChannel,
                     isConnected = isConnected,
                     modifier = Modifier
-                        .size(12.dp) // Larger visibility as requested
+                        .size(16.dp) // Increased for better visibility
                         .padding(start = 6.dp, end = 2.dp)
                 )
 
@@ -744,13 +755,13 @@ private fun LocationChannelsButton(
     
     val (badgeText, badgeColor) = when (selectedChannel) {
         is com.gapmesh.droid.geohash.ChannelID.Mesh -> {
-            "#mesh" to Color(0xFF007AFF) // iOS blue for mesh
+            stringResource(R.string.mesh_network_header) to Color(0xFF007AFF) // iOS blue for mesh
         }
         is com.gapmesh.droid.geohash.ChannelID.Location -> {
             val geohash = (selectedChannel as com.gapmesh.droid.geohash.ChannelID.Location).channel.geohash
             "#$geohash" to Color(0xFF00C851) // Green for location
         }
-        null -> "#mesh" to Color(0xFF007AFF) // Default to mesh
+        null -> stringResource(R.string.mesh_network_header) to Color(0xFF007AFF) // Default to mesh
     }
     
     Button(

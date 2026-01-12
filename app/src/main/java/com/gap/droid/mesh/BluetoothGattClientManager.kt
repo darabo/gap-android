@@ -234,13 +234,15 @@ class BluetoothGattClientManager(
         }
         
         // ========== PRIMARY SCAN: Filtered by service UUID ==========
-        val scanFilter = ScanFilter.Builder()
-            .setServiceUuid(ParcelUuid(AppConstants.Mesh.Gatt.SERVICE_UUID))
-            .build()
+        // Use rotating UUIDs for privacy-aware discovery
+        val validUuids = ServiceUuidRotation.getValidServiceUuids(includeLegacy = true)
+        val scanFilters = validUuids.map { uuid ->
+            ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(uuid))
+                .build()
+        }
         
-        val scanFilters = listOf(scanFilter) 
-        
-        Log.d(TAG, "Starting BLE scan with target service UUID: ${AppConstants.Mesh.Gatt.SERVICE_UUID}")
+        Log.d(TAG, "Starting BLE scan with ${validUuids.size} service UUIDs: ${validUuids.joinToString { it.toString().take(8) }}...")
         
         scanCallback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
@@ -407,8 +409,8 @@ class BluetoothGattClientManager(
         val deviceAddress = device.address
         val scanRecord = result.scanRecord
         
-        // CRITICAL: Only process devices that have our service UUID
-        val hasOurService = scanRecord?.serviceUuids?.any { it.uuid == AppConstants.Mesh.Gatt.SERVICE_UUID } == true
+        // CRITICAL: Only process devices that have a valid service UUID (rotating or legacy)
+        val hasOurService = scanRecord?.serviceUuids?.any { ServiceUuidRotation.isValidServiceUuid(it.uuid) } == true
         if (!hasOurService) {
             return
         }
@@ -579,7 +581,14 @@ class BluetoothGattClientManager(
                             gatt.disconnect()
                         }
                     } else {
-                        Log.e(TAG, "Client: Required service not found for $deviceAddress")
+                        Log.e(TAG, "Client: Required service not found for $deviceAddress. Looking for: ${AppConstants.Mesh.Gatt.SERVICE_UUID}")
+                        Log.e(TAG, "Client: Discovered ${gatt.services.size} services on device:")
+                        gatt.services.forEach { s ->
+                            Log.e(TAG, "  - Service: ${s.uuid}")
+                            s.characteristics.forEach { c ->
+                                Log.e(TAG, "    - Char: ${c.uuid}")
+                            }
+                        }
                         gatt.disconnect()
                     }
                 } else {

@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
 import kotlin.math.pow
+import com.gapmesh.droid.net.ArtiTorManager
+import java.net.ConnectException
 
 /**
  * Manages WebSocket connections to Nostr relays
@@ -762,11 +764,31 @@ class NostrRelayManager private constructor() {
             return
         }
         
+        // Check if we should suspend retry counting (e.g. if Tor is starting up)
+        var shouldCountAttempt = true
+        
+        try {
+            val torStatus = ArtiTorManager.getInstance().statusFlow.value
+            if (torStatus.mode == com.gapmesh.droid.net.TorMode.ON) {
+                // If Tor is ON but not fully running/bootstrapped, don't count connection refusals against the limit
+                // This prevents exhausting retries while waiting for Tor to start (which can take >1 min)
+                if ((torStatus.state == ArtiTorManager.TorState.STARTING || 
+                     torStatus.state == ArtiTorManager.TorState.BOOTSTRAPPING) &&
+                    (error is ConnectException || error.message?.contains("ECONNREFUSED") == true)) {
+                    shouldCountAttempt = false
+                    Log.d(TAG, "Tor is bootstrapping, not counting retry attempt for $relayUrl")
+                }
+            }
+        } catch (_: Exception) {}
+
         // Implement exponential backoff for non-DNS errors
         val relay = relaysList.find { it.url == relayUrl } ?: return
-        relay.reconnectAttempts++
         
-        // Stop attempting after max attempts
+        if (shouldCountAttempt) {
+            relay.reconnectAttempts++
+        }
+        
+        // Stop attempting after max attempts (only if we're counting them)
         if (relay.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
             Log.w(TAG, "Max reconnection attempts ($MAX_RECONNECT_ATTEMPTS) reached for $relayUrl")
             return

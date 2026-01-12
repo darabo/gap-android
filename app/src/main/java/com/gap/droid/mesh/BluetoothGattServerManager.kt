@@ -370,8 +370,23 @@ class BluetoothGattServerManager(
 
         val settings = powerManager.getAdvertiseSettings()
         
+        // Use rotating UUID for privacy, or static UUID for legacy compatibility
+        val legacyMode = try { 
+            com.gapmesh.droid.service.MeshServicePreferences.isLegacyCompatibilityEnabled(false) 
+        } catch (_: Exception) { false }
+        
+        val serviceUuid = if (legacyMode) {
+            // Legacy mode: use static UUID so Bitchat devices can find us
+            ServiceUuidRotation.FALLBACK_UUID
+        } else {
+            // Privacy mode: use rotating UUID
+            ServiceUuidRotation.getCurrentServiceUuid()
+        }
+        
+        Log.d(TAG, "Advertising with UUID: $serviceUuid (legacy: $legacyMode)")
+        
         val data = AdvertiseData.Builder()
-            .addServiceUuid(ParcelUuid(AppConstants.Mesh.Gatt.SERVICE_UUID))
+            .addServiceUuid(ParcelUuid(serviceUuid))
             .setIncludeTxPowerLevel(false)
             .setIncludeDeviceName(false)
             .build()

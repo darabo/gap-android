@@ -69,6 +69,15 @@ class PermissionManager(private val context: Context) {
             Manifest.permission.ACCESS_FINE_LOCATION
         ))
 
+        // Storage permissions (for screenshot detection) - optional, won't block onboarding if denied
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Android 13+ uses granular media permissions
+            permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
+        } else {
+            // Android 12 and below use READ_EXTERNAL_STORAGE
+            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+
         // Notification permission intentionally excluded to keep it optional
 
         return permissions
@@ -255,6 +264,25 @@ class PermissionManager(private val context: Context) {
             )
         }
 
+        // Storage category
+        val storagePermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            listOf(Manifest.permission.READ_MEDIA_IMAGES)
+        } else {
+            listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+        
+        categories.add(
+            PermissionCategory(
+                type = PermissionType.STORAGE,
+                typeName = context.getString(R.string.perm_type_storage),
+                description = context.getString(R.string.perm_storage_desc),
+                permissions = storagePermissions,
+                isGranted = storagePermissions.all { isPermissionGranted(it) },
+                systemDescription = context.getString(R.string.perm_storage_system)
+            )
+        )
+
+
         return categories
     }
 
@@ -314,6 +342,7 @@ enum class PermissionType(val nameValue: String) {
     BACKGROUND_LOCATION("Background Location"),
     MICROPHONE("Microphone"),
     NOTIFICATIONS("Notifications"),
+    STORAGE("Storage"),
     BATTERY_OPTIMIZATION("Battery Optimization"),
     OTHER("Other")
 }

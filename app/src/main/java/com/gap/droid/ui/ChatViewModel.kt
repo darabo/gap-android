@@ -31,6 +31,9 @@ import com.gapmesh.droid.nostr.GeohashAliasRegistry
 import com.gapmesh.droid.util.dataFromHexString
 import com.gapmesh.droid.util.hexEncodedString
 import java.security.MessageDigest
+import com.gapmesh.droid.net.ArtiTorManager
+import com.gapmesh.droid.R
+import com.gapmesh.droid.ui.ScreenshotDetector
 
 /**
  * # Architecture Overview
@@ -63,6 +66,8 @@ import java.security.MessageDigest
     val meshService: BluetoothMeshService
 ) : AndroidViewModel(application), BluetoothMeshDelegate {
     private val debugManager by lazy { try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance() } catch (e: Exception) { null } }
+    
+    private var screenshotDetector: ScreenshotDetector? = null
 
     companion object {
         private const val TAG = "ChatViewModel"
@@ -302,6 +307,44 @@ import java.security.MessageDigest
         // Initialize session state monitoring
         initializeSessionStateMonitoring()
 
+        // Initialize ScreenshotDetector
+        screenshotDetector = ScreenshotDetector(getApplication(), viewModelScope) {
+            handleScreenshot()
+        }
+        screenshotDetector?.start()
+
+        // Monitor Tor Status
+        viewModelScope.launch {
+            var lastTorSystemMessage: String? = null
+            
+            ArtiTorManager.getInstance().statusFlow.collect { status ->
+                // Only show Tor status messages in Geohash/Location mode, not in Mesh
+                val currentChannel = state.selectedLocationChannel.value
+                val isInMeshMode = currentChannel is com.gapmesh.droid.geohash.ChannelID.Mesh
+                
+                if (isInMeshMode) {
+                    // Suppress Tor status messages in Mesh mode to reduce confusion
+                    return@collect
+                }
+                
+                val context = getApplication<Application>()
+                val msg = when(status.state) {
+                     com.gapmesh.droid.net.ArtiTorManager.TorState.STARTING -> context.getString(R.string.system_tor_starting)
+                     com.gapmesh.droid.net.ArtiTorManager.TorState.RUNNING -> {
+                         // Only show "Running" once
+                         context.getString(R.string.system_tor_running)
+                     }
+                     com.gapmesh.droid.net.ArtiTorManager.TorState.BOOTSTRAPPING -> if (status.bootstrapPercent < 10) context.getString(R.string.system_tor_restarting) else null
+                     else -> null
+                }
+                
+                if (msg != null && msg != lastTorSystemMessage) {
+                    messageManager.addSystemMessage(msg)
+                    lastTorSystemMessage = msg
+                }
+            }
+        }
+
         // Bridge DebugSettingsManager -> Chat messages when verbose logging is on
         viewModelScope.launch {
             com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().debugMessages.collect { msgs ->
@@ -379,14 +422,29 @@ import java.security.MessageDigest
         try {
             meshService.connectionManager.onPacketOutbound = null
         } catch (_: Exception) { }
+        
+        screenshotDetector?.stop()
     }
     
     // MARK: - Nickname Management
     
     fun setNickname(newNickname: String) {
+        Log.d(TAG, "setNickname($newNickname) called - persisting and announcing")
         state.setNickname(newNickname)
         dataManager.saveNickname(newNickname)
         meshService.sendBroadcastAnnounce()
+    }
+
+    private fun handleScreenshot() {
+        val context = getApplication<Application>()
+        
+        // 1. Send public message "took a screenshot"
+        // Always send in English for consistency across devices with different locales
+        // The receiver will see this in their own language if they handle localization on their end
+        sendMessage("took a screenshot")
+        
+        // 2. Add local system message "You took a screenshot" (localized for current user)
+        messageManager.addSystemMessage(context.getString(R.string.system_screenshot_local))
     }
     
     /**
@@ -1184,6 +1242,6 @@ import java.security.MessageDigest
      */
     fun colorForNostrPubkey(pubkeyHex: String, isDark: Boolean): androidx.compose.ui.graphics.Color {
         return geohashViewModel.colorForNostrPubkey(pubkeyHex, isDark)
-}
+    }
 
 }

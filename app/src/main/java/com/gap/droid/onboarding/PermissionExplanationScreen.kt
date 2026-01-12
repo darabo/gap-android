@@ -219,6 +219,7 @@ private fun getPermissionIcon(permissionType: PermissionType): ImageVector {
         PermissionType.MICROPHONE -> Icons.Filled.Mic
         PermissionType.NOTIFICATIONS -> Icons.Filled.Notifications
         PermissionType.BATTERY_OPTIMIZATION -> Icons.Filled.Power
+        PermissionType.STORAGE -> Icons.Filled.Settings // Or another suitable icon
         PermissionType.OTHER -> Icons.Filled.Settings
     }
 }

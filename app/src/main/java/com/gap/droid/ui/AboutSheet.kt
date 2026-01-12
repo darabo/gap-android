@@ -561,6 +561,24 @@ fun AboutSheet(
                                             }
                                         } else null
                                     )
+                                    
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 56.dp),
+                                        color = colorScheme.outline.copy(alpha = 0.12f)
+                                    )
+                                    
+                                    // Legacy Compatibility Toggle (Bitchat interop)
+                                    var legacyEnabled by remember { mutableStateOf(com.gapmesh.droid.service.MeshServicePreferences.isLegacyCompatibilityEnabled(false)) }
+                                    SettingsToggleRow(
+                                        icon = Icons.Filled.NetworkCheck,
+                                        title = stringResource(R.string.about_legacy_compat_title),
+                                        subtitle = stringResource(R.string.about_legacy_compat_desc),
+                                        checked = legacyEnabled,
+                                        onCheckedChange = { enabled ->
+                                            legacyEnabled = enabled
+                                            com.gapmesh.droid.service.MeshServicePreferences.setLegacyCompatibilityEnabled(enabled)
+                                        }
+                                    )
                                 }
                             }
                             

@@ -47,6 +47,9 @@ class BitchatApplication : Application() {
         // Initialize mesh service preferences
         try { com.gapmesh.droid.service.MeshServicePreferences.init(this) } catch (_: Exception) { }
 
+        // Initialize service UUID rotation for privacy-enhanced BLE discovery
+        try { com.gapmesh.droid.mesh.ServiceUuidRotation.init(this) } catch (_: Exception) { }
+
         // Proactively start the foreground service to keep mesh alive
         try { com.gapmesh.droid.service.MeshForegroundService.start(this) } catch (_: Exception) { }
 

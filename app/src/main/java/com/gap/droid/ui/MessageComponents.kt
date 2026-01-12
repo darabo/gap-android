@@ -726,6 +726,7 @@ fun DeliveryStatusIcon(status: DeliveryStatus) {
 /**
  * Format message content for chat bubble display with clickable URLs and mentions
  */
+@Composable
 fun formatBubbleMessageContent(
     content: String,
     mentions: List<String>?,
@@ -735,13 +736,21 @@ fun formatBubbleMessageContent(
 ): AnnotatedString {
     val builder = AnnotatedString.Builder()
     
+    // Receiver-side translation: Translate known English markers to current locale
+    // This allows messages to display in the receiver's language regardless of sender's locale
+    val screenshotPublic = stringResource(R.string.system_screenshot_public)
+    val screenshotLocal = stringResource(R.string.system_screenshot_local)
+    var translatedContent = content
+        .replace("you took a screenshot", screenshotLocal) // Handle local message variant
+        .replace("took a screenshot", screenshotPublic) // Handle public message variant
+    
     // URL pattern matching
     val urlPattern = """(https?://[^\s]+|www\.[^\s]+|[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}[^\s]*)""".toRegex()
     val mentionPattern = """@([\p{L}0-9_]+(?:#[a-fA-F0-9]{4})?)""".toRegex()
     
     // Find all matches
-    val urlMatches = urlPattern.findAll(content).toList()
-    val mentionMatches = mentionPattern.findAll(content).toList()
+    val urlMatches = urlPattern.findAll(translatedContent).toList()
+    val mentionMatches = mentionPattern.findAll(translatedContent).toList()
     
     // Combine and sort
     data class Match(val range: IntRange, val type: String, val value: String)
@@ -770,7 +779,7 @@ fun formatBubbleMessageContent(
                 color = textColor,
                 fontWeight = if (isMentioned) FontWeight.Bold else FontWeight.Normal
             ))
-            builder.append(content.substring(lastEnd, match.range.first))
+            builder.append(translatedContent.substring(lastEnd, match.range.first))
             builder.pop()
         }
         
@@ -803,12 +812,12 @@ fun formatBubbleMessageContent(
     }
     
     // Remaining text
-    if (lastEnd < content.length) {
+    if (lastEnd < translatedContent.length) {
         builder.pushStyle(SpanStyle(
             color = textColor,
             fontWeight = if (isMentioned) FontWeight.Bold else FontWeight.Normal
         ))
-        builder.append(content.substring(lastEnd))
+        builder.append(translatedContent.substring(lastEnd))
         builder.pop()
     }
     

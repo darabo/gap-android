@@ -3,6 +3,7 @@ package com.gapmesh.droid.onboarding
 import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -34,6 +35,11 @@ fun TutorialScreen(
 ) {
     var step by remember { mutableStateOf(0) }
     val context = LocalContext.current
+    
+    // [Goose] Hoisted state for Identity Step to ensuring saving on "Next"
+    val nickname by viewModel.nickname.collectAsStateWithLifecycle()
+    var isEditing by remember { mutableStateOf(false) }
+    var editName by remember { mutableStateOf("") }
     
     // Persist background preference
     fun saveBackgroundPref(enabled: Boolean) {
@@ -69,7 +75,14 @@ fun TutorialScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 when (step) {
-                    0 -> IdentityStep(viewModel)
+                    0 -> IdentityStep(
+                        viewModel = viewModel,
+                        nickname = nickname,
+                        isEditing = isEditing,
+                        editName = editName,
+                        onIsEditingChange = { isEditing = it },
+                        onEditNameChange = { editName = it }
+                    )
                     1 -> ConnectivityStep(
                         onBackgroundModeChange = { saveBackgroundPref(it) }
                     )
@@ -81,6 +94,14 @@ fun TutorialScreen(
             
             Button(
                 onClick = {
+                    if (step == 0) {
+                        // [Goose] Fix: Save changes if user clicks Next while editing
+                        if (isEditing && editName.isNotBlank()) {
+                            viewModel.setNickname(editName)
+                            isEditing = false
+                        }
+                    }
+                    
                     if (step < 2) step++ else finishTutorial()
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -95,11 +116,14 @@ fun TutorialScreen(
 }
 
 @Composable
-private fun IdentityStep(viewModel: ChatViewModel) {
-    val nickname by viewModel.nickname.collectAsStateWithLifecycle()
-    var isEditing by remember { mutableStateOf(false) }
-    var editName by remember { mutableStateOf("") }
-    
+private fun IdentityStep(
+    viewModel: ChatViewModel,
+    nickname: String,
+    isEditing: Boolean,
+    editName: String,
+    onIsEditingChange: (Boolean) -> Unit,
+    onEditNameChange: (String) -> Unit
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             stringResource(R.string.onboarding_welcome),
@@ -126,13 +150,13 @@ private fun IdentityStep(viewModel: ChatViewModel) {
                 if (isEditing) {
                     OutlinedTextField(
                         value = editName,
-                        onValueChange = { editName = it },
+                        onValueChange = onEditNameChange,
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         trailingIcon = {
                             IconButton(onClick = { 
                                 if (editName.isNotBlank()) viewModel.setNickname(editName)
-                                isEditing = false 
+                                onIsEditingChange(false) 
                             }) {
                                 Icon(Icons.Filled.Check, "Save")
                             }
@@ -140,18 +164,24 @@ private fun IdentityStep(viewModel: ChatViewModel) {
                     )
                 } else {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onEditNameChange(nickname)
+                                onIsEditingChange(true)
+                            },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             text = nickname,
                             style = MaterialTheme.typography.titleLarge,
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            modifier = Modifier.padding(vertical = 8.dp)
                         )
                         IconButton(onClick = { 
-                            editName = nickname
-                            isEditing = true 
+                            onEditNameChange(nickname)
+                            onIsEditingChange(true) 
                         }) {
                             Icon(Icons.Filled.Edit, "Edit")
                         }
