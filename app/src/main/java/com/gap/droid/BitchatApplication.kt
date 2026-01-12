@@ -44,6 +44,12 @@ class BitchatApplication : Application() {
         // Initialize debug preference manager (persists debug toggles)
         try { com.gapmesh.droid.ui.debug.DebugPreferenceManager.init(this) } catch (_: Exception) { }
 
+        // Initialize Geohash Registries for persistence
+        try {
+            com.gapmesh.droid.nostr.GeohashAliasRegistry.initialize(this)
+            com.gapmesh.droid.nostr.GeohashConversationRegistry.initialize(this)
+        } catch (_: Exception) { }
+
         // Initialize mesh service preferences
         try { com.gapmesh.droid.service.MeshServicePreferences.init(this) } catch (_: Exception) { }
 

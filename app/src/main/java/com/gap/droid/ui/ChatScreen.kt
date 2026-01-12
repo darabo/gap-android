@@ -5,7 +5,6 @@ package com.gapmesh.droid.ui
 
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -51,12 +50,12 @@ fun ChatScreen(viewModel: ChatViewModel) {
     val hasUnreadPrivateMessages by viewModel.unreadPrivateMessages.collectAsStateWithLifecycle()
     val privateChats by viewModel.privateChats.collectAsStateWithLifecycle()
     val channelMessages by viewModel.channelMessages.collectAsStateWithLifecycle()
-    val showSidebar by viewModel.showSidebar.collectAsStateWithLifecycle()
     val showCommandSuggestions by viewModel.showCommandSuggestions.collectAsStateWithLifecycle()
     val commandSuggestions by viewModel.commandSuggestions.collectAsStateWithLifecycle()
     val showMentionSuggestions by viewModel.showMentionSuggestions.collectAsStateWithLifecycle()
     val mentionSuggestions by viewModel.mentionSuggestions.collectAsStateWithLifecycle()
     val showAppInfo by viewModel.showAppInfo.collectAsStateWithLifecycle()
+    val showMeshPeerListSheet by viewModel.showMeshPeerList.collectAsStateWithLifecycle()
     val showVerificationSheet by viewModel.showVerificationSheet.collectAsStateWithLifecycle()
     val showSecurityVerificationSheet by viewModel.showSecurityVerificationSheet.collectAsStateWithLifecycle()
     val geohashPeople by viewModel.geohashPeople.collectAsStateWithLifecycle()
@@ -286,7 +285,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
             nickname = nickname,
             viewModel = viewModel,
             colorScheme = colorScheme,
-            onSidebarToggle = { viewModel.showSidebar() },
+            onSidebarToggle = { viewModel.showMeshPeerList() },
             onShowAppInfo = { viewModel.showAppInfo() },
             onPanicClear = { viewModel.panicClearAllData() },
             onLocationChannelsClick = { showLocationChannelsSheet = true },
@@ -303,28 +302,9 @@ fun ChatScreen(viewModel: ChatViewModel) {
             color = colorScheme.outline.copy(alpha = 0.3f)
         )
 
-        val alpha by animateFloatAsState(
-            targetValue = if (showSidebar) 0.5f else 0f,
-            animationSpec = tween(
-                durationMillis = 300,
-                easing = EaseOutCubic
-            ), label = "overlayAlpha"
-        )
-
-        // Only render the background if it's visible
-        if (alpha > 0f) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = alpha))
-                    .clickable { viewModel.hideSidebar() }
-                    .zIndex(1f)
-            )
-        }
-
         // Scroll-to-bottom floating button
         AnimatedVisibility(
-            visible = isScrolledUp && !showSidebar,
+            visible = isScrolledUp,
             enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(),
             exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(),
             modifier = Modifier
@@ -351,32 +331,6 @@ fun ChatScreen(viewModel: ChatViewModel) {
             }
         }
 
-        AnimatedVisibility(
-            visible = showSidebar,
-            enter = slideInHorizontally(
-                initialOffsetX = { it },
-                animationSpec = tween(300, easing = EaseOutCubic)
-            ) + fadeIn(animationSpec = tween(300)),
-            exit = slideOutHorizontally(
-                targetOffsetX = { it },
-                animationSpec = tween(250, easing = EaseInCubic)
-            ) + fadeOut(animationSpec = tween(250)),
-            modifier = Modifier.zIndex(2f)
-        ) {
-            SidebarOverlay(
-                viewModel = viewModel,
-                onDismiss = { 
-                    viewModel.hideSidebar()
-                    currentTab = BottomNavTab.MESH // Reset to Chat tab
-                },
-                onShowVerification = {
-                    viewModel.showVerificationSheet(fromSidebar = true)
-                    viewModel.hideSidebar()
-                    currentTab = BottomNavTab.MESH // Reset to Chat tab
-                },
-                modifier = Modifier.fillMaxSize()
-            )
-        }
     }
 
     // Full-screen image viewer - separate from other sheets to allow image browsing without navigation
@@ -430,12 +384,14 @@ fun ChatScreen(viewModel: ChatViewModel) {
         showVerificationSheet = showVerificationSheet,
         onVerificationSheetDismiss = viewModel::hideVerificationSheet,
         showSecurityVerificationSheet = showSecurityVerificationSheet,
-        onSecurityVerificationSheetDismiss = viewModel::hideSecurityVerificationSheet
+        onSecurityVerificationSheetDismiss = viewModel::hideSecurityVerificationSheet,
+        showMeshPeerListSheet = showMeshPeerListSheet,
+        onMeshPeerListDismiss = viewModel::hideMeshPeerList,
     )
 }
 
 @Composable
-private fun ChatInputSection(
+fun ChatInputSection(
     messageText: TextFieldValue,
     onMessageTextChange: (TextFieldValue) -> Unit,
     onSend: () -> Unit,
@@ -574,7 +530,9 @@ private fun ChatDialogs(
     showVerificationSheet: Boolean,
     onVerificationSheetDismiss: () -> Unit,
     showSecurityVerificationSheet: Boolean,
-    onSecurityVerificationSheetDismiss: () -> Unit
+    onSecurityVerificationSheetDismiss: () -> Unit,
+    showMeshPeerListSheet: Boolean,
+    onMeshPeerListDismiss: () -> Unit,
 ) {
     // Password dialog
     PasswordPromptDialog(
@@ -629,6 +587,18 @@ private fun ChatDialogs(
             targetNickname = selectedUserForSheet,
             selectedMessage = selectedMessageForSheet,
             viewModel = viewModel
+        )
+    }
+    // MeshPeerList sheet (network view)
+    if (showMeshPeerListSheet){
+        MeshPeerListSheet(
+            isPresented = showMeshPeerListSheet,
+            viewModel = viewModel,
+            onDismiss = onMeshPeerListDismiss,
+            onShowVerification = {
+                onMeshPeerListDismiss()
+                viewModel.showVerificationSheet(fromSidebar = true)
+            }
         )
     }
 

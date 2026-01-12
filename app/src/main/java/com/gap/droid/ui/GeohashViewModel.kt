@@ -12,6 +12,8 @@ import com.gapmesh.droid.nostr.NostrProtocol
 import com.gapmesh.droid.nostr.NostrRelayManager
 import com.gapmesh.droid.nostr.NostrSubscriptionManager
 import com.gapmesh.droid.nostr.PoWPreferenceManager
+import com.gapmesh.droid.nostr.GeohashAliasRegistry
+import com.gapmesh.droid.nostr.GeohashConversationRegistry
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
@@ -93,6 +95,8 @@ class GeohashViewModel(
 
     fun panicReset() {
         repo.clearAll()
+        GeohashAliasRegistry.clear()
+        GeohashConversationRegistry.clear()
         subscriptionManager.disconnect()
         currentGeohashSubId = null
         currentDmSubId = null
@@ -168,7 +172,7 @@ class GeohashViewModel(
         val gh = (current as? com.gapmesh.droid.geohash.ChannelID.Location)?.channel?.geohash
         if (!gh.isNullOrEmpty()) {
             repo.setConversationGeohash(convKey, gh)
-            com.gapmesh.droid.nostr.GeohashConversationRegistry.set(convKey, gh)
+            GeohashConversationRegistry.set(convKey, gh)
         }
         onStartPrivateChat(convKey)
         Log.d(TAG, "🗨️ Started geohash DM with ${pubkeyHex} -> ${convKey} (geohash=${gh})")
@@ -260,7 +264,7 @@ class GeohashViewModel(
                         handler = { event -> dmHandler.onGiftWrap(event, geohash, dmIdentity) }
                     )
                     // Also register alias in global registry for routing convenience
-                    com.gapmesh.droid.nostr.GeohashAliasRegistry.put("nostr_${dmIdentity.publicKeyHex.take(16)}", dmIdentity.publicKeyHex)
+                    GeohashAliasRegistry.put("nostr_${dmIdentity.publicKeyHex.take(16)}", dmIdentity.publicKeyHex)
                 }
             }
             null -> {
