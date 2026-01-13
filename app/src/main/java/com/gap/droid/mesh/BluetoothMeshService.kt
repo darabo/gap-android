@@ -16,6 +16,7 @@ import com.gapmesh.droid.model.RequestSyncPacket
 import com.gapmesh.droid.sync.GossipSyncManager
 import com.gapmesh.droid.util.toHexString
 import com.gapmesh.droid.services.VerificationService
+import com.gapmesh.droid.ui.debug.DebugSettingsManager
 import kotlinx.coroutines.*
 import java.util.*
 import kotlin.math.sign
@@ -545,27 +546,23 @@ class BluetoothMeshService(private val context: Context) {
         
         // BluetoothConnectionManager delegates
         connectionManager.delegate = object : BluetoothConnectionManagerDelegate {
-        override fun onPacketReceived(packet: BitchatPacket, peerID: String, device: android.bluetooth.BluetoothDevice?) {
-            // Log incoming for debug graphs (do not double-count anywhere else)
-            try {
-                val nick = getPeerNicknames()[peerID]
-                val route = packet.route
-                val routeInfo = if (!route.isNullOrEmpty()) "routed: ${route.size} hops" else null
-                // Convert route to hex strings for visualization
-                val routeStrings = route?.map { it.toHexString() }
-                
-                com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().logIncoming(
-                    packetType = packet.type.toString(),
-                    fromPeerID = peerID,
-                    fromNickname = nick,
-                    fromDeviceAddress = device?.address,
-                    packetVersion = packet.version,
-                    routeInfo = routeInfo,
-                    route = routeStrings
-                )
-            } catch (_: Exception) { }
-            packetProcessor.processPacket(RoutedPacket(packet, peerID, device?.address))
-        }
+            override fun onPacketReceived(packet: BitchatPacket, peerID: String, device: android.bluetooth.BluetoothDevice?) {
+                // Log incoming for debug graphs (do not double-count anywhere else)
+                try {
+                    val nick = getPeerNicknames()[peerID]
+                    val route = packet.route
+                    val routeInfo = if (!route.isNullOrEmpty()) "routed: ${route.size} hops" else null
+                    DebugSettingsManager.getInstance().logIncoming(
+                        packetType = packet.type.toString(),
+                        fromPeerID = peerID,
+                        fromNickname = nick,
+                        fromDeviceAddress = device?.address,
+                        packetVersion = packet.version,
+                        routeInfo = routeInfo
+                    )
+                } catch (_: Exception) { }
+                packetProcessor.processPacket(RoutedPacket(packet, peerID, device?.address))
+            }
             
             override fun onDeviceConnected(device: android.bluetooth.BluetoothDevice) {
                 // Send initial announcements after services are ready
@@ -1048,7 +1045,7 @@ class BluetoothMeshService(private val context: Context) {
                 type = MessageType.ANNOUNCE.value,
                 ttl = MAX_TTL,
                 senderID = myPeerID,
-                payload = tlvPayload
+                payload = tlvPayload!!
             )
             
             // Sign the packet using our signing key (exactly like iOS)
@@ -1111,7 +1108,7 @@ class BluetoothMeshService(private val context: Context) {
             type = MessageType.ANNOUNCE.value,
             ttl = MAX_TTL,
             senderID = myPeerID,
-            payload = tlvPayload
+            payload = tlvPayload!!
         )
         
         // Sign the packet using our signing key (exactly like iOS)

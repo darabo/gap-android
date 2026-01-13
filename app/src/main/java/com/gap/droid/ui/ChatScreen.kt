@@ -264,7 +264,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
                             showLocationChannelsSheet = true
                         }
                         BottomNavTab.PEOPLE -> {
-                            viewModel.showSidebar()
+                            viewModel.showMeshPeerList()
                         }
                         BottomNavTab.SETTINGS -> {
                             viewModel.showAppInfo()
@@ -331,6 +331,19 @@ fun ChatScreen(viewModel: ChatViewModel) {
             }
         }
 
+        // Mesh/Geohash Sidebar
+        MeshPeerListSheet(
+            isPresented = showMeshPeerListSheet,
+            viewModel = viewModel,
+            onDismiss = {
+                viewModel.hideMeshPeerList()
+            },
+            onShowVerification = {
+                viewModel.hideMeshPeerList()
+                viewModel.showVerificationSheet(fromSidebar = true)
+            },
+            modifier = Modifier.fillMaxSize().zIndex(2f)
+        )
     }
 
     // Full-screen image viewer - separate from other sheets to allow image browsing without navigation

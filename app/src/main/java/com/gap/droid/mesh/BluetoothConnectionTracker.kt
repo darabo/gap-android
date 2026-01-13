@@ -9,6 +9,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import com.gapmesh.droid.ui.debug.DebugSettingsManager
+import com.gapmesh.droid.util.AppConstants
+import com.gapmesh.droid.util.DeviceTierManager
 
 /**
  * Tracks all Bluetooth connections and handles cleanup
@@ -21,15 +24,15 @@ class BluetoothConnectionTracker(
     companion object {
         private const val TAG = "BluetoothConnectionTracker"
         // Static cleanup constants (not tier-dependent)
-        private const val CLEANUP_DELAY = com.gapmesh.droid.util.AppConstants.Mesh.CONNECTION_CLEANUP_DELAY_MS
-        private const val CLEANUP_INTERVAL = com.gapmesh.droid.util.AppConstants.Mesh.CONNECTION_CLEANUP_INTERVAL_MS // 30 seconds
+        private const val CLEANUP_DELAY = AppConstants.Mesh.CONNECTION_CLEANUP_DELAY_MS
+        private const val CLEANUP_INTERVAL = AppConstants.Mesh.CONNECTION_CLEANUP_INTERVAL_MS // 30 seconds
         
         // Dynamic tier-aware parameters accessed via DeviceTierManager
         private val connectionRetryDelay: Long
-            get() = com.gapmesh.droid.util.DeviceTierManager.connectionRetryDelayMs
+            get() = DeviceTierManager.connectionRetryDelayMs
         
         private val maxConnectionAttempts: Int
-            get() = com.gapmesh.droid.util.DeviceTierManager.maxConnectionAttempts
+            get() = DeviceTierManager.maxConnectionAttempts
     }
     
     // Connection tracking - reduced memory footprint
@@ -244,7 +247,7 @@ class BluetoothConnectionTracker(
      */
     fun isConnectionLimitReached(): Boolean {
         // Respect debug override if set
-        val dbg = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance() } catch (_: Exception) { null }
+        val dbg = try { DebugSettingsManager.getInstance() } catch (_: Exception) { null }
         val maxConnections = dbg?.maxConnectionsOverall?.value ?: powerManager.getMaxConnections()
         return connectedDevices.size >= maxConnections
     }
@@ -254,7 +257,7 @@ class BluetoothConnectionTracker(
      */
     fun enforceConnectionLimits() {
         // Read debug overrides if available
-        val dbg = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance() } catch (_: Exception) { null }
+        val dbg = try { DebugSettingsManager.getInstance() } catch (_: Exception) { null }
         val maxOverall = dbg?.maxConnectionsOverall?.value ?: powerManager.getMaxConnections()
         val maxClient = dbg?.maxClientConnections?.value ?: maxOverall
         // Note: maxServer is handled by GattServerManager, but we need to respect overall limit here too

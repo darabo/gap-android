@@ -9,30 +9,9 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object GeohashAliasRegistry {
     private val map: MutableMap<String, String> = ConcurrentHashMap()
-    private const val PREFS_NAME = "geohash_alias_registry"
-    private var prefs: android.content.SharedPreferences? = null
-
-    fun initialize(context: android.content.Context) {
-        if (prefs == null) {
-            prefs = context.getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE)
-            loadFromPrefs()
-        }
-    }
-
-    private fun loadFromPrefs() {
-        prefs?.let { p ->
-            val allEntries = p.all
-            for ((key, value) in allEntries) {
-                if (key is String && value is String) {
-                    map[key] = value
-                }
-            }
-        }
-    }
 
     fun put(alias: String, pubkeyHex: String) {
         map[alias] = pubkeyHex
-        prefs?.edit()?.putString(alias, pubkeyHex)?.apply()
     }
 
     fun get(alias: String): String? = map[alias]
@@ -41,8 +20,5 @@ object GeohashAliasRegistry {
 
     fun snapshot(): Map<String, String> = HashMap(map)
 
-    fun clear() {
-        map.clear()
-        prefs?.edit()?.clear()?.apply()
-    }
+    fun clear() { map.clear() }
 }

@@ -29,6 +29,7 @@ import com.gapmesh.droid.geohash.GeohashChannelLevel
 import com.gapmesh.droid.geohash.LocationChannelManager
 import com.gapmesh.droid.nostr.LocationNotesManager
 import com.gapmesh.droid.core.ui.component.button.CloseButton
+import com.gapmesh.droid.core.ui.component.sheet.BitchatBottomSheet
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.Calendar
@@ -102,13 +103,9 @@ fun LocationNotesSheet(
         }
     }
 
-    ModalBottomSheet(
+    BitchatBottomSheet(
         onDismissRequest = onDismiss,
-        modifier = modifier.statusBarsPadding(),
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        dragHandle = null,
-        containerColor = backgroundColor,
-        contentColor = if (isDark) Color.White else Color.Black
+        modifier = modifier,
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             LazyColumn(
@@ -123,7 +120,6 @@ fun LocationNotesSheet(
                         locationName = displayLocationName,
                         state = state,
                         accentGreen = accentGreen,
-                        backgroundColor = backgroundColor
                     )
                 }
 
@@ -205,7 +201,6 @@ fun LocationNotesSheet(
                         onDraftChange = { draft = it },
                         sendButtonEnabled = sendButtonEnabled,
                         accentGreen = accentGreen,
-                        backgroundColor = backgroundColor,
                         onSend = {
                             val content = draft.trim()
                             if (content.isNotEmpty()) {
@@ -230,13 +225,12 @@ private fun LocationNotesHeader(
     count: Int,
     locationName: String?,
     state: LocationNotesManager.State,
-    backgroundColor: Color,
+    accentGreen: Color,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(backgroundColor)
-            .padding(top = 16.dp, bottom = 12.dp)
+            .padding(horizontal = 16.dp)
             .padding(top = 16.dp, bottom = 12.dp)
     ) {
         // Localized title with ±1 and note count

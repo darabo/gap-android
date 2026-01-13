@@ -25,65 +25,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.rotate
 import com.gapmesh.droid.mesh.BluetoothMeshService
-import com.gapmesh.droid.services.meshgraph.MeshGraphService
 import kotlinx.coroutines.launch
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.res.stringResource
 import com.gapmesh.droid.R
 import androidx.compose.ui.platform.LocalContext
 import com.gapmesh.droid.service.MeshServicePreferences
 import com.gapmesh.droid.service.MeshForegroundService
 import com.gapmesh.droid.core.ui.component.sheet.BitchatBottomSheet
-
-@Composable
-fun MeshTopologySection() {
-    val colorScheme = MaterialTheme.colorScheme
-    val graphService = remember { MeshGraphService.getInstance() }
-    val snapshot by graphService.graphState.collectAsState()
-
-    Surface(shape = RoundedCornerShape(12.dp), color = colorScheme.surfaceVariant.copy(alpha = 0.2f)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Filled.SettingsEthernet, contentDescription = null, tint = Color(0xFF8E8E93))
-                Text("mesh topology", fontFamily = FontFamily.Monospace, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-            }
-            val nodes = snapshot.nodes
-            val edges = snapshot.edges
-            val empty = nodes.isEmpty()
-            if (empty) {
-                Text("no gossip yet", fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colorScheme.onSurface.copy(alpha = 0.6f))
-            } else {
-                ForceDirectedMeshGraph(
-                    nodes = nodes,
-                    edges = edges,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp)
-                        .background(colorScheme.surface.copy(alpha = 0.4f))
-                )
-                
-                // Flexible peer list
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    nodes.forEach { node ->
-                        val label = "${node.peerID.take(8)} • ${node.nickname ?: "unknown"}"
-                        Text(
-                            text = label,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp,
-                            color = colorScheme.onSurface.copy(alpha = 0.85f)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
 
 private enum class GraphMode { OVERALL, PER_DEVICE, PER_PEER }
 
@@ -191,11 +139,6 @@ fun DebugSettingsSheet(
                         )
                     }
                 }
-            }
-
-            // Mesh topology visualization (moved below verbose logging)
-            item {
-                MeshTopologySection()
             }
 
             // GATT controls
@@ -407,7 +350,7 @@ fun DebugSettingsSheet(
                                     kotlinx.coroutines.delay(1000)
                                 }
                             }
-                            
+
                             // Helper functions moved to top-level composable below to avoid scope issues
 
                             // Render two blocks: Incoming and Outgoing
@@ -546,6 +489,9 @@ fun DebugSettingsSheet(
                     }
                 }
             }
+
+
+
 
             // Connected devices
             item {
