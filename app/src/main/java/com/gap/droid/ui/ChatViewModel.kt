@@ -34,7 +34,14 @@ import java.security.MessageDigest
 
 /**
  * Refactored ChatViewModel - Main coordinator for bitchat functionality
- * Delegates specific responsibilities to specialized managers while maintaining 100% iOS compatibility
+ * Delegates specific responsibilities to specialized managers while maintaining 100% iOS compatibility.
+ *
+ * This ViewModel acts as the central hub for the UI, managing state related to:
+ * - Messaging (sending/receiving)
+ * - Channel management (joining/leaving)
+ * - Private chats
+ * - Peer discovery and connection status
+ * - Geohash location-based chats
  */
 class ChatViewModel(
     application: Application,
@@ -73,18 +80,27 @@ class ChatViewModel(
     }
 
     // MARK: - State management
+    // Centralized state container for the Chat UI
     private val state = ChatState(
         scope = viewModelScope,
     )
 
-    // Transfer progress tracking
+    // Transfer progress tracking maps
     private val transferMessageMap = mutableMapOf<String, String>()
     private val messageTransferMap = mutableMapOf<String, String>()
 
-    // Specialized managers
+    // Specialized managers that handle specific domains of the app logic
+
+    // Handles local data persistence (preferences, database, etc.)
     private val dataManager = DataManager(application.applicationContext)
+
+    // Manages secure identity (cryptographic keys)
     private val identityManager by lazy { SecureIdentityStateManager(getApplication()) }
+
+    // Manages message history and lists
     private val messageManager = MessageManager(state)
+
+    // Manages channel subscriptions and state
     private val channelManager = ChannelManager(state, messageManager, dataManager, viewModelScope)
 
     // Create Noise session delegate for clean dependency injection
@@ -144,7 +160,8 @@ class ChatViewModel(
         getMeshService = { meshService }
     )
     
-    // New Geohash architecture ViewModel (replaces God object service usage in UI path)
+    // New Geohash architecture ViewModel (replaces God object service usage in UI path).
+    // This component manages location-based chat features using Nostr protocol.
     val geohashViewModel = GeohashViewModel(
         application = application,
         state = state,
@@ -159,6 +176,7 @@ class ChatViewModel(
 
 
 
+    // Exposing StateFlows for UI consumption (Compose observes these)
     val messages: StateFlow<List<BitchatMessage>> = state.messages
     val connectedPeers: StateFlow<List<String>> = state.connectedPeers
     val nickname: StateFlow<String> = state.nickname
