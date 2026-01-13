@@ -276,14 +276,6 @@ object BinaryProtocol {
                 }
             }
             
-            // Route (if present) - count byte + hop IDs (matches iOS)
-            if (hasRoute && sanitizedRoute != null) {
-                buffer.put(sanitizedRoute.size.toByte())
-                for (hop in sanitizedRoute) {
-                    buffer.put(hop)
-                }
-            }
-
             // Route (optional, v2+ only): 1 byte count + N*8 bytes
             if (packet.version >= 2u.toUByte() && !packet.route.isNullOrEmpty()) {
                 packet.route?.let { routeList ->

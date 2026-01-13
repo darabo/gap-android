@@ -122,8 +122,8 @@ fun LocationNotesSheet(
                         count = count,
                         locationName = displayLocationName,
                         state = state,
-                        accentGreen = accentGreen,
-                        backgroundColor = backgroundColor
+                        backgroundColor = backgroundColor,
+                        accentGreen = accentGreen
                     )
                 }
 
@@ -205,7 +205,6 @@ fun LocationNotesSheet(
                         onDraftChange = { draft = it },
                         sendButtonEnabled = sendButtonEnabled,
                         accentGreen = accentGreen,
-                        backgroundColor = backgroundColor,
                         onSend = {
                             val content = draft.trim()
                             if (content.isNotEmpty()) {
@@ -231,6 +230,7 @@ private fun LocationNotesHeader(
     locationName: String?,
     state: LocationNotesManager.State,
     backgroundColor: Color,
+    accentGreen: Color = Color(0xFF32D74B),
 ) {
     Column(
         modifier = Modifier

@@ -264,7 +264,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
                             showLocationChannelsSheet = true
                         }
                         BottomNavTab.PEOPLE -> {
-                            viewModel.showSidebar()
+                            viewModel.showMeshPeerList()
                         }
                         BottomNavTab.SETTINGS -> {
                             viewModel.showAppInfo()
