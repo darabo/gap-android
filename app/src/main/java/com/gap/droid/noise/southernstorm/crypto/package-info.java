@@ -9,4 +9,4 @@
  * Applications that use Noise won't normally use these classes
  * directly.
  */
-package com.gap.droid.noise.southernstorm.crypto;
+package com.gapmesh.droid.noise.southernstorm.crypto;

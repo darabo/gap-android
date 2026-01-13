@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.util.Log
 import androidx.compose.foundation.*
@@ -16,12 +16,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gap.droid.ui.theme.BASE_FONT_SIZE
+import com.gapmesh.droid.ui.theme.BASE_FONT_SIZE
 import java.util.*
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gap.droid.R
+import com.gapmesh.droid.R
 
 /**
  * GeohashPeopleList - iOS-compatible component for displaying geohash participants
@@ -92,9 +92,9 @@ fun GeohashPeopleList(
             // Get current geohash identity for "me" detection
             val myHex = remember(selectedLocationChannel) {
                 when (val channel = selectedLocationChannel) {
-                    is com.gap.droid.geohash.ChannelID.Location -> {
+                    is com.gapmesh.droid.geohash.ChannelID.Location -> {
                         try {
-                            val identity = com.gap.droid.nostr.NostrIdentityBridge.deriveIdentity(
+                            val identity = com.gapmesh.droid.nostr.NostrIdentityBridge.deriveIdentity(
                                 forGeohash = channel.channel.geohash,
                                 context = viewModel.getApplication()
                             )
@@ -123,7 +123,7 @@ fun GeohashPeopleList(
             val baseNameCounts = remember(geohashPeople) {
                 val counts = mutableMapOf<String, Int>()
                 geohashPeople.forEach { person ->
-                    val (b, _) = com.gap.droid.ui.splitSuffix(person.displayName)
+                    val (b, _) = com.gapmesh.droid.ui.splitSuffix(person.displayName)
                     counts[b] = (counts[b] ?: 0) + 1
                 }
                 counts
@@ -142,7 +142,7 @@ fun GeohashPeopleList(
                     nickname = nickname,
                     colorScheme = colorScheme,
                     viewModel = viewModel,
-                    showHashSuffix = (baseNameCounts[com.gap.droid.ui.splitSuffix(person.displayName).first] ?: 0) > 1,
+                    showHashSuffix = (baseNameCounts[com.gapmesh.droid.ui.splitSuffix(person.displayName).first] ?: 0) > 1,
                     onTap = {
                         if (person.id != myHex) {
                             // TODO: Re-enable when NIP-17 geohash DM issues are fixed
@@ -214,7 +214,7 @@ private fun GeohashPersonItem(
         Spacer(modifier = Modifier.width(8.dp))
         
         // Display name with suffix handling
-        val (baseNameRaw, suffixRaw) = com.gap.droid.ui.splitSuffix(person.displayName)
+        val (baseNameRaw, suffixRaw) = com.gapmesh.droid.ui.splitSuffix(person.displayName)
         val baseName = truncateNickname(baseNameRaw)
         val suffix = if (showHashSuffix) suffixRaw else ""
         

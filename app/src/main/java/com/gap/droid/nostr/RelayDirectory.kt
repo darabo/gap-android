@@ -1,4 +1,4 @@
-package com.gap.droid.nostr
+package com.gapmesh.droid.nostr
 
 import android.app.Application
 import android.content.SharedPreferences
@@ -35,7 +35,7 @@ object RelayDirectory {
 
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val httpClient: OkHttpClient
-        get() = com.gap.droid.net.OkHttpProvider.httpClient()
+        get() = com.gapmesh.droid.net.OkHttpProvider.httpClient()
 
     data class RelayInfo(
         val url: String,
@@ -89,7 +89,7 @@ object RelayDirectory {
         val snapshot = synchronized(relaysLock) { relays.toList() }
         if (snapshot.isEmpty()) return emptyList()
         val center = try {
-            val c = com.gap.droid.geohash.Geohash.decodeToCenter(geohash)
+            val c = com.gapmesh.droid.geohash.Geohash.decodeToCenter(geohash)
             c
         } catch (e: Exception) {
             Log.e(TAG, "Failed to decode geohash '$geohash': ${e.message}")

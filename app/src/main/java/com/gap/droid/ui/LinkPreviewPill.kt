@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.content.Intent
 import android.net.Uri
@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gap.droid.ui.theme.BASE_FONT_SIZE
+import com.gapmesh.droid.ui.theme.BASE_FONT_SIZE
 import java.net.URL
 
 /**
@@ -95,7 +95,7 @@ fun LinkPreviewPill(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Link,
-                        contentDescription = stringResource(com.gap.droid.R.string.cd_link),
+                        contentDescription = stringResource(com.gapmesh.droid.R.string.cd_link),
                         modifier = Modifier.size(24.dp),
                         tint = Color.Blue
                     )

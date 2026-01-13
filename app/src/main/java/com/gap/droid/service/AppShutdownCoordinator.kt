@@ -1,11 +1,11 @@
-package com.gap.droid.service
+package com.gapmesh.droid.service
 
 import android.app.Application
 import android.os.Process
 import androidx.core.app.NotificationManagerCompat
-import com.gap.droid.mesh.BluetoothMeshService
-import com.gap.droid.net.ArtiTorManager
-import com.gap.droid.net.TorMode
+import com.gapmesh.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.net.ArtiTorManager
+import com.gapmesh.droid.net.TorMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -49,9 +49,9 @@ object AppShutdownCoordinator {
         val job = scope.launch {
             // Signal UI to finish gracefully before we kill the process
             try {
-                val intent = android.content.Intent(com.gap.droid.util.AppConstants.UI.ACTION_FORCE_FINISH)
+                val intent = android.content.Intent(com.gapmesh.droid.util.AppConstants.UI.ACTION_FORCE_FINISH)
                     .setPackage(app.packageName)
-                app.sendBroadcast(intent, com.gap.droid.util.AppConstants.UI.PERMISSION_FORCE_FINISH)
+                app.sendBroadcast(intent, com.gapmesh.droid.util.AppConstants.UI.PERMISSION_FORCE_FINISH)
             } catch (_: Exception) { }
 
             // Stop mesh (best-effort)
@@ -64,7 +64,7 @@ object AppShutdownCoordinator {
             }
 
             // Clear AppState in-memory store
-            try { com.gap.droid.services.AppStateStore.clear() } catch (_: Exception) { }
+            try { com.gapmesh.droid.services.AppStateStore.clear() } catch (_: Exception) { }
 
             // Stop foreground and clear notification
             try { stopForeground() } catch (_: Exception) { }

@@ -20,7 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package com.gap.droid.noise.southernstorm.protocol;
+package com.gapmesh.droid.noise.southernstorm.protocol;
 
 /**
  * Class that contains a pair of CipherState objects.
@@ -35,11 +35,11 @@ public final class CipherStatePair implements Destroyable {
 	/**
 	 * Constructs a pair of CipherState objects.
 	 * 
-	 * @param sender The CipherState to use to send packets to the remote party.
-	 * @param receiver The CipherState to use to receive packets from the remote party.
+	 * @param sender   The CipherState to use to send packets to the remote party.
+	 * @param receiver The CipherState to use to receive packets from the remote
+	 *                 party.
 	 */
-	public CipherStatePair(CipherState sender, CipherState receiver)
-	{
+	public CipherStatePair(CipherState sender, CipherState receiver) {
 		send = sender;
 		recv = receiver;
 	}
@@ -52,7 +52,7 @@ public final class CipherStatePair implements Destroyable {
 	public CipherState getSender() {
 		return send;
 	}
-	
+
 	/**
 	 * Gets the CipherState to use to receive packets from the remote party.
 	 * 
@@ -67,32 +67,29 @@ public final class CipherStatePair implements Destroyable {
 	 * 
 	 * This function is intended for use with one-way handshake patterns.
 	 */
-	public void senderOnly()
-	{
+	public void senderOnly() {
 		if (recv != null) {
 			recv.destroy();
 			recv = null;
 		}
 	}
-	
+
 	/**
 	 * Destroys the sending CipherState and retains only the receiving CipherState.
 	 * 
 	 * This function is intended for use with one-way handshake patterns.
 	 */
-	public void receiverOnly()
-	{
+	public void receiverOnly() {
 		if (send != null) {
 			send.destroy();
 			send = null;
 		}
 	}
-	
+
 	/**
 	 * Swaps the sender and receiver.
 	 */
-	public void swap()
-	{
+	public void swap() {
 		CipherState temp = send;
 		send = recv;
 		recv = temp;

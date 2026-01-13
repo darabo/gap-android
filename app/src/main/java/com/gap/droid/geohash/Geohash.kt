@@ -1,4 +1,4 @@
-package com.gap.droid.geohash
+package com.gapmesh.droid.geohash
 
 /**
  * Lightweight Geohash encoder used for Location Channels.

@@ -1,4 +1,4 @@
-package com.gap.droid.ui.debug
+package com.gapmesh.droid.ui.debug
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -1,10 +1,10 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
-import com.gap.droid.mesh.BluetoothMeshDelegate
-import com.gap.droid.ui.NotificationTextUtils
-import com.gap.droid.mesh.BluetoothMeshService
-import com.gap.droid.model.BitchatMessage
-import com.gap.droid.model.DeliveryStatus
+import com.gapmesh.droid.mesh.BluetoothMeshDelegate
+import com.gapmesh.droid.ui.NotificationTextUtils
+import com.gapmesh.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.model.DeliveryStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -72,7 +72,7 @@ class MeshDelegateHandler(
                         if (channel.startsWith("geo:")) {
                             val geo = channel.removePrefix("geo:")
                             val selected = state.selectedLocationChannel.value
-                            selected is com.gap.droid.geohash.ChannelID.Location && selected.channel.geohash.equals(geo, ignoreCase = true)
+                            selected is com.gapmesh.droid.geohash.ChannelID.Location && selected.channel.geohash.equals(geo, ignoreCase = true)
                         } else false
                     } catch (_: Exception) { false }
                     if (!viewingClassic && !viewingGeohash) {
@@ -100,7 +100,7 @@ class MeshDelegateHandler(
             state.setIsConnected(peers.isNotEmpty())
             notificationManager.showActiveUserNotification(peers)
             // Flush router outbox for any peers that just connected (and their noiseHex aliases)
-            runCatching { com.gap.droid.services.MessageRouter.tryGetInstance()?.onPeersUpdated(peers) }
+            runCatching { com.gapmesh.droid.services.MessageRouter.tryGetInstance()?.onPeersUpdated(peers) }
 
             // Clean up channel members who disconnected
             channelManager.cleanupDisconnectedMembers(peers, getMyPeerID())
@@ -114,33 +114,33 @@ class MeshDelegateHandler(
                 if (isNostrAlias || isNoiseHex) {
                     // Reverse case: Nostr/offline chat is open, and peer may have come online on mesh.
                     // Resolve canonical target (prefer connected mesh peer if available)
-                    val canonical = com.gap.droid.services.ConversationAliasResolver.resolveCanonicalPeerID(
+                    val canonical = com.gapmesh.droid.services.ConversationAliasResolver.resolveCanonicalPeerID(
                         selectedPeerID = currentPeer,
                         connectedPeers = peers,
                         meshNoiseKeyForPeer = { pid -> getPeerInfo(pid)?.noisePublicKey },
                         meshHasPeer = { pid -> peers.contains(pid) },
                         nostrPubHexForAlias = { alias ->
                             // Use GeohashAliasRegistry for geohash aliases, but for mesh favorites, derive from favorites mapping
-                            if (com.gap.droid.nostr.GeohashAliasRegistry.contains(alias)) {
-                                com.gap.droid.nostr.GeohashAliasRegistry.get(alias)
+                            if (com.gapmesh.droid.nostr.GeohashAliasRegistry.contains(alias)) {
+                                com.gapmesh.droid.nostr.GeohashAliasRegistry.get(alias)
                             } else {
                                 // Best-effort: derive pub hex from favorites mapping for mesh nostr_ aliases
                                 val prefix = alias.removePrefix("nostr_")
-                                val favs = try { com.gap.droid.favorites.FavoritesPersistenceService.shared.getOurFavorites() } catch (_: Exception) { emptyList() }
+                                val favs = try { com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.getOurFavorites() } catch (_: Exception) { emptyList() }
                                 favs.firstNotNullOfOrNull { rel ->
                                     rel.peerNostrPublicKey?.let { s ->
-                                        runCatching { com.gap.droid.nostr.Bech32.decode(s) }.getOrNull()?.let { dec ->
+                                        runCatching { com.gapmesh.droid.nostr.Bech32.decode(s) }.getOrNull()?.let { dec ->
                                             if (dec.first == "npub") dec.second.joinToString("") { b -> "%02x".format(b) } else null
                                         }
                                     }
                                 }?.takeIf { it.startsWith(prefix, ignoreCase = true) }
                             }
                         },
-                        findNoiseKeyForNostr = { key -> com.gap.droid.favorites.FavoritesPersistenceService.shared.findNoiseKey(key) }
+                        findNoiseKeyForNostr = { key -> com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.findNoiseKey(key) }
                     )
                     if (canonical != currentPeer) {
                         // Merge conversations and switch selection to the live mesh peer (or noiseHex)
-                        com.gap.droid.services.ConversationAliasResolver.unifyChatsIntoPeer(state, canonical, listOf(currentPeer))
+                        com.gapmesh.droid.services.ConversationAliasResolver.unifyChatsIntoPeer(state, canonical, listOf(currentPeer))
                         state.setSelectedPrivateChatPeer(canonical)
                     }
                 } else if (isMeshEphemeral && !peers.contains(currentPeer)) {
@@ -149,14 +149,14 @@ class MeshDelegateHandler(
                         val info = getPeerInfo(currentPeer)
                         val noiseKey = info?.noisePublicKey
                         if (noiseKey != null) {
-                            com.gap.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKey)
+                            com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKey)
                         } else null
                     } catch (_: Exception) { null }
 
                     if (favoriteRel?.isMutual == true) {
                         val noiseHex = favoriteRel.peerNoisePublicKey.joinToString("") { b -> "%02x".format(b) }
                         if (noiseHex != currentPeer) {
-                            com.gap.droid.services.ConversationAliasResolver.unifyChatsIntoPeer(
+                            com.gapmesh.droid.services.ConversationAliasResolver.unifyChatsIntoPeer(
                                 state = state,
                                 targetPeerID = noiseHex,
                                 keysToMerge = listOf(currentPeer)
@@ -178,10 +178,10 @@ class MeshDelegateHandler(
                     val noiseHex = noiseKey.joinToString("") { b -> "%02x".format(b) }
 
                     // Derive temp nostr key from favorites npub
-                    val npub = com.gap.droid.favorites.FavoritesPersistenceService.shared.findNostrPubkey(noiseKey)
+                    val npub = com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.findNostrPubkey(noiseKey)
                     val tempNostrKey: String? = try {
                         if (npub != null) {
-                            val (hrp, data) = com.gap.droid.nostr.Bech32.decode(npub)
+                            val (hrp, data) = com.gapmesh.droid.nostr.Bech32.decode(npub)
                             if (hrp == "npub") "nostr_${data.joinToString("") { b -> "%02x".format(b) }.take(16)}" else null
                         } else null
                     } catch (_: Exception) { null }
@@ -196,7 +196,7 @@ class MeshDelegateHandler(
      * Merge any chats stored under the given keys into the connected peer's chat entry.
      */
     private fun unifyChatsIntoPeer(targetPeerID: String, keysToMerge: List<String>) {
-        com.gap.droid.services.ConversationAliasResolver.unifyChatsIntoPeer(state, targetPeerID, keysToMerge)
+        com.gapmesh.droid.services.ConversationAliasResolver.unifyChatsIntoPeer(state, targetPeerID, keysToMerge)
     }
 
     override fun didReceiveChannelLeave(channel: String, fromPeer: String) {
@@ -313,7 +313,7 @@ class MeshDelegateHandler(
     /**
      * Expose mesh peer info for components that need to resolve identities (e.g., Nostr mapping)
      */
-    fun getPeerInfo(peerID: String): com.gap.droid.mesh.PeerInfo? {
+    fun getPeerInfo(peerID: String): com.gapmesh.droid.mesh.PeerInfo? {
         return getMeshService().getPeerInfo(peerID)
     }
 

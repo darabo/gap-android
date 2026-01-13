@@ -1,7 +1,7 @@
-package com.gap.droid.service
+package com.gapmesh.droid.service
 
 import android.content.Context
-import com.gap.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.mesh.BluetoothMeshService
 
 /**
  * Process-wide holder to share a single BluetoothMeshService instance

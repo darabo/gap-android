@@ -1,18 +1,18 @@
-package com.gap.droid.nostr
+package com.gapmesh.droid.nostr
 
 import android.app.Application
 import android.util.Log
-import com.gap.droid.model.BitchatFilePacket
-import com.gap.droid.model.BitchatMessage
-import com.gap.droid.model.DeliveryStatus
-import com.gap.droid.model.NoisePayload
-import com.gap.droid.model.NoisePayloadType
-import com.gap.droid.model.PrivateMessagePacket
-import com.gap.droid.protocol.BitchatPacket
-import com.gap.droid.services.SeenMessageStore
-import com.gap.droid.ui.ChatState
-import com.gap.droid.ui.MeshDelegateHandler
-import com.gap.droid.ui.PrivateChatManager
+import com.gapmesh.droid.model.BitchatFilePacket
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.model.DeliveryStatus
+import com.gapmesh.droid.model.NoisePayload
+import com.gapmesh.droid.model.NoisePayloadType
+import com.gapmesh.droid.model.PrivateMessagePacket
+import com.gapmesh.droid.protocol.BitchatPacket
+import com.gapmesh.droid.services.SeenMessageStore
+import com.gapmesh.droid.ui.ChatState
+import com.gapmesh.droid.ui.MeshDelegateHandler
+import com.gapmesh.droid.ui.PrivateChatManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -26,7 +26,7 @@ class NostrDirectMessageHandler(
     private val meshDelegateHandler: MeshDelegateHandler,
     private val scope: CoroutineScope,
     private val repo: GeohashRepository,
-    private val dataManager: com.gap.droid.ui.DataManager
+    private val dataManager: com.gapmesh.droid.ui.DataManager
 ) {
     companion object { private const val TAG = "NostrDirectMessageHandler" }
 
@@ -73,13 +73,13 @@ class NostrDirectMessageHandler(
                 val packetData = base64URLDecode(base64Content) ?: return@launch
                 val packet = BitchatPacket.fromBinaryData(packetData) ?: return@launch
 
-                if (packet.type != com.gap.droid.protocol.MessageType.NOISE_ENCRYPTED.value) return@launch
+                if (packet.type != com.gapmesh.droid.protocol.MessageType.NOISE_ENCRYPTED.value) return@launch
 
                 val noisePayload = NoisePayload.decode(packet.payload) ?: return@launch
                 val messageTimestamp = Date(giftWrap.createdAt * 1000L)
                 val convKey = "nostr_${senderPubkey.take(16)}"
                 repo.putNostrKeyMapping(convKey, senderPubkey)
-                com.gap.droid.nostr.GeohashAliasRegistry.put(convKey, senderPubkey)
+                com.gapmesh.droid.nostr.GeohashAliasRegistry.put(convKey, senderPubkey)
                 if (geohash.isNotEmpty()) {
                     // Remember which geohash this conversation belongs to so we can subscribe on-demand
                     repo.setConversationGeohash(convKey, geohash)
@@ -169,12 +169,12 @@ class NostrDirectMessageHandler(
                 val file = BitchatFilePacket.decode(payload.data)
                 if (file != null) {
                     val uniqueMsgId = java.util.UUID.randomUUID().toString().uppercase()
-                    val savedPath = com.gap.droid.features.file.FileUtils.saveIncomingFile(application, file)
+                    val savedPath = com.gapmesh.droid.features.file.FileUtils.saveIncomingFile(application, file)
                     val message = BitchatMessage(
                         id = uniqueMsgId,
                         sender = senderNickname,
                         content = savedPath,
-                        type = com.gap.droid.features.file.FileUtils.messageTypeForMime(file.mimeType),
+                        type = com.gapmesh.droid.features.file.FileUtils.messageTypeForMime(file.mimeType),
                         timestamp = timestamp,
                         isRelay = false,
                         isPrivate = true,

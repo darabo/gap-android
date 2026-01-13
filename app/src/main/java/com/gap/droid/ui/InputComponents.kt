@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 // [Goose] TODO: Replace inline file attachment stub with FilePickerButton abstraction that dispatches via FileShareDispatcher
 
 
@@ -31,18 +31,18 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gap.droid.R
+import com.gapmesh.droid.R
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.withStyle
-import com.gap.droid.ui.theme.BASE_FONT_SIZE
-import com.gap.droid.features.voice.normalizeAmplitudeSample
-import com.gap.droid.features.voice.AudioWaveformExtractor
-import com.gap.droid.ui.media.RealtimeScrollingWaveform
-import com.gap.droid.ui.media.ImagePickerButton
-import com.gap.droid.ui.media.FilePickerButton
+import com.gapmesh.droid.ui.theme.BASE_FONT_SIZE
+import com.gapmesh.droid.features.voice.normalizeAmplitudeSample
+import com.gapmesh.droid.features.voice.AudioWaveformExtractor
+import com.gapmesh.droid.ui.media.RealtimeScrollingWaveform
+import com.gapmesh.droid.ui.media.ImagePickerButton
+import com.gapmesh.droid.ui.media.FilePickerButton
 
 /**
  * Input components for ChatScreen
@@ -302,7 +302,7 @@ fun MessageInput(
                     // Extract and cache waveform from the actual audio file to match receiver rendering
                     AudioWaveformExtractor.extractAsync(path, sampleCount = 120) { arr ->
                         if (arr != null) {
-                            try { com.gap.droid.features.voice.VoiceWaveformCache.put(path, arr) } catch (_: Exception) {}
+                            try { com.gapmesh.droid.features.voice.VoiceWaveformCache.put(path, arr) } catch (_: Exception) {}
                         }
                     }
                     // BLE path (private or public) — use latest values to avoid stale captures

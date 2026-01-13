@@ -1,4 +1,4 @@
-package com.gap.droid.onboarding
+package com.gapmesh.droid.onboarding
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
-import com.gap.droid.R
+import com.gapmesh.droid.R
 
 /**
  * Permission explanation screen shown before requesting permissions
@@ -186,7 +186,7 @@ private fun PermissionCategoryCard(
     ) {
         Icon(
             imageVector = getPermissionIcon(category.type),
-            contentDescription = category.type.nameValue,
+            contentDescription = category.typeName,
             tint = colorScheme.primary,
             modifier = Modifier
                 .padding(top = 2.dp)
@@ -195,7 +195,7 @@ private fun PermissionCategoryCard(
         Spacer(modifier = Modifier.width(16.dp))
         Column {
             Text(
-                text = category.type.nameValue,
+                text = category.typeName,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
                 color = colorScheme.onBackground

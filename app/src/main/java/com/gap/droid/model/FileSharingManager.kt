@@ -1,9 +1,9 @@
-package com.gap.droid.model
+package com.gapmesh.droid.model
 
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import com.gap.droid.features.file.FileUtils
+import com.gapmesh.droid.features.file.FileUtils
 import java.io.File
 
 /**
