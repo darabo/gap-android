@@ -11,7 +11,7 @@ import java.io.FileOutputStream
 
 /**
  * Manager for sharing the installed APK file with other devices
- * Enables offline distribution of the app via Bluetooth mesh
+ * Enables offline distribution of the app via various sharing methods
  */
 object ApkSharingManager {
     

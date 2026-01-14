@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import android.widget.Toast
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
@@ -684,10 +685,10 @@ fun AboutSheet(
                                                     context.startActivity(shareIntent)
                                                 } else {
                                                     // Show error toast
-                                                    android.widget.Toast.makeText(
+                                                    Toast.makeText(
                                                         context,
                                                         context.getString(R.string.share_apk_error),
-                                                        android.widget.Toast.LENGTH_SHORT
+                                                        Toast.LENGTH_SHORT
                                                     ).show()
                                                 }
                                             }
