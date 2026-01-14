@@ -213,6 +213,29 @@ Some channels may be password-protected. Ask the channel owner for the password.
 2. **Disable battery optimization** to receive messages reliably
 3. **Stay within range** – Bluetooth works best within 30 meters
 4. **More people = better network** – Each phone extends the mesh range!
+5. **Share the app** – Help others join the mesh by sharing the APK
+
+---
+
+## Sharing the App with Others
+
+Gap Mesh includes a built-in feature to share the app with nearby people who don't have internet access:
+
+1. Open the app and tap the **menu icon (≡)** in the top-right corner
+2. Scroll down to **"Offline Distribution"** section
+3. Tap **"Share APK"** button
+4. Choose how to share:
+   - **Bluetooth** – Send directly to another phone
+   - **WiFi Direct** – Fast local transfer
+   - **Nearby Share** – Google's device-to-device sharing
+   - **Other apps** – Any sharing app you have installed
+
+The person receiving the APK file will need to:
+1. Open the downloaded `.apk` file
+2. Enable **"Install from unknown sources"** if prompted (Settings > Security)
+3. Tap **"Install"** to complete installation
+
+This is especially useful in situations where internet access is limited or blocked!
 
 ---
 

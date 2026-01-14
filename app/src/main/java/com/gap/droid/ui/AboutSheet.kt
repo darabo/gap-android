@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.NetworkCheck
@@ -20,7 +21,10 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import android.widget.Toast
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -37,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gap.droid.R
 import com.gap.droid.core.ui.component.button.CloseButton
+import com.gap.droid.features.apk.ApkSharingManager
 import com.gap.droid.net.TorMode
 import com.gap.droid.net.TorPreferenceManager
 import com.gap.droid.net.ArtiTorManager
@@ -589,6 +594,132 @@ fun AboutSheet(
                                                 maxLines = 2
                                             )
                                         }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // APK Sharing Section
+                    item(key = "apk_sharing") {
+                        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            Text(
+                                text = "OFFLINE DISTRIBUTION",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                letterSpacing = 0.5.sp,
+                                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                            )
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = colorScheme.surface,
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Share,
+                                            contentDescription = null,
+                                            tint = colorScheme.primary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = stringResource(R.string.share_apk_title),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.share_apk_subtitle),
+                                                fontSize = 13.sp,
+                                                color = colorScheme.onSurface.copy(alpha = 0.6f)
+                                            )
+                                        }
+                                    }
+                                    
+                                    Text(
+                                        text = stringResource(R.string.share_apk_description),
+                                        fontSize = 13.sp,
+                                        color = colorScheme.onSurface.copy(alpha = 0.7f),
+                                        lineHeight = 18.sp
+                                    )
+                                    
+                                    var apkSize by remember { mutableStateOf("...") }
+                                    var isLoading by remember { mutableStateOf(false) }
+                                    val scope = rememberCoroutineScope()
+                                    
+                                    LaunchedEffect(Unit) {
+                                        withContext(Dispatchers.IO) {
+                                            apkSize = ApkSharingManager.getFormattedApkSize(context)
+                                        }
+                                    }
+                                    
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.share_apk_size, apkSize),
+                                            fontSize = 12.sp,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = colorScheme.onSurface.copy(alpha = 0.5f)
+                                        )
+                                    }
+                                    
+                                    Button(
+                                        onClick = {
+                                            isLoading = true
+                                            scope.launch {
+                                                val shareIntent = withContext(Dispatchers.IO) {
+                                                    ApkSharingManager.shareApkViaIntent(context)
+                                                }
+                                                isLoading = false
+                                                if (shareIntent != null) {
+                                                    context.startActivity(shareIntent)
+                                                } else {
+                                                    // Show error toast
+                                                    Toast.makeText(
+                                                        context,
+                                                        context.getString(R.string.share_apk_error),
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                            }
+                                        },
+                                        enabled = !isLoading,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = colorScheme.primary,
+                                            contentColor = colorScheme.onPrimary
+                                        ),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        if (isLoading) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(18.dp),
+                                                strokeWidth = 2.dp,
+                                                color = colorScheme.onPrimary
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = Icons.Default.Share,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(R.string.share_apk_button),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium
+                                        )
                                     }
                                 }
                             }
