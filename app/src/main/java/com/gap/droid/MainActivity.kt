@@ -3,6 +3,7 @@ package com.gap.droid
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -77,6 +78,9 @@ class MainActivity : OrientationAwareActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // Prevent screenshots and screen recording for security (like Briar)
+        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+
         // Register receiver for force finish signal from shutdown coordinator
         val filter = android.content.IntentFilter(com.gap.droid.util.AppConstants.UI.ACTION_FORCE_FINISH)
         if (android.os.Build.VERSION.SDK_INT >= 33) {
