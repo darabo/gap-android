@@ -46,6 +46,7 @@ New to Gap Mesh? Start here:
 - **✅ Modern Android UI**: Jetpack Compose with Material Design 3
 - **✅ Dark/Light Themes**: Terminal-inspired aesthetic matching iOS version
 - **✅ Battery Optimization**: Adaptive scanning and power management
+- **✅ APK Sharing**: Share the app via Bluetooth/WiFi for offline distribution to nearby devices
 
 ## Android Setup
 
@@ -158,6 +159,22 @@ The app requires the following permissions (automatically requested):
 - **Message Retention**: Owners can enable mandatory message saving with `/save`
 - **@ Mentions**: Use `@nickname` to mention users (with autocomplete)
 - **Ownership Transfer**: Pass control to trusted users with `/transfer`
+
+### Sharing the App (Offline Distribution)
+
+Gap Mesh includes a built-in feature to share the APK with nearby devices for offline distribution:
+
+1. **Open the app** and tap the menu icon (≡) in the top-right
+2. **Scroll to "Offline Distribution"** section in the About sheet
+3. **Tap "Share APK"** to open the system share dialog
+4. **Choose a sharing method**:
+   - **Bluetooth**: Direct file transfer to nearby Android devices
+   - **WiFi Direct**: Fast local transfer without internet
+   - **Nearby Share**: Google's device-to-device sharing
+   - **Any other sharing app** installed on your device
+5. **Recipient receives the APK** and can install it (must enable "Install from unknown sources")
+
+This feature is particularly useful in offline scenarios where internet access is limited or restricted, allowing the mesh network to grow organically through peer-to-peer distribution.
 
 ## Security & Privacy
 
