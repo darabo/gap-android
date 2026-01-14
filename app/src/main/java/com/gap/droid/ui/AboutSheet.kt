@@ -647,8 +647,14 @@ fun AboutSheet(
                                         lineHeight = 18.sp
                                     )
                                     
-                                    val apkSize = remember { 
-                                        com.gap.droid.features.apk.ApkSharingManager.getFormattedApkSize(context) 
+                                    var apkSize by remember { mutableStateOf("...") }
+                                    var isLoading by remember { mutableStateOf(false) }
+                                    val scope = rememberCoroutineScope()
+                                    
+                                    LaunchedEffect(Unit) {
+                                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                            apkSize = com.gap.droid.features.apk.ApkSharingManager.getFormattedApkSize(context)
+                                        }
                                     }
                                     
                                     Row(
@@ -665,18 +671,25 @@ fun AboutSheet(
                                     
                                     Button(
                                         onClick = {
-                                            val shareIntent = com.gap.droid.features.apk.ApkSharingManager.shareApkViaIntent(context)
-                                            if (shareIntent != null) {
-                                                context.startActivity(shareIntent)
-                                            } else {
-                                                // Show error toast
-                                                android.widget.Toast.makeText(
-                                                    context,
-                                                    context.getString(R.string.share_apk_error),
-                                                    android.widget.Toast.LENGTH_SHORT
-                                                ).show()
+                                            isLoading = true
+                                            scope.launch {
+                                                val shareIntent = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                                    com.gap.droid.features.apk.ApkSharingManager.shareApkViaIntent(context)
+                                                }
+                                                isLoading = false
+                                                if (shareIntent != null) {
+                                                    context.startActivity(shareIntent)
+                                                } else {
+                                                    // Show error toast
+                                                    android.widget.Toast.makeText(
+                                                        context,
+                                                        context.getString(R.string.share_apk_error),
+                                                        android.widget.Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
                                             }
                                         },
+                                        enabled = !isLoading,
                                         modifier = Modifier.fillMaxWidth(),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = colorScheme.primary,
@@ -684,11 +697,19 @@ fun AboutSheet(
                                         ),
                                         shape = RoundedCornerShape(12.dp)
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Share,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
-                                        )
+                                        if (isLoading) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(18.dp),
+                                                strokeWidth = 2.dp,
+                                                color = colorScheme.onPrimary
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = Icons.Default.Share,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             text = stringResource(R.string.share_apk_button),

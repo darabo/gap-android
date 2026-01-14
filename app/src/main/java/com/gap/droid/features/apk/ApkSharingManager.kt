@@ -2,10 +2,8 @@ package com.gap.droid.features.apk
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
-import com.gap.droid.model.BitchatFilePacket
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -79,30 +77,6 @@ object ApkSharingManager {
             destFile
         } catch (e: Exception) {
             Log.e(TAG, "Failed to prepare APK for sharing", e)
-            null
-        }
-    }
-    
-    /**
-     * Create a BitchatFilePacket from the installed APK
-     * This allows sending the APK through the mesh network
-     */
-    fun createApkFilePacket(context: Context): BitchatFilePacket? {
-        return try {
-            val apkFile = prepareApkForSharing(context) ?: return null
-            val apkInfo = getInstalledApkInfo(context) ?: return null
-            
-            // Read APK content
-            val content = apkFile.readBytes()
-            
-            BitchatFilePacket(
-                fileName = apkInfo.fileName,
-                fileSize = apkInfo.fileSize,
-                mimeType = "application/vnd.android.package-archive",
-                content = content
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to create APK file packet", e)
             null
         }
     }
