@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.NetworkCheck
@@ -589,6 +590,111 @@ fun AboutSheet(
                                                 maxLines = 2
                                             )
                                         }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // APK Sharing Section
+                    item(key = "apk_sharing") {
+                        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            Text(
+                                text = "OFFLINE DISTRIBUTION",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                letterSpacing = 0.5.sp,
+                                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                            )
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = colorScheme.surface,
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Share,
+                                            contentDescription = null,
+                                            tint = colorScheme.primary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = stringResource(R.string.share_apk_title),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.share_apk_subtitle),
+                                                fontSize = 13.sp,
+                                                color = colorScheme.onSurface.copy(alpha = 0.6f)
+                                            )
+                                        }
+                                    }
+                                    
+                                    Text(
+                                        text = stringResource(R.string.share_apk_description),
+                                        fontSize = 13.sp,
+                                        color = colorScheme.onSurface.copy(alpha = 0.7f),
+                                        lineHeight = 18.sp
+                                    )
+                                    
+                                    val apkSize = remember { 
+                                        com.gap.droid.features.apk.ApkSharingManager.getFormattedApkSize(context) 
+                                    }
+                                    
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.share_apk_size, apkSize),
+                                            fontSize = 12.sp,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = colorScheme.onSurface.copy(alpha = 0.5f)
+                                        )
+                                    }
+                                    
+                                    Button(
+                                        onClick = {
+                                            val shareIntent = com.gap.droid.features.apk.ApkSharingManager.shareApkViaIntent(context)
+                                            if (shareIntent != null) {
+                                                context.startActivity(shareIntent)
+                                            } else {
+                                                // Show error toast
+                                                android.widget.Toast.makeText(
+                                                    context,
+                                                    context.getString(R.string.share_apk_error),
+                                                    android.widget.Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = colorScheme.primary,
+                                            contentColor = colorScheme.onPrimary
+                                        ),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Share,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(R.string.share_apk_button),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium
+                                        )
                                     }
                                 }
                             }
