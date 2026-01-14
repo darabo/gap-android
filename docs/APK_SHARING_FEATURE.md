@@ -73,7 +73,7 @@ User Action                    → System Response
 
 ### APK Extraction
 ```kotlin
-val sourceDir = context.applicationInfo.sourceDir  // e.g., /data/app/com.gap.droid-xxx/base.apk
+val sourceDir = context.applicationInfo.sourceDir  // e.g., /data/app/com.gapmesh.droid-xxx/base.apk
 val apkFile = File(sourceDir)
 // Copy to cache for sharing
 val shareDir = File(context.cacheDir, "apk_share")
