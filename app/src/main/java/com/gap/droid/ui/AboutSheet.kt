@@ -22,6 +22,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -38,6 +40,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gap.droid.R
 import com.gap.droid.core.ui.component.button.CloseButton
+import com.gap.droid.features.apk.ApkSharingManager
 import com.gap.droid.net.TorMode
 import com.gap.droid.net.TorPreferenceManager
 import com.gap.droid.net.ArtiTorManager
@@ -652,8 +655,8 @@ fun AboutSheet(
                                     val scope = rememberCoroutineScope()
                                     
                                     LaunchedEffect(Unit) {
-                                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                            apkSize = com.gap.droid.features.apk.ApkSharingManager.getFormattedApkSize(context)
+                                        withContext(Dispatchers.IO) {
+                                            apkSize = ApkSharingManager.getFormattedApkSize(context)
                                         }
                                     }
                                     
@@ -673,8 +676,8 @@ fun AboutSheet(
                                         onClick = {
                                             isLoading = true
                                             scope.launch {
-                                                val shareIntent = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                                    com.gap.droid.features.apk.ApkSharingManager.shareApkViaIntent(context)
+                                                val shareIntent = withContext(Dispatchers.IO) {
+                                                    ApkSharingManager.shareApkViaIntent(context)
                                                 }
                                                 isLoading = false
                                                 if (shareIntent != null) {

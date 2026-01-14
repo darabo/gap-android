@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.core.content.FileProvider
+import androidx.core.content.pm.PackageInfoCompat
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -16,6 +17,7 @@ object ApkSharingManager {
     
     private const val TAG = "ApkSharingManager"
     private const val APK_SHARE_DIR = "apk_share"
+    private const val CLEANUP_AGE_MILLIS = 60 * 60 * 1000L  // 1 hour
     
     /**
      * Get the installed APK file information
@@ -36,7 +38,7 @@ object ApkSharingManager {
                 filePath = sourceDir,
                 fileSize = apkFile.length(),
                 versionName = packageInfo.versionName ?: "unknown",
-                versionCode = packageInfo.longVersionCode
+                versionCode = PackageInfoCompat.getLongVersionCode(packageInfo)
             )
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get APK info", e)
@@ -139,8 +141,7 @@ object ApkSharingManager {
                 shareDir.listFiles()?.forEach { file ->
                     if (file.isFile && file.name.endsWith(".apk")) {
                         val ageMillis = System.currentTimeMillis() - file.lastModified()
-                        // Delete APK files older than 1 hour
-                        if (ageMillis > 60 * 60 * 1000) {
+                        if (ageMillis > CLEANUP_AGE_MILLIS) {
                             file.delete()
                             Log.d(TAG, "Deleted old APK copy: ${file.name}")
                         }
