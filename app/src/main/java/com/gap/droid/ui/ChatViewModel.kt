@@ -937,6 +937,16 @@ class ChatViewModel(
     fun panicClearAllData() {
         Log.w(TAG, "🚨 PANIC MODE ACTIVATED - Clearing all sensitive data")
         
+        // Clear persistent message storage (async)
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                com.gap.droid.services.MessageRetentionService.getInstance(getApplication()).deleteAllStoredMessages()
+                Log.d(TAG, "✅ Cleared all stored messages via MessageRetentionService")
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Failed to clear stored messages: ${e.message}")
+            }
+        }
+
         // Clear all UI managers
         messageManager.clearAllMessages()
         channelManager.clearAllChannels()
