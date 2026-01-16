@@ -38,19 +38,54 @@ class SecureIdentityStateManager(private val context: Context) {
     private val lock = Any()
     
     init {
-        // Create master key for encryption
-        val masterKey = MasterKey.Builder(context, MasterKey.DEFAULT_MASTER_KEY_ALIAS)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        
-        // Create encrypted shared preferences
-        prefs = EncryptedSharedPreferences.create(
-            context,
-            PREFS_NAME,
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+        var sp: SharedPreferences? = null
+        try {
+            // Create master key for encryption
+            val masterKey = MasterKey.Builder(context, MasterKey.DEFAULT_MASTER_KEY_ALIAS)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+
+            // Create encrypted shared preferences
+            sp = EncryptedSharedPreferences.create(
+                context,
+                PREFS_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to create EncryptedSharedPreferences: ${e.message}. Attempting recovery...")
+            try {
+                // Delete the shared preferences file to reset corrupt data
+                if (android.os.Build.VERSION.SDK_INT >= 24) {
+                    context.deleteSharedPreferences(PREFS_NAME)
+                } else {
+                    context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().clear().commit()
+                    val dir = java.io.File(context.filesDir.parent, "shared_prefs")
+                    val file = java.io.File(dir, "$PREFS_NAME.xml")
+                    if (file.exists()) file.delete()
+                }
+
+                // Re-attempt creation
+                val masterKey = MasterKey.Builder(context, MasterKey.DEFAULT_MASTER_KEY_ALIAS)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build()
+
+                sp = EncryptedSharedPreferences.create(
+                    context,
+                    PREFS_NAME,
+                    masterKey,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+                )
+                Log.i(TAG, "Recovery successful: EncryptedSharedPreferences recreated")
+            } catch (e2: Exception) {
+                Log.e(TAG, "Recovery failed: ${e2.message}. Fallback to plain preferences.")
+                // Fallback to plain shared preferences if encryption is not available/working
+                sp = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            }
+        }
+        prefs = sp!!
     }
     
     // MARK: - Static Key Management
