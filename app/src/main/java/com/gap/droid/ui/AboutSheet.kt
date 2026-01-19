@@ -569,6 +569,33 @@ fun AboutSheet(
                                             com.gapmesh.droid.service.MeshServicePreferences.setLegacyCompatibilityEnabled(enabled)
                                         }
                                     )
+                                    
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 56.dp),
+                                        color = colorScheme.outline.copy(alpha = 0.12f)
+                                    )
+                                    
+                                    // Screenshot Notifications Toggle
+                                    LaunchedEffect(Unit) { com.gapmesh.droid.service.ScreenshotPreferenceManager.init(context) }
+                                    val screenshotEnabled by com.gapmesh.droid.service.ScreenshotPreferenceManager.isEnabled.collectAsState()
+                                    val permissionManager = remember { com.gapmesh.droid.onboarding.PermissionManager(context) }
+                                    val hasStoragePermission = remember(screenshotEnabled) { permissionManager.isStoragePermissionGranted() }
+                                    
+                                    SettingsToggleRow(
+                                        icon = Icons.Filled.Security,
+                                        title = stringResource(R.string.screenshot_notifications_title),
+                                        subtitle = if (!hasStoragePermission && screenshotEnabled) {
+                                            stringResource(R.string.screenshot_notifications_permission_needed)
+                                        } else {
+                                            stringResource(R.string.screenshot_notifications_desc)
+                                        },
+                                        checked = screenshotEnabled,
+                                        onCheckedChange = { enabled ->
+                                            com.gapmesh.droid.service.ScreenshotPreferenceManager.setScreenshotNotificationsEnabled(enabled)
+                                            // Note: Permission request will be handled by the system when
+                                            // ScreenshotDetector tries to access storage
+                                        }
+                                    )
                                 }
                             }
                             

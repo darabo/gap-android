@@ -150,6 +150,11 @@
   <string name="cd_privacy_protected">Privacy Protected</string>
   <string name="cancel_lower">cancel</string>
   
+  <!-- Screenshot Notifications Settings -->
+  <string name="screenshot_notifications_title">Screenshot Notifications</string>
+  <string name="screenshot_notifications_desc">Notify chat partners when you take a screenshot</string>
+  <string name="screenshot_notifications_permission_needed">Storage access is needed for screenshot detection</string>
+
   <!-- Language Selection -->
   <string name="language_selection_title">Choose Language</string>
   <string name="language_selection_subtitle">زبان را انتخاب کنید</string>
@@ -397,6 +402,11 @@
   <string name="perm_type_notifications">Notifications</string>
   <string name="perm_type_battery_optimization">Battery Optimization</string>
   <string name="perm_type_other">Other</string>
+  
+  <!-- WiFi Aware permission -->
+  <string name="perm_type_wifi_aware">WiFi Aware</string>
+  <string name="perm_wifi_aware_desc">Enables high-bandwidth mesh networking over WiFi for faster file sharing when available</string>
+  <string name="perm_wifi_aware_system">Allow Gap Mesh to use WiFi Aware for faster connections</string>
 
   <!-- Password prompt dialog -->
   <string name="pwd_prompt_title">Enter Channel Password</string>

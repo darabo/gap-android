@@ -1,14 +1,18 @@
 package com.gapmesh.droid.wifiaware
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.wifi.aware.*
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.gapmesh.droid.crypto.EncryptionService
 import com.gapmesh.droid.protocol.BitchatPacket
 import com.gapmesh.droid.protocol.BinaryProtocol
@@ -165,7 +169,23 @@ class WiFiAwareService(
     // MARK: - Lifecycle
     
     /**
-     * Start WiFi Aware service if available.
+     * Check if NEARBY_WIFI_DEVICES permission is granted.
+     * Required on Android 13+ (API 33) for WiFi Aware operations.
+     */
+    fun hasNearbyWifiPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.NEARBY_WIFI_DEVICES
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            // Permission not required on Android 12 and below
+            true
+        }
+    }
+    
+    /**
+     * Start WiFi Aware service if available and permissions are granted.
      */
     fun start() {
         if (!WiFiAwareAvailability.isSupported(context)) {
@@ -177,6 +197,13 @@ class WiFiAwareService(
         if (!WiFiAwareAvailability.isAvailable(context)) {
             Log.w(TAG, "WiFi Aware supported but not currently available")
             _state.value = WiFiAwareState.Unavailable
+            return
+        }
+        
+        // Check NEARBY_WIFI_DEVICES permission on Android 13+
+        if (!hasNearbyWifiPermission()) {
+            Log.w(TAG, "WiFi Aware requires NEARBY_WIFI_DEVICES permission on Android 13+")
+            _state.value = WiFiAwareState.Failed("NEARBY_WIFI_DEVICES permission required")
             return
         }
         

@@ -299,7 +299,7 @@ class MainActivity : OrientationAwareActivity() {
             OnboardingState.PERMISSION_EXPLANATION -> {
                 PermissionExplanationScreen(
                     modifier = modifier,
-                    permissionCategories = permissionManager.getCategorizedPermissions(),
+                    permissionCategories = permissionManager.getCategorizedPermissionsForOnboarding(),
                     onContinue = {
                         mainViewModel.updateOnboardingState(OnboardingState.PERMISSION_REQUESTING)
                         onboardingCoordinator.requestPermissions()

@@ -142,6 +142,11 @@
     <string name="close_plain">بستن</string>
     <string name="cancel_lower">لغو</string>
     
+    <!-- تنظیمات اعلان اسکرین‌شات -->
+    <string name="screenshot_notifications_title">اعلان‌های اسکرین‌شات</string>
+    <string name="screenshot_notifications_desc">به طرف مکالمه اطلاع بده که اسکرین‌شات گرفتی</string>
+    <string name="screenshot_notifications_permission_needed">برای تشخیص اسکرین‌شات به دسترسی حافظه نیاز است</string>
+    
     <!-- انتخاب زبان -->
     <string name="language_selection_title">Choose Language</string>
     <string name="language_selection_subtitle">زبان را انتخاب کنید</string>
@@ -347,6 +352,11 @@
     <string name="perm_type_notifications">اعلان‌ها</string>
     <string name="perm_type_battery_optimization">بهینه‌سازی باتری</string>
     <string name="perm_type_other">سایر</string>
+
+    <!-- WiFi Aware permission -->
+    <string name="perm_type_wifi_aware">WiFi Aware</string>
+    <string name="perm_wifi_aware_desc">شبکهٔ مِش پرسرعت از طریق WiFi برای اشتراک‌گذاری سریع‌تر فایل‌ها</string>
+    <string name="perm_wifi_aware_system">به گپ مش اجازه دهید از WiFi Aware استفاده کند</string>
 
     <!-- گفت‌وگوی گذرواژه -->
     <string name="pwd_prompt_title">گذرواژهٔ کانال را وارد کنید</string>

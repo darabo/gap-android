@@ -41,15 +41,15 @@ class PermissionManager(private val context: Context) {
     }
 
     /**
-     * Get required permissions that can be requested together.
+     * Get critical permissions required for core app functionality.
+     * These are the ONLY permissions requested during onboarding.
      * Background location is handled separately to ensure correct request order.
-     * Note: Notification permission is optional and not included here,
-     * so the app works without notification access.
+     * Note: Notification permission is optional and handled contextually.
      */
     fun getRequiredPermissions(): List<String> {
         val permissions = mutableListOf<String>()
 
-        // Bluetooth permissions (API level dependent)
+        // Bluetooth permissions (API level dependent) - CRITICAL for mesh
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             permissions.addAll(listOf(
                 Manifest.permission.BLUETOOTH_ADVERTISE,
@@ -63,24 +63,66 @@ class PermissionManager(private val context: Context) {
             ))
         }
 
-        // Location permissions (required for Bluetooth LE scanning)
+        // Location permissions (required for Bluetooth LE scanning) - CRITICAL for mesh
         permissions.addAll(listOf(
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.ACCESS_FINE_LOCATION
         ))
 
-        // Storage permissions (for screenshot detection) - optional, won't block onboarding if denied
+        // WiFi Aware permission (Android 13+) - CRITICAL for high-bandwidth mesh
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Android 13+ uses granular media permissions
+            permissions.add(Manifest.permission.NEARBY_WIFI_DEVICES)
+        }
+
+        // NOTE: Storage permission moved to getDeferrablePermissions() - requested via Settings
+        // NOTE: Notification permission is in getOptionalPermissions() - requested contextually
+
+        return permissions
+    }
+
+    /**
+     * Alias for getRequiredPermissions() - returns only critical permissions for onboarding.
+     */
+    fun getCriticalPermissions(): List<String> = getRequiredPermissions()
+
+    /**
+     * Get deferrable permissions that enhance the experience but aren't needed during onboarding.
+     * These are requested contextually when the user enables specific features in Settings.
+     */
+    fun getDeferrablePermissions(): List<String> {
+        val permissions = mutableListOf<String>()
+
+        // Storage permissions (for screenshot detection) - requested when enabling the feature
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
         } else {
-            // Android 12 and below use READ_EXTERNAL_STORAGE
             permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
 
-        // Notification permission intentionally excluded to keep it optional
-
         return permissions
+    }
+
+    /**
+     * Check if storage permission is granted (for screenshot detection feature).
+     */
+    fun isStoragePermissionGranted(): Boolean {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+        return isPermissionGranted(permission)
+    }
+
+    /**
+     * Get the storage permission string for the current API level.
+     */
+    fun getStoragePermission(): String {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
     }
 
     /**
@@ -173,7 +215,7 @@ class PermissionManager(private val context: Context) {
     }
 
     /**
-     * Get categorized permission information for display
+     * Get categorized permission information for display (full list for diagnostics)
      */
     fun getCategorizedPermissions(): List<PermissionCategory> {
         val categories = mutableListOf<PermissionCategory>()
@@ -202,6 +244,21 @@ class PermissionManager(private val context: Context) {
                 systemDescription = context.getString(R.string.perm_nearby_devices_system)
             )
         )
+
+        // WiFi Aware category (Android 13+ only)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val wifiAwarePermissions = listOf(Manifest.permission.NEARBY_WIFI_DEVICES)
+            categories.add(
+                PermissionCategory(
+                    type = PermissionType.WIFI_AWARE,
+                    typeName = context.getString(R.string.perm_type_wifi_aware),
+                    description = context.getString(R.string.perm_wifi_aware_desc),
+                    permissions = wifiAwarePermissions,
+                    isGranted = wifiAwarePermissions.all { isPermissionGranted(it) },
+                    systemDescription = context.getString(R.string.perm_wifi_aware_system)
+                )
+            )
+        }
 
         // Location category
         val locationPermissions = listOf(
@@ -248,8 +305,6 @@ class PermissionManager(private val context: Context) {
             )
         }
 
-        // Microphone category removed from onboarding
-
         // Battery optimization category (if applicable)
         if (isBatteryOptimizationSupported()) {
             categories.add(
@@ -264,7 +319,7 @@ class PermissionManager(private val context: Context) {
             )
         }
 
-        // Storage category
+        // Storage category (kept in full list for diagnostics)
         val storagePermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             listOf(Manifest.permission.READ_MEDIA_IMAGES)
         } else {
@@ -282,6 +337,77 @@ class PermissionManager(private val context: Context) {
             )
         )
 
+        return categories
+    }
+
+    /**
+     * Get streamlined permission categories for onboarding display.
+     * Only shows the essential permissions needed to use the mesh network.
+     * Storage, Background Location, Notifications, and Battery Optimization are
+     * excluded to reduce onboarding friction - they're requested later via Settings.
+     */
+    fun getCategorizedPermissionsForOnboarding(): List<PermissionCategory> {
+        val categories = mutableListOf<PermissionCategory>()
+
+        // Combined "Mesh Network" category explanation
+        val bluetoothPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            listOf(
+                Manifest.permission.BLUETOOTH_ADVERTISE,
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.BLUETOOTH_SCAN
+            )
+        } else {
+            listOf(
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.BLUETOOTH_ADMIN
+            )
+        }
+
+        // Nearby Devices (Bluetooth)
+        categories.add(
+            PermissionCategory(
+                type = PermissionType.NEARBY_DEVICES,
+                typeName = context.getString(R.string.perm_type_nearby_devices),
+                description = context.getString(R.string.perm_nearby_devices_desc),
+                permissions = bluetoothPermissions,
+                isGranted = bluetoothPermissions.all { isPermissionGranted(it) },
+                systemDescription = context.getString(R.string.perm_nearby_devices_system)
+            )
+        )
+
+        // WiFi Aware (Android 13+ only)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val wifiAwarePermissions = listOf(Manifest.permission.NEARBY_WIFI_DEVICES)
+            categories.add(
+                PermissionCategory(
+                    type = PermissionType.WIFI_AWARE,
+                    typeName = context.getString(R.string.perm_type_wifi_aware),
+                    description = context.getString(R.string.perm_wifi_aware_desc),
+                    permissions = wifiAwarePermissions,
+                    isGranted = wifiAwarePermissions.all { isPermissionGranted(it) },
+                    systemDescription = context.getString(R.string.perm_wifi_aware_system)
+                )
+            )
+        }
+
+        // Location (required for BLE scanning)
+        val locationPermissions = listOf(
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        categories.add(
+            PermissionCategory(
+                type = PermissionType.PRECISE_LOCATION,
+                typeName = context.getString(R.string.perm_type_precise_location),
+                description = context.getString(R.string.perm_location_desc),
+                permissions = locationPermissions,
+                isGranted = locationPermissions.all { isPermissionGranted(it) },
+                systemDescription = context.getString(R.string.perm_location_system)
+            )
+        )
+
+        // NOTE: Background Location, Notifications, Battery Optimization, and Storage
+        // are intentionally EXCLUDED from onboarding - they are requested later via Settings
 
         return categories
     }
@@ -338,6 +464,7 @@ data class PermissionCategory(
 
 enum class PermissionType(val nameValue: String) {
     NEARBY_DEVICES("Nearby Devices"),
+    WIFI_AWARE("WiFi Aware"),
     PRECISE_LOCATION("Precise Location"),
     BACKGROUND_LOCATION("Background Location"),
     MICROPHONE("Microphone"),

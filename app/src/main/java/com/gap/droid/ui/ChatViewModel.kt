@@ -436,6 +436,13 @@ import com.gapmesh.droid.ui.ScreenshotDetector
     }
 
     private fun handleScreenshot() {
+        // Check if screenshot notifications are enabled in settings
+        com.gapmesh.droid.service.ScreenshotPreferenceManager.init(getApplication())
+        if (!com.gapmesh.droid.service.ScreenshotPreferenceManager.isScreenshotNotificationsEnabled()) {
+            // Feature is disabled - don't send notification
+            return
+        }
+        
         val context = getApplication<Application>()
         
         // 1. Send public message "took a screenshot"
