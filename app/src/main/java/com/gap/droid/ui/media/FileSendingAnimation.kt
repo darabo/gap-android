@@ -1,4 +1,4 @@
-package com.gap.droid.ui.media
+package com.gapmesh.droid.ui.media
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -30,7 +30,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.gap.droid.R
+import com.gapmesh.droid.R
 import kotlinx.coroutines.delay
 
 /**

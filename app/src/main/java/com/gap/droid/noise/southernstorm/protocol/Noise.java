@@ -20,7 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package com.gap.droid.noise.southernstorm.protocol;
+package com.gapmesh.droid.noise.southernstorm.protocol;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -29,10 +29,10 @@ import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 
-import com.gap.droid.noise.southernstorm.crypto.Blake2bMessageDigest;
-import com.gap.droid.noise.southernstorm.crypto.Blake2sMessageDigest;
-import com.gap.droid.noise.southernstorm.crypto.SHA256MessageDigest;
-import com.gap.droid.noise.southernstorm.crypto.SHA512MessageDigest;
+import com.gapmesh.droid.noise.southernstorm.crypto.Blake2bMessageDigest;
+import com.gapmesh.droid.noise.southernstorm.crypto.Blake2sMessageDigest;
+import com.gapmesh.droid.noise.southernstorm.crypto.SHA256MessageDigest;
+import com.gapmesh.droid.noise.southernstorm.crypto.SHA512MessageDigest;
 
 /**
  * Utility functions for the Noise protocol library.

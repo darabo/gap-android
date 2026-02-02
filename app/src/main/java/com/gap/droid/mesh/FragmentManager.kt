@@ -1,10 +1,10 @@
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import android.util.Log
-import com.gap.droid.protocol.BitchatPacket
-import com.gap.droid.protocol.MessageType
-import com.gap.droid.protocol.MessagePadding
-import com.gap.droid.model.FragmentPayload
+import com.gapmesh.droid.protocol.BitchatPacket
+import com.gapmesh.droid.protocol.MessageType
+import com.gapmesh.droid.protocol.MessagePadding
+import com.gapmesh.droid.model.FragmentPayload
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -22,10 +22,10 @@ class FragmentManager {
     companion object {
         private const val TAG = "FragmentManager"
         // iOS values: 512 MTU threshold, 469 max fragment size (512 MTU - headers)
-        private const val FRAGMENT_SIZE_THRESHOLD = com.gap.droid.util.AppConstants.Fragmentation.FRAGMENT_SIZE_THRESHOLD // Matches iOS: if data.count > 512
-        private const val MAX_FRAGMENT_SIZE = com.gap.droid.util.AppConstants.Fragmentation.MAX_FRAGMENT_SIZE        // Matches iOS: maxFragmentSize = 469 
-        private const val FRAGMENT_TIMEOUT = com.gap.droid.util.AppConstants.Fragmentation.FRAGMENT_TIMEOUT_MS     // Matches iOS: 30 seconds cleanup
-        private const val CLEANUP_INTERVAL = com.gap.droid.util.AppConstants.Fragmentation.CLEANUP_INTERVAL_MS     // 10 seconds cleanup check
+        private const val FRAGMENT_SIZE_THRESHOLD = com.gapmesh.droid.util.AppConstants.Fragmentation.FRAGMENT_SIZE_THRESHOLD // Matches iOS: if data.count > 512
+        private const val MAX_FRAGMENT_SIZE = com.gapmesh.droid.util.AppConstants.Fragmentation.MAX_FRAGMENT_SIZE        // Matches iOS: maxFragmentSize = 469 
+        private const val FRAGMENT_TIMEOUT = com.gapmesh.droid.util.AppConstants.Fragmentation.FRAGMENT_TIMEOUT_MS     // Matches iOS: 30 seconds cleanup
+        private const val CLEANUP_INTERVAL = com.gapmesh.droid.util.AppConstants.Fragmentation.CLEANUP_INTERVAL_MS     // 10 seconds cleanup check
     }
     
     // Fragment storage - iOS equivalent: incomingFragments: [String: [Int: Data]]

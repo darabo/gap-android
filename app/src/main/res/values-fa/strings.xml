@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">bitchat</string>
+    <string name="app_name">گپ مش</string>
 
     <!-- توضیح مجوزها -->
     <string name="permission_bluetooth_rationale">برای چت مستقیم با دیگران بدون اینترنت، به مجوز بلوتوث نیاز است.</string>
@@ -23,18 +23,25 @@
     <string name="emergency_clear_hint">برای پاک کردن همهٔ داده‌ها سه بار ضربه بزنید</string>
     <string name="your_network">شبکه</string>
 
+    <!-- ناوبری پایین -->
+    <string name="nav_mesh">گفت‌وگو</string>
+    <string name="nav_location">مکان</string>
+    <string name="nav_people">افراد</string>
+    <string name="nav_settings">تنظیمات</string>
+    <string name="change_username">تغییر نام کاربری</string>
+
     <!-- بهینه‌سازی باتری -->
     <string name="battery_optimization_detected">بهینه‌سازی باتری شناسایی شد</string>
     <string name="battery_optimization_disabled">بهینه‌سازی باتری غیرفعال شد</string>
     <string name="battery_optimization_not_required">بهینه‌سازی باتری لازم نیست</string>
     <string name="battery_optimization_checking">در حال بررسی بهینه‌سازی باتری</string>
     <string name="battery_optimization_why_disable">چرا بهینه‌سازی باتری را غیرفعال کنیم؟</string>
-    <string name="battery_optimization_explanation">bitchat برای حفظ اتصال مِش با دستگاه‌های نزدیک در پس‌زمینه اجرا می‌شود. بهینه‌سازی باتری می‌تواند این اتصال‌ها را قطع کند و باعث تأخیر یا از دست رفتن پیام‌ها شود.\n\nغیرفعال‌کردن بهینه‌سازی باتری، ارتباط همتابه‌همتای قابل اعتماد را تضمین می‌کند.</string>
+    <string name="battery_optimization_explanation">گپ مش برای حفظ اتصال مِش با دستگاه‌های نزدیک در پس‌زمینه اجرا می‌شود. بهینه‌سازی باتری می‌تواند این اتصال‌ها را قطع کند و باعث تأخیر یا از دست رفتن پیام‌ها شود.\n\nغیرفعال‌کردن بهینه‌سازی باتری، ارتباط همتابه‌همتای قابل اعتماد را تضمین می‌کند.</string>
     <string name="battery_optimization_disable_button">غیرفعال‌کردن بهینه‌سازی باتری</string>
-    <string name="battery_optimization_note">توجه: می‌توانید بعداً در تنظیمات اندروید &gt; برنامه‌ها &gt; bitchat &gt; باتری این مورد را تغییر دهید.</string>
-    <string name="battery_optimization_not_supported_explanation">دستگاه شما به تنظیمات بهینه‌سازی باتری نیاز ندارد. bitchat به‌صورت عادی اجرا می‌شود.</string>
-    <string name="battery_optimization_not_supported_message">دستگاه شما به تنظیمات بهینه‌سازی باتری نیاز ندارد. bitchat به‌صورت عادی اجرا می‌شود.</string>
-    <string name="battery_optimization_success_message">bitchat می‌تواند با اطمینان در پس‌زمینه اجرا شود</string>
+    <string name="battery_optimization_note">توجه: می‌توانید بعداً در تنظیمات اندروید &gt; برنامه‌ها &gt; گپ مش &gt; باتری این مورد را تغییر دهید.</string>
+    <string name="battery_optimization_not_supported_explanation">دستگاه شما به تنظیمات بهینه‌سازی باتری نیاز ندارد. گپ مش به‌صورت عادی اجرا می‌شود.</string>
+    <string name="battery_optimization_not_supported_message">دستگاه شما به تنظیمات بهینه‌سازی باتری نیاز ندارد. گپ مش به‌صورت عادی اجرا می‌شود.</string>
+    <string name="battery_optimization_success_message">گپ مش می‌تواند با اطمینان در پس‌زمینه اجرا شود</string>
     <string name="battery_optimization_benefits">• تحویل مطمئن پیام‌ها\n• حفظ اتصال مِش\n• رلهٔ پیام در پس‌زمینه\n• جلوگیری از قطع اتصال</string>
     <string name="battery_optimization_check_again">بررسی مجدد</string>
     <string name="battery_optimization_skip">فعلاً رد کردن</string>
@@ -46,7 +53,7 @@
     <string name="notification_summary_more">و %1$d مورد دیگر</string>
     <string name="notification_messages_from_people">%1$d پیام از %2$d نفر</string>
     <string name="notification_more_conversations">و %1$d گفت‌وگوی دیگر</string>
-    <string name="notification_active_peers_title">👥 کاربران bitchat در نزدیکی!</string>
+    <string name="notification_active_peers_title">👥 کاربران گپ مش در نزدیکی!</string>
     <string name="notification_active_peers_one">۱ نفر در نزدیکی</string>
     <string name="notification_active_peers_many">%1$d نفر در نزدیکی</string>
     <string name="notification_new_messages">پیام‌های جدید</string>
@@ -57,8 +64,8 @@
     <string name="notification_new_activity_in">فعالیت جدید در %1$s</string>
     <string name="notification_messages_in">پیام‌ها در %1$s</string>
     <string name="notification_joined_conversation">%1$s به گفت‌وگو پیوست</string>
-    <string name="notification_geohash_summary_title_mentions">bitchat – %1$d مورد ذکر</string>
-    <string name="notification_geohash_summary_title">bitchat – گفت‌وگوی مکانی</string>
+    <string name="notification_geohash_summary_title_mentions">گپ مش – %1$d مورد ذکر</string>
+    <string name="notification_geohash_summary_title">گپ مش – گفت‌وگوی مکانی</string>
     <string name="notification_geohash_summary_text">%1$d پیام از %2$d موقعیت</string>
     <string name="notification_mesh_mention_title_singular">ذکر در گفت‌وگوی مِش</string>
     <string name="notification_mesh_mention_title_plural">%1$d مورد ذکر در گفت‌وگوی مِش</string>
@@ -132,6 +139,13 @@
     <string name="about_footer">متن‌باز • حریم خصوصی در اولویت • غیرمتمرکز</string>
     <string name="close_plain">بستن</string>
     <string name="cancel_lower">لغو</string>
+    
+    <!-- انتخاب زبان -->
+    <string name="language_selection_title">Choose Language</string>
+    <string name="language_selection_subtitle">زبان را انتخاب کنید</string>
+    <string name="language_english">English</string>
+    <string name="language_farsi">فارسی</string>
+    <string name="about_language">زبان</string>
 
     <!-- توضیحات عمومی محتوا -->
     <string name="cd_warning">هشدار</string>
@@ -253,24 +267,24 @@
     <!-- صفحه‌های آغازین -->
     <string name="location_services_required">خدمات مکان لازم است</string>
     <string name="privacy_first">حریم خصوصی در اولویت</string>
-    <string name="location_explanation">bitchat موقعیت شما را پیگیری نمی‌کند.\n\nبرای اسکن بلوتوث و قابلیت گفت‌وگوی geohash، خدمات مکان لازم است.</string>
-    <string name="location_needs_for">bitchat به خدمات مکان برای موارد زیر نیاز دارد:</string>
+    <string name="location_explanation">گپ مش موقعیت شما را پیگیری نمی‌کند.\n\nبرای اسکن بلوتوث و قابلیت گفت‌وگوی geohash، خدمات مکان لازم است.</string>
+    <string name="location_needs_for">گپ مش به خدمات مکان برای موارد زیر نیاز دارد:</string>
     <string name="location_needs_bullets">• اسکن دستگاه‌های بلوتوث\n• یافتن کاربران نزدیک در شبکهٔ مِش\n• قابلیت گفت‌وگوی geohash\n• بدون پیگیری یا جمع‌آوری موقعیت</string>
     <string name="open_location_settings">باز کردن تنظیمات مکان</string>
     <string name="check_again">بررسی دوباره</string>
     <string name="location_services_unavailable">خدمات مکان در دسترس نیست</string>
-    <string name="location_unavailable_explanation">خدمات مکان در این دستگاه در دسترس نیست. این غیرمعمول است زیرا خدمات مکان در دستگاه‌های اندرویدی استاندارد است.\n\nبرای عملکرد صحیح اسکن بلوتوث (الزام اندروید) bitchat به خدمات مکان نیاز دارد. بدون آن، برنامه نمی‌تواند کاربران نزدیک را بیابد.</string>
+    <string name="location_unavailable_explanation">خدمات مکان در این دستگاه در دسترس نیست. این غیرمعمول است زیرا خدمات مکان در دستگاه‌های اندرویدی استاندارد است.\n\nبرای عملکرد صحیح اسکن بلوتوث (الزام اندروید) گپ مش به خدمات مکان نیاز دارد. بدون آن، برنامه نمی‌تواند کاربران نزدیک را بیابد.</string>
     <string name="checking_location_services">در حال بررسی خدمات مکان …</string>
     <string name="bluetooth_required">بلوتوث لازم است</string>
-    <string name="bluetooth_needs_for">bitchat به بلوتوث برای موارد زیر نیاز دارد:</string>
+    <string name="bluetooth_needs_for">گپ مش به بلوتوث برای موارد زیر نیاز دارد:</string>
     <string name="bluetooth_needs_bullets">• یافتن کاربران نزدیک\n• ایجاد اتصال‌های شبکهٔ مِش\n• ارسال و دریافت پیام‌ها\n• کار بدون اینترنت یا سرور</string>
     <string name="enable_bluetooth">فعال‌کردن بلوتوث</string>
     <string name="bluetooth_not_supported">بلوتوث پشتیبانی نمی‌شود</string>
-    <string name="bluetooth_unsupported_explanation">این دستگاه از Bluetooth Low Energy (BLE) که برای کارکرد bitchat لازم است پشتیبانی نمی‌کند.\n\nbitchat برای ایجاد شبکهٔ مِش و ارتباط با دستگاه‌های نزدیک بدون اینترنت به BLE نیاز دارد.</string>
+    <string name="bluetooth_unsupported_explanation">این دستگاه از Bluetooth Low Energy (BLE) که برای کارکرد گپ مش لازم است پشتیبانی نمی‌کند.\n\nگپ مش برای ایجاد شبکهٔ مِش و ارتباط با دستگاه‌های نزدیک بدون اینترنت به BLE نیاز دارد.</string>
     <string name="checking_bluetooth_status">در حال بررسی وضعیت بلوتوث …</string>
     <string name="battery_optimization_detected_title">بهینه‌سازی باتری شناسایی شد</string>
     <string name="battery_optimization_enabled_title">بهینه‌سازی باتری فعال است</string>
-    <string name="battery_optimization_explanation_short">برای حفظ اتصال مِش، bitchat باید در پس‌زمینه اجرا شود. بهینه‌سازی باتری می‌تواند این اتصال‌ها را مختل کند.</string>
+    <string name="battery_optimization_explanation_short">برای حفظ اتصال مِش، گپ مش باید در پس‌زمینه اجرا شود. بهینه‌سازی باتری می‌تواند این اتصال‌ها را مختل کند.</string>
     <string name="benefits_of_disabling">مزایای غیرفعالسازی</string>
     <string name="battery_benefits_short">• تحویل مطمئن پیام‌ها\n• حفظ اتصال مِش\n• جلوگیری از قطع اتصال</string>
     <string name="disable_battery_optimization">غیرفعال‌کردن بهینه‌سازی باتری</string>
@@ -285,7 +299,7 @@
     <string name="privacy_bullets">• بدون پیگیری یا جمع‌آوری داده\n• گفت‌وگوی مِش بلوتوث کاملاً آفلاین است\n• گفت‌وگوی geohash از اینترنت استفاده می‌کند</string>
     <string name="permissions_header">مجوزها</string>
     <string name="grant_permissions">اعطای مجوزها</string>
-    <string name="location_tracking_warning">bitchat موقعیت شما را پیگیری نمی‌کند</string>
+    <string name="location_tracking_warning">گپ مش موقعیت شما را پیگیری نمی‌کند</string>
     <string name="geohash_people_header">افراد</string>
     <string name="nobody_around">کسی در اطراف نیست …</string>
     <string name="you_suffix"> (شما)</string>
@@ -314,14 +328,14 @@
     <string name="pow_label_format">pow: %1$dbit</string>
 
     <!-- توضیحات مجوز -->
-    <string name="perm_nearby_devices_desc">برای یافتن کاربران bitchat از طریق بلوتوث لازم است</string>
-    <string name="perm_nearby_devices_system">به bitchat اجازه دهید با دستگاه‌های نزدیک متصل شود</string>
-    <string name="perm_location_desc">برای یافتن کاربران نزدیک bitchat از طریق بلوتوث به‌وسیلهٔ اندروید لازم است</string>
-    <string name="perm_location_system">bitchat برای اسکن دستگاه‌های نزدیک به این مورد نیاز دارد</string>
+    <string name="perm_nearby_devices_desc">برای یافتن کاربران گپ مش از طریق بلوتوث لازم است</string>
+    <string name="perm_nearby_devices_system">به گپ مش اجازه دهید با دستگاه‌های نزدیک متصل شود</string>
+    <string name="perm_location_desc">برای یافتن کاربران نزدیک گپ مش از طریق بلوتوث به‌وسیلهٔ اندروید لازم است</string>
+    <string name="perm_location_system">گپ مش برای اسکن دستگاه‌های نزدیک به این مورد نیاز دارد</string>
     <string name="perm_notifications_desc">هنگام دریافت پیام خصوصی اعلان دریافت کنید</string>
-    <string name="perm_notifications_system">به bitchat اجازه دهید برای شما اعلان ارسال کند</string>
-    <string name="perm_battery_desc">بهینه‌سازی باتری را غیرفعال کنید تا اطمینان حاصل شود bitchat به‌طور قابل اعتماد در پس‌زمینه اجرا شده و اتصال‌های شبکهٔ مِش را حفظ می‌کند</string>
-    <string name="perm_battery_system">به bitchat اجازه دهید بدون محدودیت باتری اجرا شود</string>
+    <string name="perm_notifications_system">به گپ مش اجازه دهید برای شما اعلان ارسال کند</string>
+    <string name="perm_battery_desc">بهینه‌سازی باتری را غیرفعال کنید تا اطمینان حاصل شود گپ مش به‌طور قابل اعتماد در پس‌زمینه اجرا شده و اتصال‌های شبکهٔ مِش را حفظ می‌کند</string>
+    <string name="perm_battery_system">به گپ مش اجازه دهید بدون محدودیت باتری اجرا شود</string>
 
     <!-- گونه‌های مجوز -->
     <string name="perm_type_nearby_devices">دستگاه‌های نزدیک</string>
@@ -351,39 +365,94 @@
 
     <string name="mesh_service_notification_content">مش در حال اجرا — %1$d همتا</string>
 
-  <string name="verify_title">verify</string>
-  <string name="verify_my_qr_title">scan to verify me</string>
-  <string name="verify_scan_prompt_friend">scan someone elses qr</string>
-  <string name="verify_scan_someone">scan someone elses qr</string>
-  <string name="verify_show_my_qr">show my qr</string>
-  <string name="verify_remove">remove verification</string>
-  <string name="verify_qr_unavailable">qr unavailable</string>
-  <string name="verify_camera_permission">camera permission is needed to scan qr codes</string>
-  <string name="verify_request_camera">enable camera</string>
-  <string name="verify_paste_label">paste verification url</string>
-  <string name="verify_validate">validate</string>
-  <string name="verify_scanned">verification requested</string>
-  <string name="security_verification_title">security verification</string>
-  <string name="fingerprint_their">their fingerprint</string>
-  <string name="fingerprint_yours">your fingerprint</string>
-  <string name="fingerprint_pending">handshake pending</string>
-  <string name="fingerprint_no_peer">open a private chat to view fingerprints</string>
-  <string name="fingerprint_status_verified">encrypted &amp; verified</string>
-  <string name="fingerprint_status_encrypted">encrypted</string>
-  <string name="fingerprint_status_handshaking">handshaking</string>
-  <string name="fingerprint_status_failed">handshake failed</string>
-  <string name="fingerprint_status_uninitialized">not encrypted</string>
-  <string name="fingerprint_verified_label">verified</string>
-  <string name="fingerprint_verified_message">you have verified this persons identity.</string>
-  <string name="fingerprint_not_verified_label">not verified</string>
-  <string name="fingerprint_not_verified_message_fmt">compare these fingerprints with %1$s using a secure channel.</string>
-  <string name="fingerprint_mark_verified">mark as verified</string>
-  <string name="fingerprint_start_handshake">start handshake</string>
-  <string name="fingerprint_copy">copy</string>
-  <string name="verify_mutual_match_title">Mutual verification</string>
-  <string name="verify_mutual_match_body">You and %1$s verified each other</string>
-  <string name="verify_mutual_system_message">mutual verification with %1$s</string>
-  <string name="verify_success_title">Verified</string>
-  <string name="verify_success_body">You verified %1$s</string>
-  <string name="verify_success_system_message">verified %1$s</string>
+  <!-- تأیید هویت -->
+  <string name="verify_title">تأیید هویت</string>
+  <string name="verify_my_qr_title">برای تأیید من اسکن کنید</string>
+  <string name="verify_scan_prompt_friend">کد QR شخص دیگری را اسکن کنید</string>
+  <string name="verify_scan_someone">کد QR شخص دیگری را اسکن کنید</string>
+  <string name="verify_show_my_qr">نمایش کد QR من</string>
+  <string name="verify_remove">حذف تأیید</string>
+  <string name="verify_qr_unavailable">کد QR در دسترس نیست</string>
+  <string name="verify_camera_permission">برای اسکن کدهای QR به مجوز دوربین نیاز است</string>
+  <string name="verify_request_camera">فعال‌کردن دوربین</string>
+  <string name="verify_paste_label">چسباندن لینک تأیید</string>
+  <string name="verify_validate">اعتبارسنجی</string>
+  <string name="verify_scanned">درخواست تأیید ارسال شد</string>
+  <string name="security_verification_title">تأیید امنیتی</string>
+  <string name="fingerprint_their">اثرانگشت آن‌ها</string>
+  <string name="fingerprint_yours">اثرانگشت شما</string>
+  <string name="fingerprint_pending">در انتظار دست‌دهی</string>
+  <string name="fingerprint_no_peer">برای مشاهدهٔ اثرانگشت‌ها یک گفت‌وگوی خصوصی باز کنید</string>
+  <string name="fingerprint_status_verified">رمزگذاری‌شده و تأییدشده</string>
+  <string name="fingerprint_status_encrypted">رمزگذاری‌شده</string>
+  <string name="fingerprint_status_handshaking">در حال دست‌دهی</string>
+  <string name="fingerprint_status_failed">دست‌دهی ناموفق بود</string>
+  <string name="fingerprint_status_uninitialized">رمزگذاری نشده</string>
+  <string name="fingerprint_verified_label">تأییدشده</string>
+  <string name="fingerprint_verified_message">شما هویت این شخص را تأیید کرده‌اید.</string>
+  <string name="fingerprint_not_verified_label">تأیید نشده</string>
+  <string name="fingerprint_not_verified_message_fmt">این اثرانگشت‌ها را با %1$s از طریق یک کانال امن مقایسه کنید.</string>
+  <string name="fingerprint_mark_verified">علامت‌گذاری به عنوان تأییدشده</string>
+  <string name="fingerprint_start_handshake">شروع دست‌دهی</string>
+  <string name="fingerprint_copy">کپی</string>
+  <string name="verify_mutual_match_title">تأیید متقابل</string>
+  <string name="verify_mutual_match_body">شما و %1$s یکدیگر را تأیید کردید</string>
+  <string name="verify_mutual_system_message">تأیید متقابل با %1$s</string>
+  <string name="verify_success_title">تأییدشده</string>
+  <string name="verify_success_body">شما %1$s را تأیید کردید</string>
+  <string name="verify_success_system_message">%1$s تأیید شد</string>
+
+    <!-- مجوز مکان در پس‌زمینه -->
+    <string name="notification_action_quit_bitchat">خروج از گپ مش</string>
+    <string name="about_background_title">اجرا در پس‌زمینه</string>
+    <string name="about_background_desc">مش را هنگام بستن برنامه فعال نگه دارید (سرویس پیش‌زمینه)</string>
+    <string name="mesh_service_channel_name">سرویس پس‌زمینهٔ مش</string>
+    <string name="mesh_service_channel_desc">مش بلوتوث را در پس‌زمینه فعال نگه می‌دارد</string>
+    <string name="action_private_message_title">پیام به %1$s</string>
+    <string name="action_private_message_subtitle">شروع گفت‌وگوی خصوصی</string>
+    <string name="cd_location_notes">یادداشت‌های مکانی</string>
+    <string name="app_brand">Gap Mesh/</string>
+    <string name="tor_not_available_in_this_build">Tor در این نسخه در دسترس نیست</string>
+    <string name="background_location_required_title">نیاز به مکان در پس‌زمینه</string>
+    <string name="background_location_required_subtitle">دسترسی به مکان در پس‌زمینه لازم است</string>
+    <string name="background_location_explanation">گپ مش برای حفظ اتصال مش هنگام بستن برنامه به دسترسی مکان در پس‌زمینه نیاز دارد.</string>
+    <string name="background_location_settings_tip">به تنظیمات &gt; مکان &gt; مجوزهای برنامه &gt; گپ مش &gt; همیشه اجازه دهید بروید</string>
+    <string name="background_location_needs_for">چرا این لازم است؟</string>
+    <string name="background_location_needs_bullets">• حفظ شبکهٔ مش\n• دریافت پیام در پس‌زمینه\n• یافتن همتایان نزدیک</string>
+    <string name="background_location_privacy_note">داده‌های مکان هرگز به هیچ سروری ارسال نمی‌شود. فقط برای کشف بلوتوث به صورت محلی استفاده می‌شود.</string>
+    <string name="grant_background_location">اعطای مکان در پس‌زمینه</string>
+    <string name="perm_background_location_desc">دسترسی به مکان در پس‌زمینه برای حفظ اتصال مش لازم است.</string>
+    <string name="perm_background_location_system">به گپ مش اجازه دهید همیشه به مکان دسترسی داشته باشد</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome">به گپ خوش آمدید</string>
+    <string name="onboarding_identity_desc">هویت دیجیتال شما در مِش.</string>
+    <string name="onboarding_username_label">نام کاربری شما</string>
+    <string name="onboarding_privacy_note">توجه: تغییر نام کاربری از حالت ناشناس ممکن است حریم خصوصی شما را کاهش دهد اگر نام قابل شناسایی انتخاب کنید.</string>
+    <string name="onboarding_bg_title">پس‌زمینه و مِش</string>
+    <string name="onboarding_bg_option">اجرای برنامه در پس‌زمینه؟</string>
+    <string name="onboarding_enabled_rec">فعال (توصیه شده)</string>
+    <string name="onboarding_disabled">غیرفعال</string>
+    <string name="onboarding_bg_enabled_desc">✓ اتصال پایدارتر\n✓ دریافت پیام در حالت قفل\n⚠ مصرف باتری بیشتر</string>
+    <string name="onboarding_bg_disabled_desc">✓ صرفه‌جویی در باتری\n⚠ قطع اتصال هنگام بستن برنامه\n⚠ تأخیر در پیام‌ها</string>
+    <string name="onboarding_mesh_title">مِش چگونه کار می‌کند</string>
+    <string name="onboarding_mesh_desc">گپ یک شبکهٔ آفلاین با بلوتوث ایجاد می‌کند. پیام‌ها بین گوشی‌ها جابه‌جا می‌شوند. همهٔ چت‌ها رمزگذاری شده و هرگز با هیچ سرور مرکزی به اشتراک گذاشته نمی‌شوند.</string>
+    <string name="onboarding_features_title">ویژگی‌ها و وضعیت</string>
+    <string name="onboarding_feature_geo_title">مکانی (Geohash)</string>
+    <string name="onboarding_feature_geo_desc">با افراد در منطقهٔ دقیق خود ارتباط برقرار کنید. نیاز به اتصال Tor (اینترنت) برای همگام‌سازی با شبکهٔ جهانی مکان دارد.</string>
+    <string name="onboarding_feature_notes_title">یادداشت‌های مکانی</string>
+    <string name="onboarding_feature_notes_desc">یادداشت‌های دیجیتال در موقعیت فعلی خود بگذارید. دیگران که از این نقطه بازدید می‌کنند می‌توانند آن‌ها را بخوانند. مثل دیوارنویسی دیجیتال!</string>
+    <string name="onboarding_status_title">آیکون‌های وضعیت اتصال</string>
+    <string name="onboarding_status_green">سبز</string>
+    <string name="onboarding_status_green_desc">متصل / آنلاین</string>
+    <string name="onboarding_status_orange">نارنجی</string>
+    <string name="onboarding_status_orange_desc">در حال اتصال / راه‌اندازی</string>
+    <string name="onboarding_status_red">قرمز</string>
+    <string name="onboarding_status_red_desc">قطع / آفلاین</string>
+    <string name="onboarding_status_desc">نقطهٔ وضعیت پویاست:\n• در چت مِش: وضعیت مِش محلی\n• در چت مکانی: وضعیت Tor</string>
+    <string name="onboarding_emergency_title">پاکسازی اضطراری داده</string>
+    <string name="onboarding_emergency_desc">سه بار روی عنوان گپ مش در سربرگ ضربه بزنید تا همهٔ داده‌ها، کلیدها و پیام‌ها فوراً پاک شوند.</string>
+    <string name="onboarding_next">بعدی</string>
+    <string name="onboarding_get_started">شروع کنید</string>
+
 </resources>

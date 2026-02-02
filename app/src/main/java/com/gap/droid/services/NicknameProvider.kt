@@ -1,7 +1,7 @@
-package com.gap.droid.services
+package com.gapmesh.droid.services
 
 import android.content.Context
-import com.gap.droid.ui.DataManager
+import com.gapmesh.droid.ui.DataManager
 
 /**
  * Provides current user's nickname for announcements and leave messages.

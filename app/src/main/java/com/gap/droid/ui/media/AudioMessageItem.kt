@@ -1,4 +1,4 @@
-package com.gap.droid.ui.media
+package com.gapmesh.droid.ui.media
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,9 +20,9 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
-import com.gap.droid.R
-import com.gap.droid.mesh.BluetoothMeshService
-import com.gap.droid.model.BitchatMessage
+import com.gapmesh.droid.R
+import com.gapmesh.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.model.BitchatMessage
 import androidx.compose.material3.ColorScheme
 import java.text.SimpleDateFormat
 
@@ -41,7 +41,7 @@ fun AudioMessageItem(
     val path = message.content.trim()
     // Derive sending progress if applicable
     val (overrideProgress, overrideColor) = when (val st = message.deliveryStatus) {
-        is com.gap.droid.model.DeliveryStatus.PartiallyDelivered -> {
+        is com.gapmesh.droid.model.DeliveryStatus.PartiallyDelivered -> {
             if (st.total > 0 && st.reached < st.total) {
                 (st.reached.toFloat() / st.total.toFloat()) to Color(0xFF1E88E5) // blue while sending
             } else null to null
@@ -50,7 +50,7 @@ fun AudioMessageItem(
     }
     Column(modifier = modifier.fillMaxWidth()) {
         // Header: nickname + timestamp line above the audio note, identical styling to text messages
-        val headerText = com.gap.droid.ui.formatMessageHeaderAnnotatedString(
+        val headerText = com.gapmesh.droid.ui.formatMessageHeaderAnnotatedString(
             message = message,
             currentUserNickname = currentUserNickname,
             meshService = meshService,
@@ -83,7 +83,7 @@ fun AudioMessageItem(
                 progressOverride = overrideProgress,
                 progressColor = overrideColor
             )
-            val showCancel = message.sender == currentUserNickname && (message.deliveryStatus is com.gap.droid.model.DeliveryStatus.PartiallyDelivered)
+            val showCancel = message.sender == currentUserNickname && (message.deliveryStatus is com.gapmesh.droid.model.DeliveryStatus.PartiallyDelivered)
             if (showCancel) {
                 Spacer(Modifier.width(8.dp))
                 Box(

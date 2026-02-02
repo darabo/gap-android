@@ -20,7 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package com.gap.droid.noise.southernstorm.protocol;
+package com.gapmesh.droid.noise.southernstorm.protocol;
 
 /**
  * Interface for objects that implement destroying.

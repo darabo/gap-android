@@ -1,4 +1,4 @@
-package com.gap.droid.util
+package com.gapmesh.droid.util
 
 /**
  * Extension function to convert a ByteArray to a hexadecimal string.

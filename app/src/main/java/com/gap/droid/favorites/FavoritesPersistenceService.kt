@@ -1,8 +1,8 @@
-package com.gap.droid.favorites
+package com.gapmesh.droid.favorites
 
 import android.content.Context
 import android.util.Log
-import com.gap.droid.identity.SecureIdentityStateManager
+import com.gapmesh.droid.identity.SecureIdentityStateManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.util.*
@@ -329,7 +329,7 @@ class FavoritesPersistenceService private constructor(private val context: Conte
     /** Normalize a Nostr public key string (npub bech32 or hex) to lowercase hex */
     private fun normalizeNostrKeyToHex(value: String): String? = try {
         if (value.startsWith("npub1")) {
-            val (hrp, data) = com.gap.droid.nostr.Bech32.decode(value)
+            val (hrp, data) = com.gapmesh.droid.nostr.Bech32.decode(value)
             if (hrp != "npub") null else data.joinToString("") { "%02x".format(it) }
         } else value.lowercase()
     } catch (_: Exception) { null }

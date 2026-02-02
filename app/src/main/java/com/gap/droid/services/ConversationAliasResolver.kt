@@ -1,6 +1,6 @@
-package com.gap.droid.services
+package com.gapmesh.droid.services
 
-import com.gap.droid.ui.ChatState
+import com.gapmesh.droid.ui.ChatState
 
 object ConversationAliasResolver {
 

@@ -1,4 +1,4 @@
-package com.gap.droid.identity
+package com.gapmesh.droid.identity
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -7,7 +7,7 @@ import androidx.security.crypto.MasterKey
 import java.security.MessageDigest
 import android.util.Base64
 import android.util.Log
-import com.gap.droid.util.hexEncodedString
+import com.gapmesh.droid.util.hexEncodedString
 import androidx.core.content.edit
 
 /**

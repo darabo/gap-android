@@ -20,11 +20,11 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package com.gap.droid.noise.southernstorm.protocol;
+package com.gapmesh.droid.noise.southernstorm.protocol;
 
 import java.util.Arrays;
 
-import com.gap.droid.noise.southernstorm.crypto.Curve25519;
+import com.gapmesh.droid.noise.southernstorm.crypto.Curve25519;
 
 /**
  * Implementation of the Curve25519 algorithm for the Noise protocol.
@@ -38,10 +38,9 @@ class Curve25519DHState implements DHState {
 	/**
 	 * Constructs a new Diffie-Hellman object for Curve25519.
 	 */
-	public Curve25519DHState()
-	{
-		publicKey = new byte [32];
-		privateKey = new byte [32];
+	public Curve25519DHState() {
+		publicKey = new byte[32];
+		privateKey = new byte[32];
 		mode = 0;
 	}
 
@@ -85,7 +84,7 @@ class Curve25519DHState implements DHState {
 	@Override
 	public void setPublicKey(byte[] key, int offset) {
 		System.arraycopy(key, offset, publicKey, 0, 32);
-		Arrays.fill(privateKey, (byte)0);
+		Arrays.fill(privateKey, (byte) 0);
 		mode = 0x01;
 	}
 
@@ -103,8 +102,8 @@ class Curve25519DHState implements DHState {
 
 	@Override
 	public void setToNullPublicKey() {
-		Arrays.fill(publicKey, (byte)0);
-		Arrays.fill(privateKey, (byte)0);
+		Arrays.fill(publicKey, (byte) 0);
+		Arrays.fill(privateKey, (byte) 0);
 		mode = 0x01;
 	}
 
@@ -139,7 +138,7 @@ class Curve25519DHState implements DHState {
 	public void calculate(byte[] sharedKey, int offset, DHState publicDH) {
 		if (!(publicDH instanceof Curve25519DHState))
 			throw new IllegalArgumentException("Incompatible DH algorithms");
-		Curve25519.eval(sharedKey, offset, privateKey, ((Curve25519DHState)publicDH).publicKey);
+		Curve25519.eval(sharedKey, offset, privateKey, ((Curve25519DHState) publicDH).publicKey);
 	}
 
 	@Override
@@ -148,7 +147,7 @@ class Curve25519DHState implements DHState {
 			throw new IllegalStateException("Mismatched DH key objects");
 		if (other == this)
 			return;
-		Curve25519DHState dh = (Curve25519DHState)other;
+		Curve25519DHState dh = (Curve25519DHState) other;
 		System.arraycopy(dh.privateKey, 0, privateKey, 0, 32);
 		System.arraycopy(dh.publicKey, 0, publicKey, 0, 32);
 		mode = dh.mode;

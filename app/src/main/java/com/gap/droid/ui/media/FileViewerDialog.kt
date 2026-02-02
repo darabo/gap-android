@@ -1,4 +1,4 @@
-package com.gap.droid.ui.media
+package com.gapmesh.droid.ui.media
 
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -24,9 +24,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.gap.droid.R
-import com.gap.droid.features.file.FileUtils
-import com.gap.droid.model.BitchatFilePacket
+import com.gapmesh.droid.R
+import com.gapmesh.droid.features.file.FileUtils
+import com.gapmesh.droid.model.BitchatFilePacket
 import kotlinx.coroutines.launch
 import java.io.File
 

@@ -1,9 +1,9 @@
-package com.gap.droid.nostr
+package com.gapmesh.droid.nostr
 
 import android.app.Application
 import android.util.Log
-import com.gap.droid.ui.ChatState
-import com.gap.droid.ui.GeoPerson
+import com.gapmesh.droid.ui.ChatState
+import com.gapmesh.droid.ui.GeoPerson
 import java.util.Date
 
 /**
@@ -14,7 +14,7 @@ import java.util.Date
 class GeohashRepository(
     private val application: Application,
     private val state: ChatState,
-    private val dataManager: com.gap.droid.ui.DataManager
+    private val dataManager: com.gapmesh.droid.ui.DataManager
 ) {
     companion object { private const val TAG = "GeohashRepository" }
 

@@ -1,4 +1,4 @@
-package com.gap.droid.nostr
+package com.gapmesh.droid.nostr
 
 import com.google.gson.*
 import com.google.gson.annotations.SerializedName

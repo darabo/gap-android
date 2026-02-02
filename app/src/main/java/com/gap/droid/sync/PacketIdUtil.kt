@@ -1,6 +1,6 @@
-package com.gap.droid.sync
+package com.gapmesh.droid.sync
 
-import com.gap.droid.protocol.BitchatPacket
+import com.gapmesh.droid.protocol.BitchatPacket
 import java.security.MessageDigest
 
 /**

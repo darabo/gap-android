@@ -1,11 +1,11 @@
-package com.gap.droid.nostr
+package com.gapmesh.droid.nostr
 
 import android.util.Base64
 import android.util.Log
-import com.gap.droid.model.PrivateMessagePacket
-import com.gap.droid.model.NoisePayloadType
-import com.gap.droid.protocol.BitchatPacket
-import com.gap.droid.protocol.MessageType
+import com.gapmesh.droid.model.PrivateMessagePacket
+import com.gapmesh.droid.model.NoisePayloadType
+import com.gapmesh.droid.protocol.BitchatPacket
+import com.gapmesh.droid.protocol.MessageType
 import java.util.*
 
 /**
@@ -46,7 +46,7 @@ object NostrEmbeddedBitChat {
                 timestamp = System.currentTimeMillis().toULong(),
                 payload = payload,
                 signature = null,
-                ttl = com.gap.droid.util.AppConstants.MESSAGE_TTL_HOPS
+                ttl = com.gapmesh.droid.util.AppConstants.MESSAGE_TTL_HOPS
             )
             
             val data = packet.toBinaryData() ?: return null
@@ -86,7 +86,7 @@ object NostrEmbeddedBitChat {
                 timestamp = System.currentTimeMillis().toULong(),
                 payload = payload,
                 signature = null,
-                ttl = com.gap.droid.util.AppConstants.MESSAGE_TTL_HOPS
+                ttl = com.gapmesh.droid.util.AppConstants.MESSAGE_TTL_HOPS
             )
             
             val data = packet.toBinaryData() ?: return null
@@ -123,7 +123,7 @@ object NostrEmbeddedBitChat {
                 timestamp = System.currentTimeMillis().toULong(),
                 payload = payload,
                 signature = null,
-                ttl = com.gap.droid.util.AppConstants.MESSAGE_TTL_HOPS
+                ttl = com.gapmesh.droid.util.AppConstants.MESSAGE_TTL_HOPS
             )
             
             val data = packet.toBinaryData() ?: return null
@@ -158,7 +158,7 @@ object NostrEmbeddedBitChat {
                 timestamp = System.currentTimeMillis().toULong(),
                 payload = payload,
                 signature = null,
-                ttl = com.gap.droid.util.AppConstants.MESSAGE_TTL_HOPS
+                ttl = com.gapmesh.droid.util.AppConstants.MESSAGE_TTL_HOPS
             )
             
             val data = packet.toBinaryData() ?: return null

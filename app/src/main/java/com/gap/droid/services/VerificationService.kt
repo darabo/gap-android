@@ -1,11 +1,11 @@
-package com.gap.droid.services
+package com.gapmesh.droid.services
 
 import android.net.Uri
 import android.util.Base64
-import com.gap.droid.crypto.EncryptionService
-import com.gap.droid.util.AppConstants
-import com.gap.droid.util.dataFromHexString
-import com.gap.droid.util.hexEncodedString
+import com.gapmesh.droid.crypto.EncryptionService
+import com.gapmesh.droid.util.AppConstants
+import com.gapmesh.droid.util.dataFromHexString
+import com.gapmesh.droid.util.hexEncodedString
 import java.io.ByteArrayOutputStream
 import java.security.SecureRandom
 import androidx.core.net.toUri

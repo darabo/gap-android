@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -37,11 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.res.stringResource
-import com.gap.droid.R
+import com.gapmesh.droid.R
 import androidx.core.view.updateLayoutParams
-import com.gap.droid.geohash.Geohash
-import com.gap.droid.geohash.LocationChannelManager
-import com.gap.droid.ui.theme.BASE_FONT_SIZE
+import com.gapmesh.droid.geohash.Geohash
+import com.gapmesh.droid.geohash.LocationChannelManager
+import com.gapmesh.droid.ui.theme.BASE_FONT_SIZE
 
 @OptIn(ExperimentalMaterial3Api::class)
 class GeohashPickerActivity : OrientationAwareActivity() {

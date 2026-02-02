@@ -1,4 +1,4 @@
-package com.gap.droid.protocol
+package com.gapmesh.droid.protocol
 
 import java.security.SecureRandom
 
