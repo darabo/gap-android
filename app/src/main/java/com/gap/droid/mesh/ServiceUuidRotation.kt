@@ -25,8 +25,12 @@ object ServiceUuidRotation {
     private const val HMAC_ALGORITHM = "HmacSHA256"
     private const val HMAC_PREFIX = "gap-mesh-ble-uuid-v1-"
 
-    // Fallback UUID (legacy static UUID for Bitchat compatibility)
+    // Fallback UUID (Gap Mesh static UUID for backward compatibility)
     val FALLBACK_UUID: UUID = UUID.fromString("7ACD9057-811D-4D17-AB14-DA891780FA3A")
+
+    // Original Bitchat/Noghteha BLE Service UUID — used in legacy mode to enable
+    // cross-app mesh communication with Bitchat and Noghteha devices
+    val BITCHAT_LEGACY_UUID: UUID = UUID.fromString("F47B5E2D-4A9E-4C5A-9B3F-8E1D2C3A4B5C")
 
     // Shared rotation secret - MUST match iOS for cross-platform discovery
     // SHA256("gap-mesh-global-rotation-v1") = deterministic 32-byte secret
@@ -77,9 +81,10 @@ object ServiceUuidRotation {
             uuids.add(deriveUuidForBucket(currentBucket + 1, secret))
         }
 
-        // Always include legacy UUID for Bitchat compatibility (if enabled)
+        // Always include legacy UUIDs for backward + Bitchat compatibility (if enabled)
         if (includeLegacy) {
             uuids.add(FALLBACK_UUID)
+            uuids.add(BITCHAT_LEGACY_UUID)
         }
 
         return uuids.distinct()

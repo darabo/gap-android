@@ -390,8 +390,8 @@ class BluetoothGattServerManager(
         } catch (_: Exception) { false }
         
         val serviceUuid = if (legacyMode) {
-            // Legacy mode: use static UUID so Bitchat devices can find us
-            ServiceUuidRotation.FALLBACK_UUID
+            // Legacy mode: use original Bitchat UUID so Bitchat/Noghteha devices can find us
+            ServiceUuidRotation.BITCHAT_LEGACY_UUID
         } else {
             // Privacy mode: use rotating UUID
             ServiceUuidRotation.getCurrentServiceUuid()
