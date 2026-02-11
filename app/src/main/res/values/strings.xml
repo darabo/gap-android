@@ -115,8 +115,8 @@
   <string name="about_offline_mesh_desc">Communicate directly via Bluetooth LE without internet or servers. Messages relay through nearby devices to extend range.</string>
   <string name="about_online_geohash_title">Online Geohash Channels</string>
   <string name="about_online_geohash_desc">Connect with people in your area using geohash-based channels. Extend the mesh using public internet relays.</string>
-  <string name="about_e2e_title">End-to-End Encryption</string>
-  <string name="about_e2e_desc">Private messages are encrypted. Channel messages are public.</string>
+  <string name="about_e2e_title">End-to-End Encryption (Audited)</string>
+  <string name="about_e2e_desc">Private message security has been audited. Messages are encrypted with the Noise protocol. Channel messages are public.</string>
   <string name="about_appearance">appearance</string>
   <string name="about_system">system</string>
   <string name="about_light">light</string>
