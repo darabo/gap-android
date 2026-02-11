@@ -358,9 +358,7 @@ class BluetoothPacketBroadcaster(
         val routeInfo = if (!route.isNullOrEmpty()) "routed: ${route.size} hops" else null
         
         if (packet.recipientID != SpecialRecipients.BROADCAST) {
-            val recipientID = packet.recipientID?.let {
-                String(it).replace("\u0000", "").trim()
-            } ?: ""
+            val recipientID = packet.recipientID?.toHexString() ?: ""
 
             // Try to find the recipient in server connections (subscribedDevices)
             val targetDevice = connectionTracker.getSubscribedDevices()
@@ -397,7 +395,7 @@ class BluetoothPacketBroadcaster(
         
         Log.i(TAG, "Broadcasting packet v${packet.version} type ${packet.type} to ${subscribedDevices.size} server + ${connectedDevices.size} client connections")
 
-        val senderID = String(packet.senderID).replace("\u0000", "")        
+        val senderID = packet.senderID.toHexString()        
         
         // Send to server connections (devices connected to our GATT server)
         subscribedDevices.forEach { device ->
