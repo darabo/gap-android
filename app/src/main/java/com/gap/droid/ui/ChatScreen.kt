@@ -1,4 +1,5 @@
 package com.gapmesh.droid.ui
+import com.gapmesh.droid.BuildConfig
 // [Goose] Bridge file share events to ViewModel via dispatcher is installed in ChatScreen composition
 
 // [Goose] Installing FileShareDispatcher handler in ChatScreen to forward file sends to ViewModel
@@ -261,7 +262,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
                             viewModel.switchToChannel(null)
                         }
                         BottomNavTab.LOCATION -> {
-                            showLocationChannelsSheet = true
+                            if (BuildConfig.HAS_GEOHASH) showLocationChannelsSheet = true
                         }
                         BottomNavTab.PEOPLE -> {
                             viewModel.showMeshPeerList()
@@ -288,8 +289,8 @@ fun ChatScreen(viewModel: ChatViewModel) {
             onSidebarToggle = { viewModel.showMeshPeerList() },
             onShowAppInfo = { viewModel.showAppInfo() },
             onPanicClear = { viewModel.panicClearAllData() },
-            onLocationChannelsClick = { showLocationChannelsSheet = true },
-            onLocationNotesClick = { showLocationNotesSheet = true }
+            onLocationChannelsClick = { if (BuildConfig.HAS_GEOHASH) showLocationChannelsSheet = true },
+            onLocationNotesClick = { if (BuildConfig.HAS_GEOHASH) showLocationNotesSheet = true }
         )
 
         // Divider under header - positioned after status bar + header height
@@ -563,7 +564,7 @@ private fun ChatDialogs(
     }
     
     // Location channels sheet
-    if (showLocationChannelsSheet) {
+    if (BuildConfig.HAS_GEOHASH && showLocationChannelsSheet) {
         LocationChannelsSheet(
             isPresented = showLocationChannelsSheet,
             onDismiss = onLocationChannelsSheetDismiss,
@@ -572,7 +573,7 @@ private fun ChatDialogs(
     }
     
     // Location notes sheet (extracted to separate presenter)
-    if (showLocationNotesSheet) {
+    if (BuildConfig.HAS_GEOHASH && showLocationNotesSheet) {
         LocationNotesSheetPresenter(
             viewModel = viewModel,
             onDismiss = onLocationNotesSheetDismiss

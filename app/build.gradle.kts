@@ -13,12 +13,29 @@ android {
         applicationId = "com.gapmesh.droid"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 5
-        versionName = "1.22"
+        versionCode = 1
+        versionName = "1.23"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    // Product flavors: "full" includes Tor, ML Kit, geohash; "light" strips them for minimal APK
+    flavorDimensions += "variant"
+    productFlavors {
+        create("full") {
+            dimension = "variant"
+            buildConfigField("boolean", "HAS_TOR", "true")
+            buildConfigField("boolean", "HAS_GEOHASH", "true")
+        }
+        create("light") {
+            dimension = "variant"
+            applicationIdSuffix = ".light"
+            versionNameSuffix = "-light"
+            buildConfigField("boolean", "HAS_TOR", "false")
+            buildConfigField("boolean", "HAS_GEOHASH", "false")
         }
     }
 
@@ -72,6 +89,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {
@@ -105,14 +123,16 @@ dependencies {
     // Permissions
     implementation(libs.accompanist.permissions)
 
-    // QR
+    // QR (ZXing shared by both flavors)
     implementation(libs.zxing.core)
-    implementation(libs.mlkit.barcode.scanning)
 
-    // CameraX
-    implementation(libs.androidx.camera.camera2)
-    implementation(libs.androidx.camera.lifecycle)
-    implementation(libs.androidx.camera.compose)
+    // Full-only: ML Kit barcode scanning (live camera QR)
+    "fullImplementation"(libs.mlkit.barcode.scanning)
+
+    // Full-only: CameraX (for ML Kit camera preview)
+    "fullImplementation"(libs.androidx.camera.camera2)
+    "fullImplementation"(libs.androidx.camera.lifecycle)
+    "fullImplementation"(libs.androidx.camera.compose)
     
     // Cryptography
     implementation(libs.bundles.cryptography)
@@ -129,14 +149,8 @@ dependencies {
     // WebSocket
     implementation(libs.okhttp)
 
-    // Arti (Tor in Rust) Android bridge - custom build from latest source
-    // Built with rustls, 16KB page size support, and onio//un service client
-    // Native libraries are in src/tor/jniLibs/ (extracted from arti-custom.aar)
-    // Only included in tor flavor to reduce APK size for standard builds
-    // Note: AAR is kept in libs/ for reference, but libraries loaded from jniLibs/
-
-    // Google Play Services Location
-    implementation(libs.gms.location)
+    // Full-only: Google Play Services Location (for geohash features)
+    "fullImplementation"(libs.gms.location)
 
     // Security preferences
     implementation(libs.androidx.security.crypto)

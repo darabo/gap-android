@@ -38,6 +38,8 @@ import com.gapmesh.droid.net.TorMode
 import com.gapmesh.droid.net.TorPreferenceManager
 import com.gapmesh.droid.net.ArtiTorManager
 import com.gapmesh.droid.onboarding.LanguagePreferenceManager
+import com.gapmesh.droid.util.ApkShareHelper
+import androidx.compose.material.icons.filled.Share
 
 /**
  * Feature row for displaying app capabilities
@@ -724,6 +726,97 @@ fun AboutSheet(
                                     }
                                 }
                             }
+                        }
+                    }
+
+                    // Share App Section
+                    item(key = "share_app") {
+                        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            Text(
+                                text = stringResource(R.string.share_app_title).uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                letterSpacing = 0.5.sp,
+                                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                            )
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = colorScheme.surface,
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Column {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Share,
+                                            contentDescription = null,
+                                            tint = colorScheme.primary,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(14.dp))
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.share_app_title),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Medium,
+                                                color = colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.share_app_desc),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = colorScheme.onSurface.copy(alpha = 0.6f),
+                                                lineHeight = 16.sp
+                                            )
+                                        }
+                                    }
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 56.dp),
+                                        color = colorScheme.outline.copy(alpha = 0.12f)
+                                    )
+                                    // Share button
+                                    Surface(
+                                        onClick = { ApkShareHelper.shareApk(context) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        color = Color.Transparent
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Share,
+                                                contentDescription = null,
+                                                tint = if (isDark) Color(0xFF32D74B) else Color(0xFF248A3D),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = stringResource(R.string.share_app_button),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = if (isDark) Color(0xFF32D74B) else Color(0xFF248A3D)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            Text(
+                                text = stringResource(R.string.share_app_size_note),
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = colorScheme.onBackground.copy(alpha = 0.4f),
+                                modifier = Modifier.padding(start = 16.dp, top = 6.dp)
+                            )
                         }
                     }
 

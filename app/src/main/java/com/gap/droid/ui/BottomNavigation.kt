@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.gapmesh.droid.R
+import com.gapmesh.droid.BuildConfig
 
 /**
  * Navigation tabs for the bottom navigation bar
@@ -48,13 +49,18 @@ fun GapMeshBottomNavigation(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     
+    // Hide LOCATION tab when geohash features are disabled (light build)
+    val visibleTabs = BottomNavTab.entries.filter { tab ->
+        tab != BottomNavTab.LOCATION || BuildConfig.HAS_GEOHASH
+    }
+    
     NavigationBar(
         modifier = modifier,
         containerColor = colorScheme.surface,
         contentColor = colorScheme.onSurface,
         tonalElevation = 3.dp
     ) {
-        BottomNavTab.entries.forEach { tab ->
+        visibleTabs.forEach { tab ->
             val selected = currentTab == tab
             val badgeCount = when (tab) {
                 BottomNavTab.MESH -> unreadMeshCount

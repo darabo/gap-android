@@ -17,16 +17,20 @@ class BitchatApplication : Application() {
         try { com.gapmesh.droid.util.DeviceTierManager.initialize(this) } catch (_: Exception) { }
 
         // Initialize Tor first so any early network goes over Tor
-        try {
-            val torProvider = ArtiTorManager.getInstance()
-            torProvider.init(this)
-        } catch (_: Exception){}
+        if (BuildConfig.HAS_TOR) {
+            try {
+                val torProvider = ArtiTorManager.getInstance()
+                torProvider.init(this)
+            } catch (_: Exception){}
+        }
 
         // Initialize relay directory (loads assets/nostr_relays.csv)
         RelayDirectory.initialize(this)
 
         // Initialize LocationNotesManager dependencies early so sheet subscriptions can start immediately
-        try { com.gapmesh.droid.nostr.LocationNotesInitializer.initialize(this) } catch (_: Exception) { }
+        if (BuildConfig.HAS_GEOHASH) {
+            try { com.gapmesh.droid.nostr.LocationNotesInitializer.initialize(this) } catch (_: Exception) { }
+        }
 
         // Initialize favorites persistence early so MessageRouter/NostrTransport can use it on startup
         try {
@@ -45,10 +49,12 @@ class BitchatApplication : Application() {
         try { com.gapmesh.droid.ui.debug.DebugPreferenceManager.init(this) } catch (_: Exception) { }
 
         // Initialize Geohash Registries for persistence
-        try {
-            com.gapmesh.droid.nostr.GeohashAliasRegistry.initialize(this)
-            com.gapmesh.droid.nostr.GeohashConversationRegistry.initialize(this)
-        } catch (_: Exception) { }
+        if (BuildConfig.HAS_GEOHASH) {
+            try {
+                com.gapmesh.droid.nostr.GeohashAliasRegistry.initialize(this)
+                com.gapmesh.droid.nostr.GeohashConversationRegistry.initialize(this)
+            } catch (_: Exception) { }
+        }
 
         // Initialize mesh service preferences
         try { com.gapmesh.droid.service.MeshServicePreferences.init(this) } catch (_: Exception) { }

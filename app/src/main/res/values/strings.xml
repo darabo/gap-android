@@ -146,6 +146,12 @@
   <string name="about_emergency_tip">Tip: Triple-click the app title to emergency delete all stored data including messages, keys, and settings.</string>
   <string name="about_debug_settings">Debug Settings</string>
   <string name="about_footer">Open Source • Privacy First • Decentralized</string>
+
+  <!-- Share App -->
+  <string name="share_app_title">Share App</string>
+  <string name="share_app_desc">Share Gap Mesh with nearby devices via Bluetooth, Nearby Share, or any file transfer method.</string>
+  <string name="share_app_button">Share APK</string>
+  <string name="share_app_size_note">APK size: ~4.5 MB</string>
   <string name="close_plain">Close</string>
   <string name="cd_privacy_protected">Privacy Protected</string>
   <string name="cancel_lower">cancel</string>
@@ -415,6 +421,7 @@
   <string name="join">Join</string>
   <string name="cancel">Cancel</string>
     <string name="tor_not_available_in_this_build">Tor not available in this build</string>
+    <string name="verify_light_no_camera">camera scanning is not available in the light build. share your qr code with the other person to verify.</string>
     
     <!-- System Messages -->
     <string name="system_screenshot_public">took a screenshot</string>
