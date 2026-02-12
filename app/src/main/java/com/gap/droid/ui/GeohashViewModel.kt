@@ -3,6 +3,10 @@ package com.gapmesh.droid.ui
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.viewModelScope
 import com.gapmesh.droid.nostr.GeohashMessageHandler
 import com.gapmesh.droid.nostr.GeohashRepository
@@ -31,7 +35,7 @@ class GeohashViewModel(
     private val meshDelegateHandler: MeshDelegateHandler,
     private val dataManager: DataManager,
     private val notificationManager: NotificationManager
-) : AndroidViewModel(application) {
+) : AndroidViewModel(application), DefaultLifecycleObserver {
 
     companion object { private const val TAG = "GeohashViewModel" }
 
@@ -60,6 +64,7 @@ class GeohashViewModel(
     private var geoTimer: Job? = null
     private var globalPresenceJob: Job? = null
     private var locationChannelManager: com.gapmesh.droid.geohash.LocationChannelManager? = null
+    private val activeSamplingGeohashes = mutableSetOf<String>()
 
     val geohashPeople: StateFlow<List<GeoPerson>> = state.geohashPeople
     val geohashParticipantCounts: StateFlow<Map<String, Int>> = state.geohashParticipantCounts
@@ -67,6 +72,10 @@ class GeohashViewModel(
 
     fun initialize() {
         subscriptionManager.connect()
+        // Observe process lifecycle to manage background sampling
+        kotlin.runCatching {
+            ProcessLifecycleOwner.get().lifecycle.addObserver(this)
+        }
         val identity = NostrIdentityBridge.getCurrentNostrIdentity(getApplication())
         if (identity != null) {
             // Use global chat-messages only for full account DMs (mesh context). For geohash DMs, subscribe per-geohash below.
@@ -214,16 +223,13 @@ class GeohashViewModel(
         if (geohashes.isEmpty()) return
         Log.d(TAG, "🌍 Beginning geohash sampling for ${geohashes.size} geohashes")
         
-        // Subscribe to events
-        viewModelScope.launch {
+        // Track which geohashes we want to sample
+        activeSamplingGeohashes.addAll(geohashes)
+        
+        // Only subscribe if app is in foreground
+        if (isAppInForeground()) {
             geohashes.forEach { geohash ->
-                subscriptionManager.subscribeGeohash(
-                    geohash = geohash,
-                    sinceMs = System.currentTimeMillis() - 86400000L,
-                    limit = 200,
-                    id = "sampling-$geohash",
-                    handler = { event -> geohashMessageHandler.onEvent(event, geohash) }
-                )
+                performSubscribeSampling(geohash)
             }
         }
     }
@@ -352,5 +358,36 @@ class GeohashViewModel(
                 repo.refreshGeohashPeople()
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        kotlin.runCatching {
+            ProcessLifecycleOwner.get().lifecycle.removeObserver(this)
+        }
+    }
+
+    override fun onStart(owner: LifecycleOwner) {
+        Log.d(TAG, "🌍 App foregrounded: Resuming sampling for ${activeSamplingGeohashes.size} geohashes")
+        activeSamplingGeohashes.forEach { performSubscribeSampling(it) }
+    }
+
+    override fun onStop(owner: LifecycleOwner) {
+        Log.d(TAG, "🌍 App backgrounded: Pausing sampling for ${activeSamplingGeohashes.size} geohashes")
+        activeSamplingGeohashes.forEach { subscriptionManager.unsubscribe("sampling-$it") }
+    }
+
+    private fun performSubscribeSampling(geohash: String) {
+        subscriptionManager.subscribeGeohash(
+            geohash = geohash,
+            sinceMs = System.currentTimeMillis() - 86400000L,
+            limit = 200,
+            id = "sampling-$geohash",
+            handler = { event -> geohashMessageHandler.onEvent(event, geohash) }
+        )
+    }
+
+    private fun isAppInForeground(): Boolean {
+        return ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
     }
 }
