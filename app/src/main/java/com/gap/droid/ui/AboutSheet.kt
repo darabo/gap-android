@@ -708,7 +708,7 @@ fun AboutSheet(
                                             }
                                             Surface(color = statusColor, shape = CircleShape, modifier = Modifier.size(10.dp)) {}
                                             Text(
-                                                text = if (torStatus.running) "Connected (${torStatus.bootstrapPercent}%)" else "Disconnected",
+                                                text = if (torStatus.running) stringResource(R.string.tor_status_connected, torStatus.bootstrapPercent) else stringResource(R.string.tor_status_disconnected),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Medium,
                                                 color = colorScheme.onSurface

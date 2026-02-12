@@ -134,11 +134,18 @@
     <string name="about_legacy_compat_title">سازگاری با نسخه‌های قدیمی</string>
     <string name="about_legacy_compat_desc">به برنامه‌های Bitchat اجازه پیدا کردن شما را بدهید. ممکن است نیاز به راه‌اندازی مجدد داشته باشد. غیرفعال‌کردن حریم خصوصی را به حداکثر می‌رساند.</string>
     <string name="about_tor_status">وضعیت Tor: %1$s، بوت‌استرپ %2$d%%</string>
+    <string name="tor_status_connected">متصل (%1$d%%)</string>
+    <string name="tor_status_disconnected">قطع شد</string>
     <string name="about_last">آخرین: %1$s</string>
     <string name="about_emergency_title">پاکسازی اضطراری داده</string>
     <string name="about_emergency_tip">نکته: برای پاک کردن همهٔ داده‌های ذخیره‌شده — شامل پیام‌ها، کلیدها و تنظیمات — سه بار روی عنوان برنامه ضربه بزنید.</string>
     <string name="about_debug_settings">تنظیمات اشکال‌زدایی</string>
     <string name="about_footer">متن‌باز • حریم خصوصی در اولویت • غیرمتمرکز</string>
+    <!-- اشتراک‌گذاری برنامه -->
+    <string name="share_app_title">اشتراک‌گذاری برنامه همراه سبک</string>
+    <string name="share_app_desc">گپ مش را با دستگاه‌های نزدیک از طریق بلوتوث، اشتراک‌گذاری نزدیک یا هر روش انتقال فایل دیگری به اشتراک بگذارید.</string>
+    <string name="share_app_button">اشتراک‌گذاری APK سبک</string>
+    <string name="share_app_size_note">اندازه فایل: ~۴.۵ مگابایت</string>
     <string name="close_plain">بستن</string>
     <string name="cancel_lower">لغو</string>
     
