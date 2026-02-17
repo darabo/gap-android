@@ -169,6 +169,10 @@
   <string name="language_english">English</string>
   <string name="language_farsi">فارسی</string>
   <string name="about_language">language</string>
+  <string name="about_theme_section">theme</string>
+  <string name="about_settings_section">settings</string>
+  <string name="about_difficulty">Difficulty</string>
+  <string name="about_tor_network">Tor Network</string>
 
   <!-- Generic content descriptions -->
   <string name="cd_warning">Warning</string>
@@ -529,5 +533,27 @@
     <string name="onboarding_next">Next</string>
     <string name="onboarding_get_started">Get Started</string>
 
+    <!-- Decoy Mode -->
+    <string name="decoy_onboarding_title">Decoy Mode</string>
+    <string name="decoy_onboarding_desc">Set a secret PIN to exit decoy mode. When activated, the app transforms into a calculator while all messages and keys are permanently wiped.</string>
+    <string name="decoy_onboarding_how_title">How It Works</string>
+    <string name="decoy_onboarding_how_wipe">Triple-tap anywhere on screen to wipe all data instantly</string>
+    <string name="decoy_onboarding_how_calc">App transforms into a working calculator</string>
+    <string name="decoy_onboarding_how_pin">Enter your secret PIN in the calculator and press = to exit decoy</string>
+    <string name="decoy_onboarding_how_persist">Decoy mode persists across app restarts and reboots</string>
+    <string name="decoy_onboarding_pin_label">Your Decoy PIN</string>
+    <string name="decoy_onboarding_generate_new">Generate New</string>
+    <string name="decoy_onboarding_choose_own">Choose Own</string>
+    <string name="decoy_onboarding_pin_warning">⚠️ IMPORTANT: If you forget your PIN, there is NO way to recover it. You will need to reinstall the app.</string>
+    <string name="decoy_onboarding_memorized">I have memorized my PIN</string>
+    <string name="decoy_settings_title">Decoy PIN</string>
+    <string name="decoy_settings_desc">Change your secret calculator exit PIN</string>
+    <string name="decoy_settings_change_title">Change Decoy PIN</string>
+    <string name="decoy_settings_new_pin">New PIN (4–8 digits)</string>
+    <string name="decoy_settings_confirm_pin">Confirm PIN</string>
+    <string name="decoy_settings_mismatch">PINs do not match</string>
+    <string name="decoy_settings_save">Save</string>
+    <string name="decoy_settings_saved">Decoy PIN updated</string>
 
 </resources>
+

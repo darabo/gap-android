@@ -112,6 +112,12 @@
                 <data android:scheme="bitchat" android:host="verify" />
             </intent-filter>
         </activity>
+        <!-- Decoy calculator activity (not a launcher, routed from MainActivity) -->
+        <activity
+            android:name=".ui.CalculatorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BitchatAndroid"
+            android:launchMode="singleTop" />
 
         <!-- Persistent foreground service to run the mesh in background -->
         <service

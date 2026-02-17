@@ -222,6 +222,10 @@ import com.gapmesh.droid.ui.ScreenshotDetector
     val teleportedGeo: StateFlow<Set<String>> = state.teleportedGeo
     val geohashParticipantCounts: StateFlow<Map<String, Int>> = state.geohashParticipantCounts
 
+    // Decoy mode activation event — UI collects this to launch CalculatorActivity
+    private val _decoyActivated = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val decoyActivated: kotlinx.coroutines.flow.SharedFlow<Unit> = _decoyActivated
+
     init {
         // Note: Mesh service delegate is now set by MainActivity
         loadAndInitialize()
@@ -1081,9 +1085,12 @@ import com.gapmesh.droid.ui.ScreenshotDetector
         dataManager.saveNickname(newNickname)
         
         Log.w(TAG, "🚨 PANIC MODE COMPLETED - All sensitive data cleared")
-        
-        // Note: Mesh service restart is now handled by MainActivity
-        // This method now only clears data, not mesh service lifecycle
+
+        // Activate decoy mode (flag persists across restarts, PIN was set during onboarding)
+        com.gapmesh.droid.service.DecoyModeManager.activateDecoy(getApplication())
+
+        // Emit event for ChatScreen to launch CalculatorActivity
+        viewModelScope.launch { _decoyActivated.emit(Unit) }
     }
     
     /**

@@ -27,6 +27,8 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gapmesh.droid.model.BitchatMessage
 import com.gapmesh.droid.ui.media.FullScreenImageViewer
+import android.content.Intent
+import androidx.compose.ui.input.pointer.pointerInput
 
 /**
  * Main ChatScreen - REFACTORED to use component-based architecture
@@ -112,11 +114,37 @@ fun ChatScreen(viewModel: ChatViewModel) {
         else -> selectedLocationChannel !is com.gapmesh.droid.geohash.ChannelID.Location
     }
 
+    // Triple-tap detection state — applied on root Box so it doesn't block child composables
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var tripleTapCount by remember { mutableIntStateOf(0) }
+    var tripleTapLastTime by remember { mutableLongStateOf(0L) }
+
     // Use WindowInsets to handle keyboard properly
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(colorScheme.background) // Extend background to fill entire screen including status bar
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                        if (event.type == androidx.compose.ui.input.pointer.PointerEventType.Press) {
+                            val now = System.currentTimeMillis()
+                            if (now - tripleTapLastTime < 400L) {
+                                tripleTapCount++
+                            } else {
+                                tripleTapCount = 1
+                            }
+                            tripleTapLastTime = now
+                            if (tripleTapCount >= 3) {
+                                tripleTapCount = 0
+                                viewModel.panicClearAllData()
+                            }
+                        }
+                        // Do NOT consume — let events pass through to children
+                    }
+                }
+            }
     ) {
         val headerHeight = 42.dp
         
@@ -292,6 +320,15 @@ fun ChatScreen(viewModel: ChatViewModel) {
             onLocationChannelsClick = { if (BuildConfig.HAS_GEOHASH) showLocationChannelsSheet = true },
             onLocationNotesClick = { if (BuildConfig.HAS_GEOHASH) showLocationNotesSheet = true }
         )
+
+        // Observe decoy activation and launch CalculatorActivity
+        LaunchedEffect(Unit) {
+            viewModel.decoyActivated.collect {
+                context.startActivity(Intent(context, CalculatorActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                })
+            }
+        }
 
         // Divider under header - positioned after status bar + header height
         HorizontalDivider(

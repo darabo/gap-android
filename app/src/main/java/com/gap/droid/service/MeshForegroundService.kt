@@ -35,6 +35,12 @@ class MeshForegroundService : Service() {
         const val ACTION_NOTIFICATION_PERMISSION_GRANTED = "com.gapmesh.droid.action.NOTIFICATION_PERMISSION_GRANTED"
 
         fun start(context: Context) {
+            // Do not start service when decoy mode is active
+            if (DecoyModeManager.isDecoyActive(context.applicationContext)) {
+                android.util.Log.i("MeshForegroundService", "Decoy mode active — not starting service")
+                return
+            }
+
             val intent = Intent(context, MeshForegroundService::class.java).apply { action = ACTION_START }
 
             // On API >= 26, avoid background-service start restrictions by using startForegroundService

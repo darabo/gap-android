@@ -122,7 +122,19 @@ class MainActivity : OrientationAwareActivity() {
         }
 
         com.gapmesh.droid.service.AppShutdownCoordinator.cancelPendingShutdown()
-        
+
+        // ── Decoy mode gate ────────────────────────────────────────────────
+        // If decoy is active, redirect to calculator immediately and skip
+        // ALL service initialization (BLE, Tor, Nostr, etc.)
+        if (com.gapmesh.droid.service.DecoyModeManager.isDecoyActive(applicationContext)) {
+            android.util.Log.w("MainActivity", "Decoy mode active — launching CalculatorActivity")
+            startActivity(android.content.Intent(this, com.gapmesh.droid.ui.CalculatorActivity::class.java).apply {
+                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+            })
+            finish()
+            return
+        }
+
         // Enable edge-to-edge display for modern Android look
         enableEdgeToEdge()
 
@@ -182,13 +194,17 @@ class MainActivity : OrientationAwareActivity() {
             }
         }
         
+        // Always sync the language StateFlow with the current AppCompat locale.
+        // This is safe to call on every onCreate (including after activity recreation
+        // from a locale change) because it only reads state — it never calls
+        // setApplicationLocales(). Locale restoration is handled automatically by
+        // the autoStoreLocales service declared in the manifest.
+        LanguagePreferenceManager.init(applicationContext)
+        
         // Only start onboarding process if we're in the initial LANGUAGE_SELECTION or CHECKING state
         // This prevents restarting onboarding on configuration changes
         if (mainViewModel.onboardingState.value == OnboardingState.CHECKING ||
             mainViewModel.onboardingState.value == OnboardingState.LANGUAGE_SELECTION) {
-            // Initialize language preference manager early
-            LanguagePreferenceManager.init(applicationContext)
-            
             // Check if language has been set before proceeding with normal onboarding
             if (!LanguagePreferenceManager.isLanguageSet(applicationContext)) {
                 mainViewModel.updateOnboardingState(OnboardingState.LANGUAGE_SELECTION)
@@ -322,7 +338,7 @@ class MainActivity : OrientationAwareActivity() {
                 )
             }
 
-            OnboardingState.TUTORIAL -> {
+            OnboardingState.TUTORIAL, OnboardingState.DECOY_PIN_SETUP -> {
                 com.gapmesh.droid.onboarding.TutorialScreen(
                     viewModel = chatViewModel,
                     onComplete = {

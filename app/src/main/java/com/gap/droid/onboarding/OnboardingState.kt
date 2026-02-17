@@ -11,6 +11,7 @@ enum class OnboardingState {
     PERMISSION_REQUESTING,
     INITIALIZING,
     TUTORIAL,
+    DECOY_PIN_SETUP,
     COMPLETE,
     ERROR
 }

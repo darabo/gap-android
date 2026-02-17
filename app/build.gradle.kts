@@ -13,8 +13,8 @@ android {
         applicationId = "com.gapmesh.droid"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 9
-        versionName = "1.24"
+        versionCode = 10
+        versionName = "1.25"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

@@ -10,6 +10,12 @@ class BootCompletedReceiver : BroadcastReceiver() {
         // Ensure preferences are initialized on cold boot before reading values
         try { MeshServicePreferences.init(context.applicationContext) } catch (_: Exception) { }
 
+        // Do not start services when decoy mode is active
+        if (DecoyModeManager.isDecoyActive(context.applicationContext)) {
+            android.util.Log.i("BootCompletedReceiver", "Decoy mode active — skipping service start")
+            return
+        }
+
         if (MeshServicePreferences.isAutoStartEnabled(true)) {
             if (Build.VERSION.SDK_INT >= 35) {
                 // Android 15+: Use WorkManager to start service outside BOOT_COMPLETED context

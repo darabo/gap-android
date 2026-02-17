@@ -15,6 +15,11 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.NetworkCheck
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -329,7 +334,7 @@ fun AboutSheet(
                     item(key = "appearance") {
                         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                             Text(
-                                text = "THEME",
+                                text = stringResource(R.string.about_theme_section).uppercase(),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = colorScheme.onBackground.copy(alpha = 0.5f),
                                 letterSpacing = 0.5.sp,
@@ -477,7 +482,7 @@ fun AboutSheet(
 
                         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                             Text(
-                                text = "SETTINGS",
+                                text = stringResource(R.string.about_settings_section).uppercase(),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = colorScheme.onBackground.copy(alpha = 0.5f),
                                 letterSpacing = 0.5.sp,
@@ -528,7 +533,7 @@ fun AboutSheet(
                                     // Tor Toggle
                                     SettingsToggleRow(
                                         icon = Icons.Filled.Security,
-                                        title = "Tor Network",
+                                        title = stringResource(R.string.about_tor_network),
                                         subtitle = stringResource(R.string.about_tor_route),
                                         checked = torMode.value == TorMode.ON,
                                         onCheckedChange = { enabled ->
@@ -598,6 +603,100 @@ fun AboutSheet(
                                             // ScreenshotDetector tries to access storage
                                         }
                                     )
+
+                                    // Decoy PIN change section
+                                    if (com.gapmesh.droid.service.DecoyModeManager.hasPIN(context)) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(start = 56.dp),
+                                            color = colorScheme.outline.copy(alpha = 0.12f)
+                                        )
+                                        var showPinDialog by remember { mutableStateOf(false) }
+                                        Surface(
+                                            onClick = { showPinDialog = true },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = Color.Transparent
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Calculate,
+                                                    contentDescription = null,
+                                                    tint = colorScheme.primary,
+                                                    modifier = Modifier.size(22.dp)
+                                                )
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        stringResource(R.string.decoy_settings_title),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight = FontWeight.Medium,
+                                                        color = colorScheme.onSurface
+                                                    )
+                                                    Text(
+                                                        stringResource(R.string.decoy_settings_desc),
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = colorScheme.onSurface.copy(alpha = 0.6f)
+                                                    )
+                                                }
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                    contentDescription = null,
+                                                    tint = colorScheme.onSurface.copy(alpha = 0.3f),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        }
+
+                                        // PIN change dialog
+                                        if (showPinDialog) {
+                                            var newPin by remember { mutableStateOf("") }
+                                            var confirmPin by remember { mutableStateOf("") }
+                                            val mismatch = confirmPin.isNotEmpty() && newPin != confirmPin
+                                            val canSave = newPin.length in 4..8 && newPin == confirmPin
+
+                                            AlertDialog(
+                                                onDismissRequest = { showPinDialog = false },
+                                                title = { Text(stringResource(R.string.decoy_settings_change_title)) },
+                                                text = {
+                                                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                                        OutlinedTextField(
+                                                            value = newPin,
+                                                            onValueChange = { newPin = it.filter { c -> c.isDigit() }.take(8) },
+                                                            label = { Text(stringResource(R.string.decoy_settings_new_pin)) },
+                                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                                            singleLine = true
+                                                        )
+                                                        OutlinedTextField(
+                                                            value = confirmPin,
+                                                            onValueChange = { confirmPin = it.filter { c -> c.isDigit() }.take(8) },
+                                                            label = { Text(stringResource(R.string.decoy_settings_confirm_pin)) },
+                                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                                            singleLine = true,
+                                                            isError = mismatch,
+                                                            supportingText = if (mismatch) {{ Text(stringResource(R.string.decoy_settings_mismatch)) }} else null
+                                                        )
+                                                    }
+                                                },
+                                                confirmButton = {
+                                                    TextButton(
+                                                        onClick = {
+                                                            com.gapmesh.droid.service.DecoyModeManager.setPIN(context, newPin)
+                                                            showPinDialog = false
+                                                            android.widget.Toast.makeText(context, context.getString(R.string.decoy_settings_saved), android.widget.Toast.LENGTH_SHORT).show()
+                                                        },
+                                                        enabled = canSave
+                                                    ) { Text(stringResource(R.string.decoy_settings_save)) }
+                                                },
+                                                dismissButton = {
+                                                    TextButton(onClick = { showPinDialog = false }) { Text(stringResource(R.string.cancel)) }
+                                                }
+                                            )
+                                        }
+                                    }
                                 }
                             }
                             
@@ -636,7 +735,7 @@ fun AboutSheet(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(
-                                                text = "Difficulty",
+                                                text = stringResource(R.string.about_difficulty),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Medium,
                                                 color = colorScheme.onSurface

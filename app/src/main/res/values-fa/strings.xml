@@ -160,6 +160,10 @@
     <string name="language_english">English</string>
     <string name="language_farsi">فارسی</string>
     <string name="about_language">زبان</string>
+    <string name="about_theme_section">تم</string>
+    <string name="about_settings_section">تنظیمات</string>
+    <string name="about_difficulty">سختی</string>
+    <string name="about_tor_network">شبکهٔ Tor</string>
 
     <!-- توضیحات عمومی محتوا -->
     <string name="cd_warning">هشدار</string>
@@ -245,6 +249,21 @@
     <string name="location_level_region">منطقه</string>
     <string name="location_bluetooth_subtitle">#bluetooth • %1$s</string>
 
+    <!-- یادداشت‌های مکانی -->
+    <plurals name="location_notes_title">
+        <item quantity="one">#%1$s ± ۱ • %2$d یادداشت</item>
+        <item quantity="other">#%1$s ± ۱ • %2$d یادداشت</item>
+    </plurals>
+    <string name="location_notes_description">یادداشت‌های کوتاه دائمی برای این مکان اضافه کنید تا بازدیدکنندگان دیگر آن‌ها را پیدا کنند.</string>
+    <string name="location_notes_relays_unavailable">رله‌های مکانی در دسترس نیست؛ یادداشت‌ها متوقف شد</string>
+    <string name="location_notes_no_relays_title">رلهٔ مکانی در نزدیکی نیست</string>
+    <string name="location_notes_no_relays_desc">یادداشت‌ها به رله‌های مکانی وابسته‌اند. اتصال را بررسی و دوباره تلاش کنید.</string>
+    <string name="loading_location_notes">در حال بارگذاری یادداشت‌ها …</string>
+    <string name="location_notes_empty_title">هنوز یادداشتی نیست</string>
+    <string name="location_notes_empty_desc">اولین نفری باشید که برای این نقطه یادداشت می‌گذارد.</string>
+    <string name="dismiss">رد کردن</string>
+    <string name="location_notes_input_placeholder">یادداشتی برای این مکان بگذارید</string>
+
     <!-- اشکال‌زدایی / عیب‌یابی -->
     <string name="debug_tools">ابزارهای اشکال‌زدایی</string>
     <string name="debug_tools_desc">ابزارهای توسعه‌دهنده برای عیب‌یابی و کنترل</string>
@@ -278,6 +297,8 @@
     <string name="debug_direct_suffix"> • مستقیم</string>
     <string name="debug_role_server">به عنوان سرور (ما میزبانیم)</string>
     <string name="debug_role_client">به عنوان کلاینت (ما متصل می‌شویم)</string>
+    <string name="debug_rssi_fmt">RSSI: %1$s</string>
+    <string name="debug_question_mark">?</string>
 
     <!-- صفحه‌های آغازین -->
     <string name="location_services_required">خدمات مکان لازم است</string>
@@ -328,10 +349,38 @@
     <string name="media_type_image">تصویر</string>
     <string name="media_type_file">فایل</string>
 
+    <!-- قالب‌بندی و نشانه‌ها -->
+    <string name="at_nickname">@%1$s</string>
+    <string name="at_symbol">@</string>
+    <string name="channel_count_prefix"> · ⧉ </string>
+    <string name="hash_symbol">#</string>
+    <string name="underscore">_</string>
+    <string name="dot">.</string>
+    <string name="warning_emoji">⚠️</string>
+    <string name="mention_suggestion_at">@%1$s</string>
+    <string name="image_counter">%1$d / %2$d</string>
+    <string name="progress_bar_brackets">[%1$s] %2$d%%</string>
+    <string name="progress_filled">█</string>
+    <string name="progress_empty">░</string>
+
+    <!-- وضعیت پیام -->
+    <string name="status_sending">○</string>
+    <string name="status_pending">○</string>
+    <string name="status_sent">✓</string>
+    <string name="status_delivered">✓✓</string>
+    <string name="status_failed">⚠</string>
+    <string name="status_read">✓</string>
+
     <!-- راهنمای متن اعلان -->
     <string name="notification_sent_image">📷 یک تصویر ارسال کرد</string>
     <string name="notification_sent_voice">🎤 یک پیام صوتی ارسال کرد</string>
     <string name="notification_sent_file">📎 یک فایل ارسال کرد</string>
+    <string name="notification_file_pdf">📄</string>
+    <string name="notification_file_zip">🗜️</string>
+    <string name="notification_file_doc">📄</string>
+    <string name="notification_file_xls">📊</string>
+    <string name="notification_file_ppt">📈</string>
+    <string name="notification_file_generic">📎</string>
 
     <!-- دسترسی‌پذیری پخش‌کنندهٔ صوت -->
     <string name="cd_play_voice">پخش</string>
@@ -433,6 +482,7 @@
     <string name="cd_location_notes">یادداشت‌های مکانی</string>
     <string name="app_brand">Gap Mesh/</string>
     <string name="tor_not_available_in_this_build">Tor در این نسخه در دسترس نیست</string>
+    <string name="verify_light_no_camera">اسکن دوربین در نسخهٔ سبک در دسترس نیست. کد QR خود را با شخص دیگر به اشتراک بگذارید تا تأیید شود.</string>
 
     <!-- پیام‌های سیستم -->
     <string name="system_screenshot_public">از صفحه عکس گرفت</string>
@@ -487,4 +537,27 @@
     <string name="onboarding_next">بعدی</string>
     <string name="onboarding_get_started">شروع کنید</string>
 
+    <!-- حالت فریب (Decoy Mode) -->
+    <string name="decoy_onboarding_title">حالت فریب</string>
+    <string name="decoy_onboarding_desc">یک پین مخفی برای خروج از حالت فریب تنظیم کنید. پس از فعال‌سازی، برنامه به یک ماشین‌حساب تبدیل می‌شود و همهٔ پیام‌ها و کلیدها برای همیشه پاک می‌شوند.</string>
+    <string name="decoy_onboarding_how_title">نحوهٔ کارکرد</string>
+    <string name="decoy_onboarding_how_wipe">سه بار هر جای صفحه ضربه بزنید تا همهٔ داده‌ها فوراً پاک شوند</string>
+    <string name="decoy_onboarding_how_calc">برنامه به یک ماشین‌حساب واقعی تبدیل می‌شود</string>
+    <string name="decoy_onboarding_how_pin">پین مخفی خود را در ماشین‌حساب وارد و = را بزنید تا از حالت فریب خارج شوید</string>
+    <string name="decoy_onboarding_how_persist">حالت فریب پس از راه‌اندازی مجدد و خاموش‌روشن‌شدن دستگاه فعال می‌ماند</string>
+    <string name="decoy_onboarding_pin_label">پین فریب شما</string>
+    <string name="decoy_onboarding_generate_new">ساخت پین جدید</string>
+    <string name="decoy_onboarding_choose_own">انتخاب دستی</string>
+    <string name="decoy_onboarding_pin_warning">⚠️ مهم: اگر پین خود را فراموش کنید، هیچ راهی برای بازیابی آن وجود ندارد. باید برنامه را حذف و دوباره نصب کنید.</string>
+    <string name="decoy_onboarding_memorized">پین خود را حفظ کرده‌ام</string>
+    <string name="decoy_settings_title">پین فریب</string>
+    <string name="decoy_settings_desc">تغییر پین مخفی خروج از ماشین‌حساب</string>
+    <string name="decoy_settings_change_title">تغییر پین فریب</string>
+    <string name="decoy_settings_new_pin">پین جدید (۴ تا ۸ رقم)</string>
+    <string name="decoy_settings_confirm_pin">تأیید پین</string>
+    <string name="decoy_settings_mismatch">پین‌ها مطابقت ندارند</string>
+    <string name="decoy_settings_save">ذخیره</string>
+    <string name="decoy_settings_saved">پین فریب به‌روزرسانی شد</string>
+
 </resources>
+

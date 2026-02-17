@@ -27,6 +27,7 @@ import com.gapmesh.droid.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gapmesh.droid.service.MeshServicePreferences
 import com.gapmesh.droid.ui.ChatViewModel
+import com.gapmesh.droid.service.DecoyModeManager
 
 @Composable
 fun TutorialScreen(
@@ -87,29 +88,37 @@ fun TutorialScreen(
                         onBackgroundModeChange = { saveBackgroundPref(it) }
                     )
                     2 -> EducationStep()
+                    3 -> DecoyPinSetupScreen(
+                        onPinSet = { pin ->
+                            DecoyModeManager.setPIN(context, pin)
+                            finishTutorial()
+                        }
+                    )
                 }
             }
             
             Spacer(Modifier.height(24.dp))
             
-            Button(
-                onClick = {
-                    if (step == 0) {
-                        // [Goose] Fix: Save changes if user clicks Next while editing
-                        if (isEditing && editName.isNotBlank()) {
-                            viewModel.setNickname(editName)
-                            isEditing = false
+            // Steps 0-2 have a Next/Get Started button; step 3 (Decoy PIN) handles its own button
+            if (step < 3) {
+                Button(
+                    onClick = {
+                        if (step == 0) {
+                            // [Goose] Fix: Save changes if user clicks Next while editing
+                            if (isEditing && editName.isNotBlank()) {
+                                viewModel.setNickname(editName)
+                                isEditing = false
+                            }
                         }
-                    }
-                    
-                    if (step < 2) step++ else finishTutorial()
-                },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Text(if (step < 2) stringResource(R.string.onboarding_next) else stringResource(R.string.onboarding_get_started))
-                Spacer(Modifier.width(8.dp))
-                Icon(if (step < 2) Icons.AutoMirrored.Filled.ArrowForward else Icons.Filled.Check, null)
+                        step++
+                    },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text(stringResource(R.string.onboarding_next))
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, null)
+                }
             }
         }
     }
@@ -277,10 +286,12 @@ private fun EducationStep() {
         )
         Spacer(Modifier.height(24.dp))
         
-        FeatureItem(
-            title = stringResource(R.string.onboarding_feature_geo_title),
-            desc = stringResource(R.string.onboarding_feature_geo_desc)
-        )
+        if (com.gapmesh.droid.BuildConfig.HAS_GEOHASH) {
+            FeatureItem(
+                title = stringResource(R.string.onboarding_feature_geo_title),
+                desc = stringResource(R.string.onboarding_feature_geo_desc)
+            )
+        }
         
         FeatureItem(
             title = stringResource(R.string.onboarding_feature_notes_title),
