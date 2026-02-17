@@ -63,7 +63,6 @@
     <string name="notification_mesh_mention_title_singular">Được nhắc đến trong Mesh Chat</string>
     <string name="notification_mesh_mention_title_plural">%1$d lần nhắc đến trong Mesh Chat</string>
     <string name="notification_more_locations">và %1$d vị trí khác</string>
-    <string name="notification_and_more">và %1$d khác</string>
 
     <!-- Khả năng truy cập yêu thích -->
     <string name="cd_add_favorite">Thêm vào yêu thích</string>
@@ -353,8 +352,8 @@
 
   <string name="verify_title">verify</string>
   <string name="verify_my_qr_title">scan to verify me</string>
-  <string name="verify_scan_prompt_friend">scan someone else's QR</string>
-  <string name="verify_scan_someone">scan someone else's QR</string>
+  <string name="verify_scan_prompt_friend">scan someone else\'s QR</string>
+  <string name="verify_scan_someone">scan someone else\'s QR</string>
   <string name="verify_show_my_qr">show my qr</string>
   <string name="verify_remove">remove verification</string>
   <string name="verify_qr_unavailable">qr unavailable</string>

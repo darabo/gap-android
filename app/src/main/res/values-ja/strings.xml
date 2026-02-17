@@ -63,7 +63,6 @@
     <string name="notification_mesh_mention_title_singular">メッシュチャットでメンション</string>
     <string name="notification_mesh_mention_title_plural">メッシュチャットで %1$d 件のメンション</string>
     <string name="notification_more_locations">ほか %1$d 箇所</string>
-    <string name="notification_and_more">ほか %1$d</string>
 
     <!-- お気に入り アクセシビリティ -->
     <string name="cd_add_favorite">お気に入りに追加</string>

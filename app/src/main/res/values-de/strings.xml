@@ -63,7 +63,6 @@
     <string name="notification_mesh_mention_title_singular">In Mesh‑Chat erwähnt</string>
     <string name="notification_mesh_mention_title_plural">%1$d Erwähnungen im Mesh‑Chat</string>
     <string name="notification_more_locations">und %1$d weitere Orte</string>
-    <string name="notification_and_more">und %1$d weitere</string>
 
     <!-- Favoriten Zugänglichkeit -->
     <string name="cd_add_favorite">Zu Favoriten hinzufügen</string>

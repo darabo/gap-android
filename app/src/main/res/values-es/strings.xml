@@ -63,7 +63,6 @@
     <string name="notification_mesh_mention_title_singular">Mencionado en chat mesh</string>
     <string name="notification_mesh_mention_title_plural">%1$d menciones en chat mesh</string>
     <string name="notification_more_locations">y %1$d ubicaciones más</string>
-    <string name="notification_and_more">y %1$d más</string>
 
     <!-- Accesibilidad de favoritos -->
     <string name="cd_add_favorite">Agregar a favoritos</string>

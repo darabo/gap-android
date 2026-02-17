@@ -70,7 +70,6 @@
     <string name="notification_mesh_mention_title_singular">ذکر در گفت‌وگوی مِش</string>
     <string name="notification_mesh_mention_title_plural">%1$d مورد ذکر در گفت‌وگوی مِش</string>
     <string name="notification_more_locations">و %1$d موقعیت دیگر</string>
-    <string name="notification_and_more">و %1$d مورد دیگر</string>
 
     <!-- دسترسی‌پذیری موارد دلخواه -->
     <string name="cd_add_favorite">افزودن به موارد دلخواه</string>

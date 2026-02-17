@@ -57,7 +57,6 @@
     <string name="notification_mesh_mention_title_singular">Упоминание в Mesh‑чате</string>
     <string name="notification_mesh_mention_title_plural">%1$d упоминаний в Mesh‑чате</string>
     <string name="notification_more_locations">и ещё %1$d локаций</string>
-    <string name="notification_and_more">и ещё %1$d</string>
 
     <string name="cd_add_favorite">В избранное</string>
     <string name="cd_remove_favorite">Убрать из избранного</string>

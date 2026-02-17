@@ -63,7 +63,6 @@
     <string name="notification_mesh_mention_title_singular">تم ذكرك في محادثة الشبكة</string>
     <string name="notification_mesh_mention_title_plural">%1$d من الإشارات في محادثة الشبكة</string>
     <string name="notification_more_locations">و%1$d مواقع أخرى</string>
-    <string name="notification_and_more">و%1$d إضافية</string>
 
     <!-- سهولة الوصول للمفضلة -->
     <string name="cd_add_favorite">إضافة إلى المفضلة</string>
@@ -366,8 +365,8 @@
 
   <string name="verify_title">verify</string>
   <string name="verify_my_qr_title">scan to verify me</string>
-  <string name="verify_scan_prompt_friend">scan someone else's QR</string>
-  <string name="verify_scan_someone">scan someone else's QR</string>
+  <string name="verify_scan_prompt_friend">scan someone else\'s QR</string>
+  <string name="verify_scan_someone">scan someone else\'s QR</string>
   <string name="verify_show_my_qr">show my qr</string>
   <string name="verify_remove">remove verification</string>
   <string name="verify_qr_unavailable">qr unavailable</string>

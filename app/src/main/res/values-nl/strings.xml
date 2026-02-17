@@ -63,7 +63,6 @@
     <string name="notification_mesh_mention_title_singular">Vermeld in meshchat</string>
     <string name="notification_mesh_mention_title_plural">%1$d vermeldingen in meshchat</string>
     <string name="notification_more_locations">en %1$d meer locaties</string>
-    <string name="notification_and_more">en %1$d meer</string>
 
     <!-- Favorieten toegankelijkheid -->
     <string name="cd_add_favorite">Toevoegen aan favorieten</string>
@@ -398,8 +397,8 @@
 
   <string name="verify_title">verify</string>
   <string name="verify_my_qr_title">scan to verify me</string>
-  <string name="verify_scan_prompt_friend">scan someone else's QR</string>
-  <string name="verify_scan_someone">scan someone else's QR</string>
+  <string name="verify_scan_prompt_friend">scan someone else\'s QR</string>
+  <string name="verify_scan_someone">scan someone else\'s QR</string>
   <string name="verify_show_my_qr">show my qr</string>
   <string name="verify_remove">remove verification</string>
   <string name="verify_qr_unavailable">qr unavailable</string>
