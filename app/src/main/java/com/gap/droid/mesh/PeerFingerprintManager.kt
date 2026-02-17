@@ -1,4 +1,4 @@
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import android.util.Log
 import java.security.MessageDigest

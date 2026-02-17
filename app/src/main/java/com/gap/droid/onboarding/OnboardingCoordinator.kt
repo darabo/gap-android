@@ -1,8 +1,9 @@
-package com.gap.droid.onboarding
+package com.gapmesh.droid.onboarding
 
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.Manifest
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -180,8 +181,7 @@ class OnboardingCoordinator(
      * Get the list of critical permissions that are absolutely required
      */
     private fun getCriticalPermissions(): List<String> {
-        // For bitchat, Bluetooth and location permissions are critical
-        // Notifications are nice-to-have but not critical and are not included in getRequiredPermissions()
+        // All required permissions are critical, including storage for screenshot detection
         return permissionManager.getRequiredPermissions()
     }
 

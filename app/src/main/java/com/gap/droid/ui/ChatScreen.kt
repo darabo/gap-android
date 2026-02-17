@@ -1,11 +1,11 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
+import com.gapmesh.droid.BuildConfig
 // [Goose] Bridge file share events to ViewModel via dispatcher is installed in ChatScreen composition
 
 // [Goose] Installing FileShareDispatcher handler in ChatScreen to forward file sends to ViewModel
 
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -25,8 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gap.droid.model.BitchatMessage
-import com.gap.droid.ui.media.FullScreenImageViewer
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.ui.media.FullScreenImageViewer
+import android.content.Intent
+import androidx.compose.ui.input.pointer.pointerInput
 
 /**
  * Main ChatScreen - REFACTORED to use component-based architecture
@@ -51,14 +53,15 @@ fun ChatScreen(viewModel: ChatViewModel) {
     val hasUnreadPrivateMessages by viewModel.unreadPrivateMessages.collectAsStateWithLifecycle()
     val privateChats by viewModel.privateChats.collectAsStateWithLifecycle()
     val channelMessages by viewModel.channelMessages.collectAsStateWithLifecycle()
-    val showSidebar by viewModel.showSidebar.collectAsStateWithLifecycle()
     val showCommandSuggestions by viewModel.showCommandSuggestions.collectAsStateWithLifecycle()
     val commandSuggestions by viewModel.commandSuggestions.collectAsStateWithLifecycle()
     val showMentionSuggestions by viewModel.showMentionSuggestions.collectAsStateWithLifecycle()
     val mentionSuggestions by viewModel.mentionSuggestions.collectAsStateWithLifecycle()
     val showAppInfo by viewModel.showAppInfo.collectAsStateWithLifecycle()
+    val showMeshPeerListSheet by viewModel.showMeshPeerList.collectAsStateWithLifecycle()
     val showVerificationSheet by viewModel.showVerificationSheet.collectAsStateWithLifecycle()
     val showSecurityVerificationSheet by viewModel.showSecurityVerificationSheet.collectAsStateWithLifecycle()
+    val geohashPeople by viewModel.geohashPeople.collectAsStateWithLifecycle()
 
     var messageText by remember { mutableStateOf(TextFieldValue("")) }
     var showPasswordPrompt by remember { mutableStateOf(false) }
@@ -74,6 +77,9 @@ fun ChatScreen(viewModel: ChatViewModel) {
     var initialViewerIndex by remember { mutableStateOf(0) }
     var forceScrollToBottom by remember { mutableStateOf(false) }
     var isScrolledUp by remember { mutableStateOf(false) }
+    
+    // Bottom navigation - removed Settings gear from header since it's in bottom nav now
+    var currentTab by remember { mutableStateOf(BottomNavTab.MESH) }
 
     // Show password dialog when needed
     LaunchedEffect(showPasswordPrompt) {
@@ -92,7 +98,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
         currentChannel != null -> channelMessages[currentChannel] ?: emptyList()
         else -> {
             val locationChannel = selectedLocationChannel
-            if (locationChannel is com.gap.droid.geohash.ChannelID.Location) {
+            if (locationChannel is com.gapmesh.droid.geohash.ChannelID.Location) {
                 val geokey = "geo:${locationChannel.channel.geohash}"
                 channelMessages[geokey] ?: emptyList()
             } else {
@@ -101,18 +107,44 @@ fun ChatScreen(viewModel: ChatViewModel) {
         }
     }
 
-    // Determine whether to show media buttons (only hide in geohash location chats)
+    // Determine whether to show media buttons (only hide in geohash location chats and private messaging)
     val showMediaButtons = when {
-        selectedPrivatePeer != null -> true
+        selectedPrivatePeer != null -> false  // Disable media buttons in private messaging
         currentChannel != null -> true
-        else -> selectedLocationChannel !is com.gap.droid.geohash.ChannelID.Location
+        else -> selectedLocationChannel !is com.gapmesh.droid.geohash.ChannelID.Location
     }
+
+    // Triple-tap detection state — applied on root Box so it doesn't block child composables
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var tripleTapCount by remember { mutableIntStateOf(0) }
+    var tripleTapLastTime by remember { mutableLongStateOf(0L) }
 
     // Use WindowInsets to handle keyboard properly
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(colorScheme.background) // Extend background to fill entire screen including status bar
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                        if (event.type == androidx.compose.ui.input.pointer.PointerEventType.Press) {
+                            val now = System.currentTimeMillis()
+                            if (now - tripleTapLastTime < 400L) {
+                                tripleTapCount++
+                            } else {
+                                tripleTapCount = 1
+                            }
+                            tripleTapLastTime = now
+                            if (tripleTapCount >= 3) {
+                                tripleTapCount = 0
+                                viewModel.panicClearAllData()
+                            }
+                        }
+                        // Do NOT consume — let events pass through to children
+                    }
+                }
+            }
     ) {
         val headerHeight = 42.dp
         
@@ -147,7 +179,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     
                     // Check if we're in a geohash channel to include hash suffix
                     val selectedLocationChannel = viewModel.selectedLocationChannel.value
-                    val mentionText = if (selectedLocationChannel is com.gap.droid.geohash.ChannelID.Location && hashSuffix.isNotEmpty()) {
+                    val mentionText = if (selectedLocationChannel is com.gapmesh.droid.geohash.ChannelID.Location && hashSuffix.isNotEmpty()) {
                         // In geohash chat - include the hash suffix from the full display name
                         "@$baseName$hashSuffix"
                     } else {
@@ -186,7 +218,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
             // Input area - stays at bottom
         // Bridge file share from lower-level input to ViewModel
     androidx.compose.runtime.LaunchedEffect(Unit) {
-        com.gap.droid.ui.events.FileShareDispatcher.setHandler { peer, channel, path ->
+        com.gapmesh.droid.ui.events.FileShareDispatcher.setHandler { peer, channel, path ->
             viewModel.sendFileNote(peer, channel, path)
         }
     }
@@ -239,6 +271,39 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 colorScheme = colorScheme,
                 showMediaButtons = showMediaButtons
             )
+            
+            // Bottom Navigation Bar
+            // Unread count logic: show 0 when on chat tab and viewing latest (not scrolled up)
+            val isViewingMeshChat = currentTab == BottomNavTab.MESH && 
+                                    selectedPrivatePeer == null && 
+                                    currentChannel == null
+            val meshUnreadCount = if (isViewingMeshChat && !isScrolledUp) 0 else 0 // Badge disabled when viewing
+            
+            GapMeshBottomNavigation(
+                currentTab = currentTab,
+                onTabSelected = { tab ->
+                    currentTab = tab
+                    when (tab) {
+                        BottomNavTab.MESH -> {
+                            // Already on mesh - clear any location/private selection
+                            viewModel.endPrivateChat()
+                            viewModel.switchToChannel(null)
+                        }
+                        BottomNavTab.LOCATION -> {
+                            if (BuildConfig.HAS_GEOHASH) showLocationChannelsSheet = true
+                        }
+                        BottomNavTab.PEOPLE -> {
+                            viewModel.showMeshPeerList()
+                        }
+                        BottomNavTab.SETTINGS -> {
+                            viewModel.showAppInfo()
+                        }
+                    }
+                },
+                unreadMeshCount = meshUnreadCount,
+                unreadLocationCount = hasUnreadChannels.values.sum(),
+                peopleNearbyCount = connectedPeers.size + geohashPeople.size
+            )
         }
 
         // Floating header - positioned absolutely at top, ignores keyboard
@@ -249,12 +314,21 @@ fun ChatScreen(viewModel: ChatViewModel) {
             nickname = nickname,
             viewModel = viewModel,
             colorScheme = colorScheme,
-            onSidebarToggle = { viewModel.showSidebar() },
+            onSidebarToggle = { viewModel.showMeshPeerList() },
             onShowAppInfo = { viewModel.showAppInfo() },
             onPanicClear = { viewModel.panicClearAllData() },
-            onLocationChannelsClick = { showLocationChannelsSheet = true },
-            onLocationNotesClick = { showLocationNotesSheet = true }
+            onLocationChannelsClick = { if (BuildConfig.HAS_GEOHASH) showLocationChannelsSheet = true },
+            onLocationNotesClick = { if (BuildConfig.HAS_GEOHASH) showLocationNotesSheet = true }
         )
+
+        // Observe decoy activation and launch CalculatorActivity
+        LaunchedEffect(Unit) {
+            viewModel.decoyActivated.collect {
+                context.startActivity(Intent(context, CalculatorActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                })
+            }
+        }
 
         // Divider under header - positioned after status bar + header height
         HorizontalDivider(
@@ -266,28 +340,9 @@ fun ChatScreen(viewModel: ChatViewModel) {
             color = colorScheme.outline.copy(alpha = 0.3f)
         )
 
-        val alpha by animateFloatAsState(
-            targetValue = if (showSidebar) 0.5f else 0f,
-            animationSpec = tween(
-                durationMillis = 300,
-                easing = EaseOutCubic
-            ), label = "overlayAlpha"
-        )
-
-        // Only render the background if it's visible
-        if (alpha > 0f) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = alpha))
-                    .clickable { viewModel.hideSidebar() }
-                    .zIndex(1f)
-            )
-        }
-
         // Scroll-to-bottom floating button
         AnimatedVisibility(
-            visible = isScrolledUp && !showSidebar,
+            visible = isScrolledUp,
             enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(),
             exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(),
             modifier = Modifier
@@ -307,35 +362,13 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 IconButton(onClick = { forceScrollToBottom = !forceScrollToBottom }) {
                     Icon(
                         imageVector = Icons.Filled.ArrowDownward,
-                        contentDescription = stringResource(com.gap.droid.R.string.cd_scroll_to_bottom),
+                        contentDescription = stringResource(com.gapmesh.droid.R.string.cd_scroll_to_bottom),
                         tint = Color(0xFF00C851)
                     )
                 }
             }
         }
 
-        AnimatedVisibility(
-            visible = showSidebar,
-            enter = slideInHorizontally(
-                initialOffsetX = { it },
-                animationSpec = tween(300, easing = EaseOutCubic)
-            ) + fadeIn(animationSpec = tween(300)),
-            exit = slideOutHorizontally(
-                targetOffsetX = { it },
-                animationSpec = tween(250, easing = EaseInCubic)
-            ) + fadeOut(animationSpec = tween(250)),
-            modifier = Modifier.zIndex(2f)
-        ) {
-            SidebarOverlay(
-                viewModel = viewModel,
-                onDismiss = { viewModel.hideSidebar() },
-                onShowVerification = {
-                    viewModel.showVerificationSheet(fromSidebar = true)
-                    viewModel.hideSidebar()
-                },
-                modifier = Modifier.fillMaxSize()
-            )
-        }
     }
 
     // Full-screen image viewer - separate from other sheets to allow image browsing without navigation
@@ -367,9 +400,15 @@ fun ChatScreen(viewModel: ChatViewModel) {
             passwordInput = ""
         },
         showAppInfo = showAppInfo,
-        onAppInfoDismiss = { viewModel.hideAppInfo() },
+        onAppInfoDismiss = { 
+            viewModel.hideAppInfo()
+            currentTab = BottomNavTab.MESH // Reset to Chat tab
+        },
         showLocationChannelsSheet = showLocationChannelsSheet,
-        onLocationChannelsSheetDismiss = { showLocationChannelsSheet = false },
+        onLocationChannelsSheetDismiss = { 
+            showLocationChannelsSheet = false
+            currentTab = BottomNavTab.MESH // Reset to Chat tab
+        },
         showLocationNotesSheet = showLocationNotesSheet,
         onLocationNotesSheetDismiss = { showLocationNotesSheet = false },
         showUserSheet = showUserSheet,
@@ -383,12 +422,14 @@ fun ChatScreen(viewModel: ChatViewModel) {
         showVerificationSheet = showVerificationSheet,
         onVerificationSheetDismiss = viewModel::hideVerificationSheet,
         showSecurityVerificationSheet = showSecurityVerificationSheet,
-        onSecurityVerificationSheetDismiss = viewModel::hideSecurityVerificationSheet
+        onSecurityVerificationSheetDismiss = viewModel::hideSecurityVerificationSheet,
+        showMeshPeerListSheet = showMeshPeerListSheet,
+        onMeshPeerListDismiss = viewModel::hideMeshPeerList,
     )
 }
 
 @Composable
-private fun ChatInputSection(
+fun ChatInputSection(
     messageText: TextFieldValue,
     onMessageTextChange: (TextFieldValue) -> Unit,
     onSend: () -> Unit,
@@ -463,7 +504,7 @@ private fun ChatFloatingHeader(
     onLocationNotesClick: () -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val locationManager = remember { com.gap.droid.geohash.LocationChannelManager.getInstance(context) }
+    val locationManager = remember { com.gapmesh.droid.geohash.LocationChannelManager.getInstance(context) }
     
     Surface(
         modifier = Modifier
@@ -527,7 +568,9 @@ private fun ChatDialogs(
     showVerificationSheet: Boolean,
     onVerificationSheetDismiss: () -> Unit,
     showSecurityVerificationSheet: Boolean,
-    onSecurityVerificationSheetDismiss: () -> Unit
+    onSecurityVerificationSheetDismiss: () -> Unit,
+    showMeshPeerListSheet: Boolean,
+    onMeshPeerListDismiss: () -> Unit,
 ) {
     // Password dialog
     PasswordPromptDialog(
@@ -541,13 +584,16 @@ private fun ChatDialogs(
 
     // About sheet
     var showDebugSheet by remember { mutableStateOf(false) }
+    val currentNickname by viewModel.nickname.collectAsStateWithLifecycle()
     AboutSheet(
         isPresented = showAppInfo,
         onDismiss = onAppInfoDismiss,
-        onShowDebug = { showDebugSheet = true }
+        onShowDebug = { showDebugSheet = true },
+        nickname = currentNickname,
+        onNicknameChange = { viewModel.setNickname(it) }
     )
     if (showDebugSheet) {
-        com.gap.droid.ui.debug.DebugSettingsSheet(
+        com.gapmesh.droid.ui.debug.DebugSettingsSheet(
             isPresented = showDebugSheet,
             onDismiss = { showDebugSheet = false },
             meshService = viewModel.meshService
@@ -555,7 +601,7 @@ private fun ChatDialogs(
     }
     
     // Location channels sheet
-    if (showLocationChannelsSheet) {
+    if (BuildConfig.HAS_GEOHASH && showLocationChannelsSheet) {
         LocationChannelsSheet(
             isPresented = showLocationChannelsSheet,
             onDismiss = onLocationChannelsSheetDismiss,
@@ -564,7 +610,7 @@ private fun ChatDialogs(
     }
     
     // Location notes sheet (extracted to separate presenter)
-    if (showLocationNotesSheet) {
+    if (BuildConfig.HAS_GEOHASH && showLocationNotesSheet) {
         LocationNotesSheetPresenter(
             viewModel = viewModel,
             onDismiss = onLocationNotesSheetDismiss
@@ -579,6 +625,18 @@ private fun ChatDialogs(
             targetNickname = selectedUserForSheet,
             selectedMessage = selectedMessageForSheet,
             viewModel = viewModel
+        )
+    }
+    // MeshPeerList sheet (network view)
+    if (showMeshPeerListSheet){
+        MeshPeerListSheet(
+            isPresented = showMeshPeerListSheet,
+            viewModel = viewModel,
+            onDismiss = onMeshPeerListDismiss,
+            onShowVerification = {
+                onMeshPeerListDismiss()
+                viewModel.showVerificationSheet(fromSidebar = true)
+            }
         )
     }
 

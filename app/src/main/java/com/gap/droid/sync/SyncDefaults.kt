@@ -1,4 +1,4 @@
-package com.gap.droid.sync
+package com.gapmesh.droid.sync
 
 object SyncDefaults {
     // Default values used when debug prefs are unavailable

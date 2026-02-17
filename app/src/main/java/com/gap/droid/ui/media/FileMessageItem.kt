@@ -1,4 +1,4 @@
-package com.gap.droid.ui.media
+package com.gapmesh.droid.ui.media
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,8 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.gap.droid.features.file.FileUtils
-import com.gap.droid.model.BitchatFilePacket
+import com.gapmesh.droid.features.file.FileUtils
+import com.gapmesh.droid.model.BitchatFilePacket
 
 /**
  * Modern chat-style file message display
@@ -63,7 +63,7 @@ fun FileMessageItem(
             // File icon
             Icon(
                 imageVector = Icons.Filled.Description,
-                contentDescription = stringResource(com.gap.droid.R.string.cd_file),
+                contentDescription = stringResource(com.gapmesh.droid.R.string.cd_file),
                 tint = getFileIconColor(packet.fileName),
                 modifier = Modifier.size(32.dp)
             )

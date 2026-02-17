@@ -1,10 +1,10 @@
-package com.gap.droid
+package com.gapmesh.droid
 
 import androidx.lifecycle.ViewModel
-import com.gap.droid.onboarding.BluetoothStatus
-import com.gap.droid.onboarding.LocationStatus
-import com.gap.droid.onboarding.OnboardingState
-import com.gap.droid.onboarding.BatteryOptimizationStatus
+import com.gapmesh.droid.onboarding.BluetoothStatus
+import com.gapmesh.droid.onboarding.LocationStatus
+import com.gapmesh.droid.onboarding.OnboardingState
+import com.gapmesh.droid.onboarding.BatteryOptimizationStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

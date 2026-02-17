@@ -1,11 +1,11 @@
-package com.gap.droid.sync
+package com.gapmesh.droid.sync
 
 import android.util.Log
-import com.gap.droid.mesh.BluetoothPacketBroadcaster
-import com.gap.droid.model.RequestSyncPacket
-import com.gap.droid.protocol.BitchatPacket
-import com.gap.droid.protocol.MessageType
-import com.gap.droid.protocol.SpecialRecipients
+import com.gapmesh.droid.mesh.BluetoothPacketBroadcaster
+import com.gapmesh.droid.model.RequestSyncPacket
+import com.gapmesh.droid.protocol.BitchatPacket
+import com.gapmesh.droid.protocol.MessageType
+import com.gapmesh.droid.protocol.SpecialRecipients
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -66,7 +66,7 @@ class GossipSyncManager(
         cleanupJob = scope.launch(Dispatchers.IO) {
             while (isActive) {
                 try {
-                    delay(com.gap.droid.util.AppConstants.Sync.CLEANUP_INTERVAL_MS)
+                    delay(com.gapmesh.droid.util.AppConstants.Sync.CLEANUP_INTERVAL_MS)
                     pruneStaleAnnouncements()
                 } catch (e: CancellationException) { throw e }
                 catch (e: Exception) { Log.e(TAG, "Periodic cleanup error: ${e.message}") }
@@ -117,8 +117,8 @@ class GossipSyncManager(
             // Ignore stale announcements older than STALE_PEER_TIMEOUT
             val now = System.currentTimeMillis()
             val age = now - packet.timestamp.toLong()
-            if (age > com.gap.droid.util.AppConstants.Mesh.STALE_PEER_TIMEOUT_MS) {
-                Log.d(TAG, "Ignoring stale ANNOUNCE (age=${age}ms > ${com.gap.droid.util.AppConstants.Mesh.STALE_PEER_TIMEOUT_MS}ms)")
+            if (age > com.gapmesh.droid.util.AppConstants.Mesh.STALE_PEER_TIMEOUT_MS) {
+                Log.d(TAG, "Ignoring stale ANNOUNCE (age=${age}ms > ${com.gapmesh.droid.util.AppConstants.Mesh.STALE_PEER_TIMEOUT_MS}ms)")
                 return
             }
             // senderID is fixed-size 8 bytes; map to hex string for key
@@ -141,7 +141,7 @@ class GossipSyncManager(
             senderID = hexStringToByteArray(myPeerID),
             timestamp = System.currentTimeMillis().toULong(),
             payload = payload,
-            ttl = com.gap.droid.util.AppConstants.SYNC_TTL_HOPS // neighbors only
+            ttl = com.gapmesh.droid.util.AppConstants.SYNC_TTL_HOPS // neighbors only
         )
         // Sign and broadcast
         val signed = delegate?.signPacketForBroadcast(packet) ?: packet
@@ -157,7 +157,7 @@ class GossipSyncManager(
             recipientID = hexStringToByteArray(peerID),
             timestamp = System.currentTimeMillis().toULong(),
             payload = payload,
-            ttl = com.gap.droid.util.AppConstants.SYNC_TTL_HOPS // neighbor only
+            ttl = com.gapmesh.droid.util.AppConstants.SYNC_TTL_HOPS // neighbor only
         )
         Log.d(TAG, "Sending sync request to $peerID (${payload.size} bytes)")
         // Sign and send directly to peer
@@ -185,7 +185,7 @@ class GossipSyncManager(
             val idBytes = hexToBytes(id)
             if (!mightContain(idBytes)) {
                 // Send original packet unchanged to requester only (keep local TTL)
-                val toSend = pkt.copy(ttl = com.gap.droid.util.AppConstants.SYNC_TTL_HOPS)
+                val toSend = pkt.copy(ttl = com.gapmesh.droid.util.AppConstants.SYNC_TTL_HOPS)
                 delegate?.sendPacketToPeer(fromPeerID, toSend)
                 Log.d(TAG, "Sent sync announce: Type ${toSend.type} from ${toSend.senderID.toHexString()} to $fromPeerID packet id ${idBytes.toHexString()}")
             }
@@ -196,7 +196,7 @@ class GossipSyncManager(
         for (pkt in toSendMsgs) {
             val idBytes = PacketIdUtil.computeIdBytes(pkt)
             if (!mightContain(idBytes)) {
-                val toSend = pkt.copy(ttl = com.gap.droid.util.AppConstants.SYNC_TTL_HOPS)
+                val toSend = pkt.copy(ttl = com.gapmesh.droid.util.AppConstants.SYNC_TTL_HOPS)
                 delegate?.sendPacketToPeer(fromPeerID, toSend)
                 Log.d(TAG, "Sent sync message: Type ${toSend.type} to $fromPeerID packet id ${idBytes.toHexString()}")
             }
@@ -267,7 +267,7 @@ class GossipSyncManager(
         for ((peerID, pair) in latestAnnouncementByPeer.entries) {
             val pkt = pair.second
             val age = now - pkt.timestamp.toLong()
-            if (age > com.gap.droid.util.AppConstants.Mesh.STALE_PEER_TIMEOUT_MS) {
+            if (age > com.gapmesh.droid.util.AppConstants.Mesh.STALE_PEER_TIMEOUT_MS) {
                 stalePeers.add(peerID)
             }
         }

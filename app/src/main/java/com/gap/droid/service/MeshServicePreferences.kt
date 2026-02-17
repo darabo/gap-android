@@ -1,12 +1,13 @@
-package com.gap.droid.service
+package com.gapmesh.droid.service
 
 import android.content.Context
 import android.content.SharedPreferences
 
 object MeshServicePreferences {
-    private const val PREFS_NAME = "bitchat_mesh_service_prefs"
+    private const val PREFS_NAME = "app_prefs"
     private const val KEY_AUTO_START = "auto_start_on_boot"
-    private const val KEY_BACKGROUND_ENABLED = "background_enabled"
+    private const val KEY_BACKGROUND_ENABLED = "background_mode_enabled"
+    private const val KEY_LEGACY_COMPATIBILITY = "legacy_compatibility_enabled"
 
     private lateinit var prefs: SharedPreferences
 
@@ -28,5 +29,13 @@ object MeshServicePreferences {
 
     fun setBackgroundEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_BACKGROUND_ENABLED, enabled).apply()
+    }
+
+    fun isLegacyCompatibilityEnabled(default: Boolean = false): Boolean {
+        return prefs.getBoolean(KEY_LEGACY_COMPATIBILITY, default)
+    }
+
+    fun setLegacyCompatibilityEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_LEGACY_COMPATIBILITY, enabled).apply()
     }
 }

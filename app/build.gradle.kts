@@ -6,19 +6,36 @@ plugins {
 }
 
 android {
-    namespace = "com.gap.droid"
+    namespace = "com.gapmesh.droid"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.gap.droid"
+        applicationId = "com.gapmesh.droid"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 44
-        versionName = "1.8.0"
+        versionCode = 12
+        versionName = "1.25"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    // Product flavors: "full" includes Tor, ML Kit, geohash; "light" strips them for minimal APK
+    flavorDimensions += "variant"
+    productFlavors {
+        create("full") {
+            dimension = "variant"
+            buildConfigField("boolean", "HAS_TOR", "true")
+            buildConfigField("boolean", "HAS_GEOHASH", "true")
+        }
+        create("light") {
+            dimension = "variant"
+            applicationIdSuffix = ".light"
+            versionNameSuffix = "-light"
+            buildConfigField("boolean", "HAS_TOR", "false")
+            buildConfigField("boolean", "HAS_GEOHASH", "false")
         }
     }
 
@@ -39,6 +56,8 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            isDebuggable = false
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -46,11 +65,15 @@ android {
         }
     }
 
-    // APK splits for GitHub releases - creates arm64, x86_64, and universal APKs
-    // AAB for Play Store handles architecture distribution automatically
+    // APK splits for GitHub/F-Droid releases - creates arm64, x86_64, and universal APKs
+    // Disabled for App Bundle builds (Play Store) since AAB handles architecture automatically
+    // See: https://issuetracker.google.com/402800800
     splits {
         abi {
-            isEnable = true
+            // Disable splits when building App Bundle to avoid conflict
+            isEnable = project.gradle.startParameter.taskNames.none { 
+                it.contains("bundle", ignoreCase = true) 
+            }
             reset()
             include("arm64-v8a", "x86_64")
             isUniversalApk = true  // For F-Droid and fallback
@@ -66,6 +89,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {
@@ -99,14 +123,16 @@ dependencies {
     // Permissions
     implementation(libs.accompanist.permissions)
 
-    // QR
+    // QR (ZXing shared by both flavors)
     implementation(libs.zxing.core)
-    implementation(libs.mlkit.barcode.scanning)
 
-    // CameraX
-    implementation(libs.androidx.camera.camera2)
-    implementation(libs.androidx.camera.lifecycle)
-    implementation(libs.androidx.camera.compose)
+    // Full-only: ML Kit barcode scanning (live camera QR)
+    "fullImplementation"(libs.mlkit.barcode.scanning)
+
+    // Full-only: CameraX (for ML Kit camera preview)
+    "fullImplementation"(libs.androidx.camera.camera2)
+    "fullImplementation"(libs.androidx.camera.lifecycle)
+    "fullImplementation"(libs.androidx.camera.compose)
     
     // Cryptography
     implementation(libs.bundles.cryptography)
@@ -123,17 +149,15 @@ dependencies {
     // WebSocket
     implementation(libs.okhttp)
 
-    // Arti (Tor in Rust) Android bridge - custom build from latest source
-    // Built with rustls, 16KB page size support, and onio//un service client
-    // Native libraries are in src/tor/jniLibs/ (extracted from arti-custom.aar)
-    // Only included in tor flavor to reduce APK size for standard builds
-    // Note: AAR is kept in libs/ for reference, but libraries loaded from jniLibs/
-
-    // Google Play Services Location
-    implementation(libs.gms.location)
+    // Full-only: Google Play Services Location (for geohash features)
+    "fullImplementation"(libs.gms.location)
 
     // Security preferences
     implementation(libs.androidx.security.crypto)
+    
+    // WorkManager for Android 15+ boot-complete FGS workaround
+    implementation(libs.androidx.work.runtime.ktx)
+
     
     // EXIF orientation handling for images
     implementation("androidx.exifinterface:exifinterface:1.3.7")

@@ -1,4 +1,4 @@
-package com.gap.droid.features.file
+package com.gapmesh.droid.features.file
 
 import android.content.Context
 import android.net.Uri
@@ -193,7 +193,7 @@ object FileUtils {
      */
     fun saveIncomingFile(
         context: Context,
-        file: com.gap.droid.model.BitchatFilePacket
+        file: com.gapmesh.droid.model.BitchatFilePacket
     ): String {
         val lowerMime = file.mimeType.lowercase()
         val isImage = lowerMime.startsWith("image/")
@@ -263,12 +263,12 @@ object FileUtils {
     /**
      * Classify BitchatMessageType from MIME string used in file messages.
      */
-    fun messageTypeForMime(mime: String): com.gap.droid.model.BitchatMessageType {
+    fun messageTypeForMime(mime: String): com.gapmesh.droid.model.BitchatMessageType {
         val lower = mime.lowercase()
         return when {
-            lower.startsWith("image/") -> com.gap.droid.model.BitchatMessageType.Image
-            lower.startsWith("audio/") -> com.gap.droid.model.BitchatMessageType.Audio
-            else -> com.gap.droid.model.BitchatMessageType.File
+            lower.startsWith("image/") -> com.gapmesh.droid.model.BitchatMessageType.Image
+            lower.startsWith("audio/") -> com.gapmesh.droid.model.BitchatMessageType.Audio
+            else -> com.gapmesh.droid.model.BitchatMessageType.File
         }
     }
 }

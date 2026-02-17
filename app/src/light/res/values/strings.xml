@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gap Mesh Light</string>
+    <string name="share_app_title">Share App</string>
+    <string name="share_app_button">Share APK</string>
+    <string name="location_explanation">Gap Mesh does NOT track your location.\n\nLocation services are required for Bluetooth scanning.</string>
+    <string name="location_needs_bullets">• Bluetooth device scanning\n• Discovering nearby users on mesh network\n• No tracking or location collection</string>
+    <string name="privacy_bullets">• no tracking or data collection\n• Bluetooth mesh chats are fully offline</string>
+    <string name="onboarding_status_desc">The status dot shows your local mesh connection status.</string>
+</resources>

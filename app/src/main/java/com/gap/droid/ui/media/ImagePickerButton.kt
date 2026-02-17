@@ -1,10 +1,13 @@
-package com.gap.droid.ui.media
+package com.gapmesh.droid.ui.media
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -19,9 +22,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import com.gap.droid.features.media.ImageUtils
+import com.gapmesh.droid.features.media.ImageUtils
 import java.io.File
+
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -47,7 +53,7 @@ fun ImagePickerButton(
         val path = capturedImagePath
         if (success && !path.isNullOrBlank()) {
             // Downscale + correct orientation, then send; delete original
-            val outPath = com.gap.droid.features.media.ImageUtils.downscalePathAndSaveToAppFiles(context, path)
+            val outPath = com.gapmesh.droid.features.media.ImageUtils.downscalePathAndSaveToAppFiles(context, path)
             if (!outPath.isNullOrBlank()) {
                 onImageReady(outPath)
             }
@@ -70,26 +76,71 @@ fun ImagePickerButton(
             )
             capturedImagePath = file.absolutePath
             takePictureLauncher.launch(uri)
-        } catch (_: Exception) {
-            // Ignore errors; no-op
+        } catch (e: Exception) {
+            android.util.Log.e("ImagePickerButton", "Camera capture failed", e)
         }
     }
 
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            startCameraCapture()
+        }
+    }
+
+    var showMenu by remember { mutableStateOf(false) }
+
     Box(
         modifier = modifier
-            .size(32.dp)
-            .combinedClickable(
-                onClick = { imagePicker.launch("image/*") },
-                onLongClick = { startCameraCapture() }
-            ),
+            .size(40.dp)
+            .clickable { showMenu = true },
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = Icons.Filled.PhotoCamera,
-            contentDescription = stringResource(com.gap.droid.R.string.pick_image),
+            contentDescription = stringResource(com.gapmesh.droid.R.string.pick_image),
             tint = Color.Gray,
             modifier = Modifier.size(20.dp)
         )
+        
+        androidx.compose.material3.DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false }
+        ) {
+            androidx.compose.material3.DropdownMenuItem(
+                text = { androidx.compose.material3.Text("Take Photo") },
+                onClick = {
+                    showMenu = false
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        startCameraCapture()
+                    } else {
+                        permissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                },
+                leadingIcon = { 
+                    Icon(
+                        imageVector = Icons.Filled.Camera,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    ) 
+                }
+            )
+            androidx.compose.material3.DropdownMenuItem(
+                text = { androidx.compose.material3.Text("Choose from Gallery") },
+                onClick = {
+                    showMenu = false
+                    imagePicker.launch("image/*")
+                },
+                leadingIcon = { 
+                    Icon(
+                        imageVector = Icons.Filled.Photo,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    ) 
+                }
+            )
+        }
     }
 
     // No custom preview: native camera UI handles confirmation

@@ -63,7 +63,6 @@
     <string name="notification_mesh_mention_title_singular">میش چیٹ وچ ذکر</string>
     <string name="notification_mesh_mention_title_plural">میش چیٹ وچ %1$d ذکر</string>
     <string name="notification_more_locations">تے %1$d ہور ٹھاں</string>
-    <string name="notification_and_more">تے %1$d ہور</string>
 
     <!-- پسندیدہ رسائی پذیری -->
     <string name="cd_add_favorite">پسندیدہ وچ پاؤ</string>
@@ -353,8 +352,8 @@
 
   <string name="verify_title">verify</string>
   <string name="verify_my_qr_title">scan to verify me</string>
-  <string name="verify_scan_prompt_friend">scan someone elses qr</string>
-  <string name="verify_scan_someone">scan someone elses qr</string>
+  <string name="verify_scan_prompt_friend">scan someone else\'s QR</string>
+  <string name="verify_scan_someone">scan someone else\'s QR</string>
   <string name="verify_show_my_qr">show my qr</string>
   <string name="verify_remove">remove verification</string>
   <string name="verify_qr_unavailable">qr unavailable</string>

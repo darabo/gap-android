@@ -1,4 +1,4 @@
-package com.gap.droid.geohash
+package com.gapmesh.droid.geohash
 
 import android.Manifest
 import android.content.Context
@@ -50,7 +50,7 @@ class LocationChannelManager private constructor(private val context: Context) {
     private var refreshTimer: Job? = null
     private var isGeocoding: Boolean = false
     private val gson = Gson()
-    private var dataManager: com.gap.droid.ui.DataManager? = null
+    private var dataManager: com.gapmesh.droid.ui.DataManager? = null
 
     // Published state for UI bindings (matching iOS @Published properties)
     private val _permissionState = MutableStateFlow(PermissionState.NOT_DETERMINED)
@@ -77,7 +77,7 @@ class LocationChannelManager private constructor(private val context: Context) {
     init {
         updatePermissionState()
         // Initialize DataManager and load persisted settings
-        dataManager = com.gap.droid.ui.DataManager(context)
+        dataManager = com.gapmesh.droid.ui.DataManager(context)
         loadPersistedChannelSelection()
         loadLocationServicesState()
     }

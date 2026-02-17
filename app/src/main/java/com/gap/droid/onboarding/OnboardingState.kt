@@ -1,6 +1,7 @@
-package com.gap.droid.onboarding
+package com.gapmesh.droid.onboarding
 
 enum class OnboardingState {
+    LANGUAGE_SELECTION,
     CHECKING,
     BLUETOOTH_CHECK,
     LOCATION_CHECK,
@@ -9,6 +10,9 @@ enum class OnboardingState {
     BACKGROUND_LOCATION_EXPLANATION,
     PERMISSION_REQUESTING,
     INITIALIZING,
+    TUTORIAL,
+    DECOY_PIN_SETUP,
     COMPLETE,
     ERROR
 }
+

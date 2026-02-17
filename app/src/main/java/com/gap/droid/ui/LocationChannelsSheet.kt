@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.content.Intent
 import android.net.Uri
@@ -29,17 +29,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import com.gap.droid.geohash.ChannelID
+import com.gapmesh.droid.geohash.ChannelID
 import kotlinx.coroutines.launch
-import com.gap.droid.geohash.GeohashChannel
-import com.gap.droid.geohash.GeohashChannelLevel
-import com.gap.droid.geohash.LocationChannelManager
-import com.gap.droid.geohash.GeohashBookmarksStore
-import com.gap.droid.ui.theme.BASE_FONT_SIZE
+import com.gapmesh.droid.geohash.GeohashChannel
+import com.gapmesh.droid.geohash.GeohashChannelLevel
+import com.gapmesh.droid.geohash.LocationChannelManager
+import com.gapmesh.droid.geohash.GeohashBookmarksStore
+import com.gapmesh.droid.ui.theme.BASE_FONT_SIZE
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gap.droid.R
-import com.gap.droid.core.ui.component.button.CloseButton
+import com.gapmesh.droid.R
+import com.gapmesh.droid.core.ui.component.button.CloseButton
+import com.gapmesh.droid.core.ui.component.sheet.BitchatBottomSheet
 
 /**
  * Location Channels Sheet for selecting geohash-based location channels
@@ -113,12 +114,10 @@ fun LocationChannelsSheet(
     val standardBlue = Color(0xFF007AFF) // iOS blue
 
     if (isPresented) {
-        ModalBottomSheet(
-            modifier = modifier.statusBarsPadding(),
+        BitchatBottomSheet(
+            modifier = modifier,
             onDismissRequest = onDismiss,
             sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.background,
-            dragHandle = null
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 LazyColumn(
@@ -411,6 +410,23 @@ fun LocationChannelsSheet(
                                                 }
                                             }
                                         },
+                                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                        imeAction = androidx.compose.ui.text.input.ImeAction.Go
+                                    ),
+                                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                                        onGo = {
+                                            if (validateGeohash(customGeohash.trim().lowercase().replace("#", ""))) {
+                                                val normalized = customGeohash.trim().lowercase().replace("#", "")
+                                                val level = levelForLength(normalized.length)
+                                                val channel = GeohashChannel(level = level, geohash = normalized)
+                                                locationManager.setTeleported(true)
+                                                locationManager.select(ChannelID.Location(channel))
+                                                onDismiss()
+                                            } else {
+                                                customError = context.getString(R.string.invalid_geohash)
+                                            }
+                                        }
+                                    ),
                                     singleLine = true,
                                     decorationBox = { innerTextField ->
                                         if (customGeohash.isEmpty()) {
@@ -692,8 +708,8 @@ private fun splitTitleAndCount(title: String): Pair<String, String?> {
 private fun meshTitleWithCount(viewModel: ChatViewModel): String {
     val meshCount = meshCount(viewModel)
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val peopleText = ctx.resources.getQuantityString(com.gap.droid.R.plurals.people_count, meshCount, meshCount)
-    val meshLabel = stringResource(com.gap.droid.R.string.mesh_label)
+    val peopleText = ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, meshCount, meshCount)
+    val meshLabel = stringResource(com.gapmesh.droid.R.string.mesh_label)
     return "$meshLabel [$peopleText]"
 }
 
@@ -707,14 +723,22 @@ private fun meshCount(viewModel: ChatViewModel): Int {
 @Composable
 private fun geohashTitleWithCount(channel: GeohashChannel, participantCount: Int): String {
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val peopleText = ctx.resources.getQuantityString(com.gap.droid.R.plurals.people_count, participantCount, participantCount)
+    
+    // For high precision channels (Neighborhood, Block) where we don't broadcast presence,
+    // show "? people" instead of "0 people" to avoid misleading "nobody is here" indication.
+    val isHighPrecision = channel.level.precision > 5
+    val peopleText = if (isHighPrecision && participantCount == 0) {
+        ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, 0, 0).replace("0", "?")
+    } else {
+        ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, participantCount, participantCount)
+    }
     val levelName = when (channel.level) {
-        com.gap.droid.geohash.GeohashChannelLevel.BUILDING -> "Building" // iOS: precision 8 for location notes
-        com.gap.droid.geohash.GeohashChannelLevel.BLOCK -> stringResource(com.gap.droid.R.string.location_level_block)
-        com.gap.droid.geohash.GeohashChannelLevel.NEIGHBORHOOD -> stringResource(com.gap.droid.R.string.location_level_neighborhood)
-        com.gap.droid.geohash.GeohashChannelLevel.CITY -> stringResource(com.gap.droid.R.string.location_level_city)
-        com.gap.droid.geohash.GeohashChannelLevel.PROVINCE -> stringResource(com.gap.droid.R.string.location_level_province)
-        com.gap.droid.geohash.GeohashChannelLevel.REGION -> stringResource(com.gap.droid.R.string.location_level_region)
+        com.gapmesh.droid.geohash.GeohashChannelLevel.BUILDING -> "Building" // iOS: precision 8 for location notes
+        com.gapmesh.droid.geohash.GeohashChannelLevel.BLOCK -> stringResource(com.gapmesh.droid.R.string.location_level_block)
+        com.gapmesh.droid.geohash.GeohashChannelLevel.NEIGHBORHOOD -> stringResource(com.gapmesh.droid.R.string.location_level_neighborhood)
+        com.gapmesh.droid.geohash.GeohashChannelLevel.CITY -> stringResource(com.gapmesh.droid.R.string.location_level_city)
+        com.gapmesh.droid.geohash.GeohashChannelLevel.PROVINCE -> stringResource(com.gapmesh.droid.R.string.location_level_province)
+        com.gapmesh.droid.geohash.GeohashChannelLevel.REGION -> stringResource(com.gapmesh.droid.R.string.location_level_region)
     }
     return "$levelName [$peopleText]"
 }
@@ -722,7 +746,14 @@ private fun geohashTitleWithCount(channel: GeohashChannel, participantCount: Int
 @Composable
 private fun geohashHashTitleWithCount(geohash: String, participantCount: Int): String {
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val peopleText = ctx.resources.getQuantityString(com.gap.droid.R.plurals.people_count, participantCount, participantCount)
+    val level = levelForLength(geohash.length)
+    val isHighPrecision = level.precision > 5
+
+    val peopleText = if (isHighPrecision && participantCount == 0) {
+        ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, 0, 0).replace("0", "?")
+    } else {
+        ctx.resources.getQuantityString(com.gapmesh.droid.R.plurals.people_count, participantCount, participantCount)
+    }
     return "#$geohash [$peopleText]"
 }
 

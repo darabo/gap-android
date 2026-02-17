@@ -1,17 +1,15 @@
-package com.gap.droid.ui.debug
+package com.gapmesh.droid.ui.debug
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.SettingsEthernet
@@ -26,13 +24,66 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.rotate
-import com.gap.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.services.meshgraph.MeshGraphService
 import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.res.stringResource
-import com.gap.droid.R
+import com.gapmesh.droid.R
 import androidx.compose.ui.platform.LocalContext
-import com.gap.droid.service.MeshServicePreferences
-import com.gap.droid.service.MeshForegroundService
+import com.gapmesh.droid.service.MeshServicePreferences
+import com.gapmesh.droid.service.MeshForegroundService
+import com.gapmesh.droid.core.ui.component.sheet.BitchatBottomSheet
+
+@Composable
+fun MeshTopologySection() {
+    val colorScheme = MaterialTheme.colorScheme
+    val graphService = remember { MeshGraphService.getInstance() }
+    val snapshot by graphService.graphState.collectAsState()
+
+    Surface(shape = RoundedCornerShape(12.dp), color = colorScheme.surfaceVariant.copy(alpha = 0.2f)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Filled.SettingsEthernet, contentDescription = null, tint = Color(0xFF8E8E93))
+                Text("mesh topology", fontFamily = FontFamily.Monospace, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            }
+            val nodes = snapshot.nodes
+            val edges = snapshot.edges
+            val empty = nodes.isEmpty()
+            if (empty) {
+                Text("no gossip yet", fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colorScheme.onSurface.copy(alpha = 0.6f))
+            } else {
+                ForceDirectedMeshGraph(
+                    nodes = nodes,
+                    edges = edges,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .background(colorScheme.surface.copy(alpha = 0.4f))
+                )
+                
+                // Flexible peer list
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    nodes.forEach { node ->
+                        val label = "${node.peerID.take(8)} • ${node.nickname ?: "unknown"}"
+                        Text(
+                            text = label,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 11.sp,
+                            color = colorScheme.onSurface.copy(alpha = 0.85f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
 private enum class GraphMode { OVERALL, PER_DEVICE, PER_PEER }
 
@@ -43,7 +94,6 @@ fun DebugSettingsSheet(
     onDismiss: () -> Unit,
     meshService: BluetoothMeshService
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val colorScheme = MaterialTheme.colorScheme
     val manager = remember { DebugSettingsManager.getInstance() }
 
@@ -76,7 +126,7 @@ fun DebugSettingsSheet(
                 val directMap = peers.associateWith { pid -> meshService.getPeerInfo(pid)?.isDirectConnection == true }
                 val devices = entries.map { (address, isClient, rssi) ->
                     val pid = mapping[address]
-                    com.gap.droid.ui.debug.ConnectedDevice(
+                    com.gapmesh.droid.ui.debug.ConnectedDevice(
                         deviceAddress = address,
                         peerID = pid,
                         nickname = pid?.let { nicknames[it] },
@@ -95,9 +145,8 @@ fun DebugSettingsSheet(
 
     if (!isPresented) return
 
-    ModalBottomSheet(
+    BitchatBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState
     ) {
         // Mark debug sheet visible/invisible to gate heavy work
         LaunchedEffect(Unit) { DebugSettingsManager.getInstance().setDebugSheetVisible(true) }
@@ -107,8 +156,8 @@ fun DebugSettingsSheet(
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 24.dp),
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(top = 80.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -142,6 +191,11 @@ fun DebugSettingsSheet(
                         )
                     }
                 }
+            }
+
+            // Mesh topology visualization (moved below verbose logging)
+            item {
+                MeshTopologySection()
             }
 
             // GATT controls
@@ -353,7 +407,7 @@ fun DebugSettingsSheet(
                                     kotlinx.coroutines.delay(1000)
                                 }
                             }
-
+                            
                             // Helper functions moved to top-level composable below to avoid scope issues
 
                             // Render two blocks: Incoming and Outgoing
@@ -486,15 +540,12 @@ fun DebugSettingsSheet(
                         Slider(value = gcsMaxBytes.toFloat(), onValueChange = { manager.setGcsMaxBytes(it.toInt()) }, valueRange = 128f..1024f, steps = 0)
                         Text(stringResource(R.string.debug_target_fpr_fmt, gcsFpr), fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colorScheme.onSurface.copy(alpha = 0.7f))
                         Slider(value = gcsFpr.toFloat(), onValueChange = { manager.setGcsFprPercent(it.toDouble()) }, valueRange = 0.1f..5.0f, steps = 49)
-                        val p = remember(gcsFpr) { com.gap.droid.sync.GCSFilter.deriveP(gcsFpr / 100.0) }
-                        val nmax = remember(gcsFpr, gcsMaxBytes) { com.gap.droid.sync.GCSFilter.estimateMaxElementsForSize(gcsMaxBytes, p) }
+                        val p = remember(gcsFpr) { com.gapmesh.droid.sync.GCSFilter.deriveP(gcsFpr / 100.0) }
+                        val nmax = remember(gcsFpr, gcsMaxBytes) { com.gapmesh.droid.sync.GCSFilter.estimateMaxElementsForSize(gcsMaxBytes, p) }
                         Text(stringResource(R.string.debug_derived_p_fmt, p.toString(), nmax.toString()), fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colorScheme.onSurface.copy(alpha = 0.7f))
                     }
                 }
             }
-
-
-
 
             // Connected devices
             item {

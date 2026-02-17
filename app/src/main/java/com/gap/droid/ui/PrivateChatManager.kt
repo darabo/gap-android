@@ -1,11 +1,11 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
-import com.gap.droid.model.BitchatMessage
-import com.gap.droid.model.DeliveryStatus
-import com.gap.droid.mesh.PeerFingerprintManager
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.model.DeliveryStatus
+import com.gapmesh.droid.mesh.PeerFingerprintManager
 import java.security.MessageDigest
 
-import com.gap.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.mesh.BluetoothMeshService
 import java.util.*
 import android.util.Log
 
@@ -298,6 +298,15 @@ class PrivateChatManager(
             if (!isPeerBlocked(senderPeerID)) {
                 // Ensure chat exists
                 messageManager.initializePrivateChat(senderPeerID)
+
+                // Exception: Nostr messages (nostr_ prefix) originate in Kotlin layer and MUST be added here.
+                if (senderPeerID.startsWith("nostr_")) {
+                    if (suppressUnread) {
+                        messageManager.addPrivateMessageNoUnread(senderPeerID, message)
+                    } else {
+                        messageManager.addPrivateMessage(senderPeerID, message)
+                    }
+                }
                 // Track as unread for read receipt purposes if not focused
                 if (!suppressUnread && state.getSelectedPrivateChatPeerValue() != senderPeerID) {
                     val unreadList = unreadReceivedMessages.getOrPut(senderPeerID) { mutableListOf() }
@@ -423,10 +432,10 @@ class PrivateChatManager(
         // If we know the sender's Nostr pubkey for this peer via favorites, derive temp key
         try {
             val noiseKeyBytes = targetPeerID.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
-            val npub = com.gap.droid.favorites.FavoritesPersistenceService.shared.findNostrPubkey(noiseKeyBytes)
+            val npub = com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.findNostrPubkey(noiseKeyBytes)
             if (npub != null) {
                 // Normalize to hex to match how we formed temp keys (nostr_<pub16>)
-                val (hrp, data) = com.gap.droid.nostr.Bech32.decode(npub)
+                val (hrp, data) = com.gapmesh.droid.nostr.Bech32.decode(npub)
                 if (hrp == "npub") {
                     val pubHex = data.joinToString("") { "%02x".format(it) }
                     tryMergeKeys.add("nostr_${pubHex.take(16)}")

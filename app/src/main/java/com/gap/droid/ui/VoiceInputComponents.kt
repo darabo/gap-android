@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.Manifest
 import androidx.compose.foundation.background
@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.unit.dp
-import com.gap.droid.features.voice.VoiceRecorder
+import com.gapmesh.droid.features.voice.VoiceRecorder
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
@@ -130,7 +130,7 @@ fun VoiceRecordButton(
     ) {
         Icon(
             imageVector = Icons.Filled.Mic,
-            contentDescription = stringResource(com.gap.droid.R.string.cd_record_voice),
+            contentDescription = stringResource(com.gapmesh.droid.R.string.cd_record_voice),
             tint = Color.Black,
             modifier = Modifier.size(20.dp)
         )

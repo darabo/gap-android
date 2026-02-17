@@ -1,4 +1,4 @@
-package com.gap.droid.ui.media
+package com.gapmesh.droid.ui.media
 
 import android.content.ContentValues
 import android.os.Build
@@ -33,7 +33,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.res.stringResource
-import com.gap.droid.R
+import com.gapmesh.droid.R
 import java.io.File
 
 /**

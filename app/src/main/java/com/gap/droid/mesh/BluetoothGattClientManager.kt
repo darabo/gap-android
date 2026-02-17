@@ -1,4 +1,4 @@
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import android.bluetooth.*
 import android.bluetooth.le.BluetoothLeScanner
@@ -8,15 +8,15 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.os.ParcelUuid
 import android.util.Log
-import com.gap.droid.protocol.BitchatPacket
-import com.gap.droid.util.AppConstants
+import com.gapmesh.droid.protocol.BitchatPacket
+import com.gapmesh.droid.util.AppConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
 import kotlinx.coroutines.Job
-import com.gap.droid.ui.debug.DebugSettingsManager
-import com.gap.droid.ui.debug.DebugScanResult
+import com.gapmesh.droid.ui.debug.DebugSettingsManager
+import com.gapmesh.droid.ui.debug.DebugScanResult
 
 /**
  * Manages GATT client operations, scanning, and client-side connections
@@ -67,6 +67,10 @@ class BluetoothGattClientManager(
     private var isCurrentlyScanning = false
     private val scanRateLimit = 5000L // Minimum 5 seconds between scan start attempts
     
+    // Debounce tracking for throttled connection log messages (reduce log spam)
+    private var lastThrottledLogDevice: String? = null
+    private var lastThrottledLogTime = 0L
+    
     // RSSI monitoring state
     private var rssiMonitoringJob: Job? = null
     
@@ -79,7 +83,7 @@ class BluetoothGattClientManager(
     fun start(): Boolean {
         // Respect debug setting
         try {
-            if (!com.gap.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value) {
+            if (!com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value) {
                 Log.i(TAG, "Client start skipped: GATT Client disabled in debug settings")
                 return false
             }
@@ -153,7 +157,7 @@ class BluetoothGattClientManager(
      * Handle scan state changes from power manager
      */
     fun onScanStateChanged(shouldScan: Boolean) {
-        val enabled = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
+        val enabled = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
         if (shouldScan && enabled) {
             startScanning()
         } else {
@@ -204,7 +208,7 @@ class BluetoothGattClientManager(
     @Suppress("DEPRECATION")
     private fun startScanning() {
         // Respect debug setting
-        val enabled = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
+        val enabled = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
         if (!permissionManager.hasBluetoothPermissions() || bleScanner == null || !isActive || !enabled) return
         
         // Rate limit scan starts to prevent "scanning too frequently" errors
@@ -230,13 +234,15 @@ class BluetoothGattClientManager(
         }
         
         // ========== PRIMARY SCAN: Filtered by service UUID ==========
-        val scanFilter = ScanFilter.Builder()
-            .setServiceUuid(ParcelUuid(AppConstants.Mesh.Gatt.SERVICE_UUID))
-            .build()
+        // Use rotating UUIDs for privacy-aware discovery
+        val validUuids = ServiceUuidRotation.getValidServiceUuids(includeLegacy = true)
+        val scanFilters = validUuids.map { uuid ->
+            ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid(uuid))
+                .build()
+        }
         
-        val scanFilters = listOf(scanFilter) 
-        
-        Log.d(TAG, "Starting BLE scan with target service UUID: ${AppConstants.Mesh.Gatt.SERVICE_UUID}")
+        Log.d(TAG, "Starting BLE scan with ${validUuids.size} service UUIDs: ${validUuids.joinToString { it.toString().take(8) }}...")
         
         scanCallback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
@@ -403,8 +409,8 @@ class BluetoothGattClientManager(
         val deviceAddress = device.address
         val scanRecord = result.scanRecord
         
-        // CRITICAL: Only process devices that have our service UUID
-        val hasOurService = scanRecord?.serviceUuids?.any { it.uuid == AppConstants.Mesh.Gatt.SERVICE_UUID } == true
+        // CRITICAL: Only process devices that have a valid service UUID (rotating or legacy)
+        val hasOurService = scanRecord?.serviceUuids?.any { ServiceUuidRotation.isValidServiceUuid(it.uuid) } == true
         if (!hasOurService) {
             return
         }
@@ -451,7 +457,13 @@ class BluetoothGattClientManager(
         
         // Check if connection attempt is allowed
         if (!connectionTracker.isConnectionAttemptAllowed(deviceAddress)) {
-            Log.d(TAG, "Connection to $deviceAddress not allowed due to recent attempts")
+            // Debounce repeated log messages for same device to reduce log spam
+            val now = System.currentTimeMillis()
+            if (deviceAddress != lastThrottledLogDevice || now - lastThrottledLogTime > 500) {
+                Log.d(TAG, "Connection to $deviceAddress not allowed due to recent attempts")
+                lastThrottledLogDevice = deviceAddress
+                lastThrottledLogTime = now
+            }
             return
         }
         
@@ -569,7 +581,14 @@ class BluetoothGattClientManager(
                             gatt.disconnect()
                         }
                     } else {
-                        Log.e(TAG, "Client: Required service not found for $deviceAddress")
+                        Log.e(TAG, "Client: Required service not found for $deviceAddress. Looking for: ${AppConstants.Mesh.Gatt.SERVICE_UUID}")
+                        Log.e(TAG, "Client: Discovered ${gatt.services.size} services on device:")
+                        gatt.services.forEach { s ->
+                            Log.e(TAG, "  - Service: ${s.uuid}")
+                            s.characteristics.forEach { c ->
+                                Log.e(TAG, "    - Char: ${c.uuid}")
+                            }
+                        }
                         gatt.disconnect()
                     }
                 } else {
@@ -630,7 +649,7 @@ class BluetoothGattClientManager(
      */
     fun restartScanning() {
         // Respect debug setting
-        val enabled = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
+        val enabled = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
         if (!isActive || !enabled) return
         
         connectionScope.launch {

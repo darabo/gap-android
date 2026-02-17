@@ -1,4 +1,4 @@
-package com.gap.droid.nostr
+package com.gapmesh.droid.nostr
 
 import android.util.Log
 import kotlinx.coroutines.Dispatchers

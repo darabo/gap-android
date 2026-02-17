@@ -1,4 +1,4 @@
-package com.gap.droid.nostr
+package com.gapmesh.droid.nostr
 
 import android.util.Log
 import java.util.concurrent.ConcurrentHashMap
@@ -22,7 +22,7 @@ class NostrEventDeduplicator(
 ) {
     companion object {
         private const val TAG = "NostrDeduplicator"
-        private const val DEFAULT_CAPACITY = com.gap.droid.util.AppConstants.Nostr.DEFAULT_DEDUP_CAPACITY
+        private const val DEFAULT_CAPACITY = com.gapmesh.droid.util.AppConstants.Nostr.DEFAULT_DEDUP_CAPACITY
         
         @Volatile
         private var INSTANCE: NostrEventDeduplicator? = null

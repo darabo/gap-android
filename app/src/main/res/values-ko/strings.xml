@@ -63,7 +63,6 @@
     <string name="notification_mesh_mention_title_singular">메쉬 채팅에서 언급됨</string>
     <string name="notification_mesh_mention_title_plural">메쉬 채팅에서 %1$d회 언급</string>
     <string name="notification_more_locations">그리고 %1$d개의 장소 더</string>
-    <string name="notification_and_more">그리고 %1$d개 더</string>
 
     <!-- 즐겨찾기 접근성 -->
     <string name="cd_add_favorite">즐겨찾기에 추가</string>
@@ -366,8 +365,8 @@
 
   <string name="verify_title">verify</string>
   <string name="verify_my_qr_title">scan to verify me</string>
-  <string name="verify_scan_prompt_friend">scan someone elses qr</string>
-  <string name="verify_scan_someone">scan someone elses qr</string>
+  <string name="verify_scan_prompt_friend">scan someone else\'s QR</string>
+  <string name="verify_scan_someone">scan someone else\'s QR</string>
   <string name="verify_show_my_qr">show my qr</string>
   <string name="verify_remove">remove verification</string>
   <string name="verify_qr_unavailable">qr unavailable</string>

@@ -1,4 +1,4 @@
-package com.gap.droid.service
+package com.gapmesh.droid.service
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -12,9 +12,9 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.gap.droid.MainActivity
-import com.gap.droid.R
-import com.gap.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.MainActivity
+import com.gapmesh.droid.R
+import com.gapmesh.droid.mesh.BluetoothMeshService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,13 +28,19 @@ class MeshForegroundService : Service() {
         private const val CHANNEL_ID = "bitchat_mesh_service"
         private const val NOTIFICATION_ID = 10001
 
-        const val ACTION_START = "com.gap.droid.service.START"
-        const val ACTION_STOP = "com.gap.droid.service.STOP"
-        const val ACTION_QUIT = "com.gap.droid.service.QUIT"
-        const val ACTION_UPDATE_NOTIFICATION = "com.gap.droid.service.UPDATE_NOTIFICATION"
-        const val ACTION_NOTIFICATION_PERMISSION_GRANTED = "com.gap.droid.action.NOTIFICATION_PERMISSION_GRANTED"
+        const val ACTION_START = "com.gapmesh.droid.service.START"
+        const val ACTION_STOP = "com.gapmesh.droid.service.STOP"
+        const val ACTION_QUIT = "com.gapmesh.droid.service.QUIT"
+        const val ACTION_UPDATE_NOTIFICATION = "com.gapmesh.droid.service.UPDATE_NOTIFICATION"
+        const val ACTION_NOTIFICATION_PERMISSION_GRANTED = "com.gapmesh.droid.action.NOTIFICATION_PERMISSION_GRANTED"
 
         fun start(context: Context) {
+            // Do not start service when decoy mode is active
+            if (DecoyModeManager.isDecoyActive(context.applicationContext)) {
+                android.util.Log.i("MeshForegroundService", "Decoy mode active — not starting service")
+                return
+            }
+
             val intent = Intent(context, MeshForegroundService::class.java).apply { action = ACTION_START }
 
             // On API >= 26, avoid background-service start restrictions by using startForegroundService

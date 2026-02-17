@@ -1,4 +1,4 @@
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import android.bluetooth.*
 import android.bluetooth.le.AdvertiseCallback
@@ -8,8 +8,8 @@ import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.Context
 import android.os.ParcelUuid
 import android.util.Log
-import com.gap.droid.protocol.BitchatPacket
-import com.gap.droid.util.AppConstants
+import com.gapmesh.droid.protocol.BitchatPacket
+import com.gapmesh.droid.util.AppConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -64,14 +64,27 @@ class BluetoothGattServerManager(
     fun enforceServerLimit(maxServer: Int) {
         if (maxServer <= 0) return
         try {
-            val subs = connectionTracker.getSubscribedDevices()
-            if (subs.size > maxServer) {
-                val excess = subs.size - maxServer
-                subs.take(excess).forEach { d ->
-                    try { gattServer?.cancelConnection(d) } catch (_: Exception) { }
+            // Use connection tracker to get actual connected server devices
+            val servers = connectionTracker.getConnectedDevices().values.filter { !it.isClient }
+            if (servers.size > maxServer) {
+                val excess = servers.size - maxServer
+                // Disconnect oldest
+                servers.sortedBy { it.connectedAt }.take(excess).forEach { d ->
+                    try { gattServer?.cancelConnection(d.device) } catch (_: Exception) { }
                 }
             }
         } catch (_: Exception) { }
+    }
+
+    /**
+     * Disconnect a specific device (used by ConnectionManager to enforce overall limits)
+     */
+    fun disconnectDevice(device: BluetoothDevice) {
+        try {
+            gattServer?.cancelConnection(device)
+        } catch (e: Exception) {
+            Log.w(TAG, "Error disconnecting device ${device.address}: ${e.message}")
+        }
     }
     
     /**
@@ -80,7 +93,7 @@ class BluetoothGattServerManager(
     fun start(): Boolean {
         // Respect debug setting
         try {
-            if (!com.gap.droid.ui.debug.DebugSettingsManager.getInstance().gattServerEnabled.value) {
+            if (!com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattServerEnabled.value) {
                 Log.i(TAG, "Server start skipped: GATT Server disabled in debug settings")
                 return false
             }
@@ -139,9 +152,10 @@ class BluetoothGattServerManager(
             
             // Try to cancel any active connections explicitly before closing
             try {
-                val devices = connectionTracker.getSubscribedDevices()
-                devices.forEach { d ->
-                    try { gattServer?.cancelConnection(d) } catch (_: Exception) { }
+                // Disconnect ALL server connections
+                val servers = connectionTracker.getConnectedDevices().values.filter { !it.isClient }
+                servers.forEach { d ->
+                    try { gattServer?.cancelConnection(d.device) } catch (_: Exception) { }
                 }
             } catch (_: Exception) { }
             
@@ -340,7 +354,7 @@ class BluetoothGattServerManager(
     @Suppress("DEPRECATION")
     private fun startAdvertising() {
         // Respect debug setting
-        val enabled = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance().gattServerEnabled.value } catch (_: Exception) { true }
+        val enabled = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattServerEnabled.value } catch (_: Exception) { true }
 
         // Guard conditions – never throw here to avoid crashing the app from a background coroutine
         if (!permissionManager.hasBluetoothPermissions()) {
@@ -370,8 +384,23 @@ class BluetoothGattServerManager(
 
         val settings = powerManager.getAdvertiseSettings()
         
+        // Use rotating UUID for privacy, or static UUID for legacy compatibility
+        val legacyMode = try { 
+            com.gapmesh.droid.service.MeshServicePreferences.isLegacyCompatibilityEnabled(false) 
+        } catch (_: Exception) { false }
+        
+        val serviceUuid = if (legacyMode) {
+            // Legacy mode: use original Bitchat UUID so Bitchat/Noghteha devices can find us
+            ServiceUuidRotation.BITCHAT_LEGACY_UUID
+        } else {
+            // Privacy mode: use rotating UUID
+            ServiceUuidRotation.getCurrentServiceUuid()
+        }
+        
+        Log.d(TAG, "Advertising with UUID: $serviceUuid (legacy: $legacyMode)")
+        
         val data = AdvertiseData.Builder()
-            .addServiceUuid(ParcelUuid(AppConstants.Mesh.Gatt.SERVICE_UUID))
+            .addServiceUuid(ParcelUuid(serviceUuid))
             .setIncludeTxPowerLevel(false)
             .setIncludeDeviceName(false)
             .build()
@@ -475,7 +504,7 @@ class BluetoothGattServerManager(
      */
     fun restartAdvertising() {
         // Respect debug setting
-        val enabled = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance().gattServerEnabled.value } catch (_: Exception) { true }
+        val enabled = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattServerEnabled.value } catch (_: Exception) { true }
         if (!isActive || !enabled) {
             stopAdvertising()
             return

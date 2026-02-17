@@ -26,3 +26,19 @@
 -keepnames class org.torproject.arti.**
 -dontwarn info.guardianproject.arti.**
 -dontwarn org.torproject.arti.**
+
+# Fix for AbstractMethodError on API < 29 where LocationListener methods are abstract
+-keepclassmembers class * implements android.location.LocationListener {
+    public <methods>;
+}
+# === PRIVACY: Remove all Log calls from release builds ===
+# Strips all android.util.Log.* calls (d, e, i, w, v, wtf)
+# This ensures no sensitive information leaks through logs in production
+-assumenosideeffects class android.util.Log {
+    public static *** d(...);
+    public static *** e(...);
+    public static *** i(...);
+    public static *** w(...);
+    public static *** v(...);
+    public static *** wtf(...);
+}

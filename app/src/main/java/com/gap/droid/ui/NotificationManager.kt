@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,9 +10,9 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.Person
 import androidx.core.app.NotificationManagerCompat
-import com.gap.droid.MainActivity
-import com.gap.droid.R
-import com.gap.droid.util.NotificationIntervalManager
+import com.gapmesh.droid.MainActivity
+import com.gapmesh.droid.R
+import com.gapmesh.droid.util.NotificationIntervalManager
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -42,7 +42,7 @@ class NotificationManager(
         private const val SUMMARY_NOTIFICATION_ID = 999
       private const val GEOHASH_SUMMARY_NOTIFICATION_ID = 998
         private const val ACTIVE_PEERS_NOTIFICATION_ID = 997
-        private const val ACTIVE_PEERS_NOTIFICATION_TIME_INTERVAL = com.gap.droid.util.AppConstants.UI.ACTIVE_PEERS_NOTIFICATION_INTERVAL_MS
+        private const val ACTIVE_PEERS_NOTIFICATION_TIME_INTERVAL = com.gapmesh.droid.util.AppConstants.UI.ACTIVE_PEERS_NOTIFICATION_INTERVAL_MS
 
         // Intent extras for notification handling
         const val EXTRA_OPEN_PRIVATE_CHAT = "open_private_chat"

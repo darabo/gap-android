@@ -1,13 +1,13 @@
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import android.util.Log
-import com.gap.droid.model.BitchatMessage
-import com.gap.droid.model.BitchatMessageType
-import com.gap.droid.model.IdentityAnnouncement
-import com.gap.droid.model.RoutedPacket
-import com.gap.droid.protocol.BitchatPacket
-import com.gap.droid.protocol.MessageType
-import com.gap.droid.util.toHexString
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.model.BitchatMessageType
+import com.gapmesh.droid.model.IdentityAnnouncement
+import com.gapmesh.droid.model.RoutedPacket
+import com.gapmesh.droid.protocol.BitchatPacket
+import com.gapmesh.droid.protocol.MessageType
+import com.gapmesh.droid.util.toHexString
 import kotlinx.coroutines.*
 import java.util.*
 import kotlin.random.Random
@@ -65,7 +65,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             }
             
             // NEW: Use NoisePayload system exactly like iOS
-            val noisePayload = com.gap.droid.model.NoisePayload.decode(decryptedData)
+            val noisePayload = com.gapmesh.droid.model.NoisePayload.decode(decryptedData)
             if (noisePayload == null) {
                 Log.w(TAG, "Failed to parse NoisePayload from $peerID")
                 return
@@ -74,9 +74,9 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             Log.d(TAG, "🔓 Decrypted NoisePayload type ${noisePayload.type} from $peerID")
             
             when (noisePayload.type) {
-                com.gap.droid.model.NoisePayloadType.PRIVATE_MESSAGE -> {
+                com.gapmesh.droid.model.NoisePayloadType.PRIVATE_MESSAGE -> {
                     // Decode TLV private message exactly like iOS
-                    val privateMessage = com.gap.droid.model.PrivateMessagePacket.decode(noisePayload.data)
+                    val privateMessage = com.gapmesh.droid.model.PrivateMessagePacket.decode(noisePayload.data)
                     if (privateMessage != null) {
                         Log.d(TAG, "🔓 Decrypted TLV PM from $peerID: ${privateMessage.content.take(30)}...")
 
@@ -111,18 +111,18 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                     }
                 }
                 
-                com.gap.droid.model.NoisePayloadType.FILE_TRANSFER -> {
+                com.gapmesh.droid.model.NoisePayloadType.FILE_TRANSFER -> {
                     // Handle encrypted file transfer; generate unique message ID
-                    val file = com.gap.droid.model.BitchatFilePacket.decode(noisePayload.data)
+                    val file = com.gapmesh.droid.model.BitchatFilePacket.decode(noisePayload.data)
                     if (file != null) {
                         Log.d(TAG, "🔓 Decrypted encrypted file from $peerID: name='${file.fileName}', size=${file.fileSize}, mime='${file.mimeType}'")
                         val uniqueMsgId = java.util.UUID.randomUUID().toString().uppercase()
-                        val savedPath = com.gap.droid.features.file.FileUtils.saveIncomingFile(appContext, file)
+                        val savedPath = com.gapmesh.droid.features.file.FileUtils.saveIncomingFile(appContext, file)
                         val message = BitchatMessage(
                             id = uniqueMsgId,
                             sender = delegate?.getPeerNickname(peerID) ?: "Unknown",
                             content = savedPath,
-                            type = com.gap.droid.features.file.FileUtils.messageTypeForMime(file.mimeType),
+                            type = com.gapmesh.droid.features.file.FileUtils.messageTypeForMime(file.mimeType),
                             timestamp = java.util.Date(packet.timestamp.toLong()),
                             isRelay = false,
                             isPrivate = true,
@@ -140,7 +140,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                     }
                 }
                 
-                com.gap.droid.model.NoisePayloadType.DELIVERED -> {
+                com.gapmesh.droid.model.NoisePayloadType.DELIVERED -> {
                     // Handle delivery ACK exactly like iOS
                     val messageID = String(noisePayload.data, Charsets.UTF_8)
                     Log.d(TAG, "📬 Delivery ACK received from $peerID for message $messageID")
@@ -149,7 +149,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                     delegate?.onDeliveryAckReceived(messageID, peerID)
                 }
                 
-                com.gap.droid.model.NoisePayloadType.READ_RECEIPT -> {
+                com.gapmesh.droid.model.NoisePayloadType.READ_RECEIPT -> {
                     // Handle read receipt exactly like iOS
                     val messageID = String(noisePayload.data, Charsets.UTF_8)
                     Log.d(TAG, "👁️ Read receipt received from $peerID for message $messageID")
@@ -157,11 +157,11 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                     // Simplified: Call delegate with messageID and peerID directly
                     delegate?.onReadReceiptReceived(messageID, peerID)
                 }
-                com.gap.droid.model.NoisePayloadType.VERIFY_CHALLENGE -> {
+                com.gapmesh.droid.model.NoisePayloadType.VERIFY_CHALLENGE -> {
                     Log.d(TAG, "🔐 Verify challenge received from $peerID (${noisePayload.data.size} bytes)")
                     delegate?.onVerifyChallengeReceived(peerID, noisePayload.data, packet.timestamp.toLong())
                 }
-                com.gap.droid.model.NoisePayloadType.VERIFY_RESPONSE -> {
+                com.gapmesh.droid.model.NoisePayloadType.VERIFY_RESPONSE -> {
                     Log.d(TAG, "🔐 Verify response received from $peerID (${noisePayload.data.size} bytes)")
                     delegate?.onVerifyResponseReceived(peerID, noisePayload.data, packet.timestamp.toLong())
                 }
@@ -178,8 +178,8 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
     private suspend fun sendDeliveryAck(messageID: String, senderPeerID: String) {
         try {
             // Create ACK payload: [type byte] + [message ID] - exactly like iOS
-            val ackPayload = com.gap.droid.model.NoisePayload(
-                type = com.gap.droid.model.NoisePayloadType.DELIVERED,
+            val ackPayload = com.gapmesh.droid.model.NoisePayload(
+                type = com.gapmesh.droid.model.NoisePayloadType.DELIVERED,
                 data = messageID.toByteArray(Charsets.UTF_8)
             )
             
@@ -199,7 +199,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                     timestamp = System.currentTimeMillis().toULong(),
                     payload = encryptedPayload,
                     signature = null,
-                    ttl = com.gap.droid.util.AppConstants.MESSAGE_TTL_HOPS // Same TTL as iOS messageTTL
+                    ttl = com.gapmesh.droid.util.AppConstants.MESSAGE_TTL_HOPS // Same TTL as iOS messageTTL
                 )
             
             delegate?.sendPacket(packet)
@@ -222,8 +222,8 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
         // Ignore stale announcements older than STALE_PEER_TIMEOUT
         val now = System.currentTimeMillis()
         val age = now - packet.timestamp.toLong()
-        if (age > com.gap.droid.util.AppConstants.Mesh.STALE_PEER_TIMEOUT_MS) {
-            Log.w(TAG, "Ignoring stale ANNOUNCE from ${peerID.take(8)} (age=${age}ms > ${com.gap.droid.util.AppConstants.Mesh.STALE_PEER_TIMEOUT_MS}ms)")
+        if (age > com.gapmesh.droid.util.AppConstants.Mesh.STALE_PEER_TIMEOUT_MS) {
+            Log.w(TAG, "Ignoring stale ANNOUNCE from ${peerID.take(8)} (age=${age}ms > ${com.gapmesh.droid.util.AppConstants.Mesh.STALE_PEER_TIMEOUT_MS}ms)")
             return false
         }
         
@@ -286,6 +286,13 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             previousPeerID = null
         )
         
+        // Update mesh graph from gossip neighbors (only if TLV present)
+        try {
+            val neighborsOrNull = com.gapmesh.droid.services.meshgraph.GossipTLV.decodeNeighborsFromAnnouncementPayload(packet.payload)
+            com.gapmesh.droid.services.meshgraph.MeshGraphService.getInstance()
+                .updateFromAnnouncement(peerID, nickname, neighborsOrNull, packet.timestamp)
+        } catch (_: Exception) { }
+
         Log.d(TAG, "✅ Processed verified TLV announce: stored identity for $peerID")
         return isFirstAnnounce
     }
@@ -326,7 +333,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                     timestamp = System.currentTimeMillis().toULong(),
                     payload = response,
                     signature = null,
-                    ttl = com.gap.droid.util.AppConstants.MESSAGE_TTL_HOPS // Same TTL as iOS
+                    ttl = com.gapmesh.droid.util.AppConstants.MESSAGE_TTL_HOPS // Same TTL as iOS
                 )
                 
                 delegate?.sendPacket(responsePacket)
@@ -385,18 +392,18 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
         
         try {
             // Try file packet first (voice, image, etc.) and log outcome for FILE_TRANSFER
-            val isFileTransfer = com.gap.droid.protocol.MessageType.fromValue(packet.type) == com.gap.droid.protocol.MessageType.FILE_TRANSFER
-            val file = com.gap.droid.model.BitchatFilePacket.decode(packet.payload)
+            val isFileTransfer = com.gapmesh.droid.protocol.MessageType.fromValue(packet.type) == com.gapmesh.droid.protocol.MessageType.FILE_TRANSFER
+            val file = com.gapmesh.droid.model.BitchatFilePacket.decode(packet.payload)
             if (file != null) {
                 if (isFileTransfer) {
                     Log.d(TAG, "📥 FILE_TRANSFER decode success (broadcast): name='${file.fileName}', size=${file.fileSize}, mime='${file.mimeType}', from=${peerID.take(8)}")
                 }
-                val savedPath = com.gap.droid.features.file.FileUtils.saveIncomingFile(appContext, file)
+                val savedPath = com.gapmesh.droid.features.file.FileUtils.saveIncomingFile(appContext, file)
                 val message = BitchatMessage(
                     id = java.util.UUID.randomUUID().toString().uppercase(),
                     sender = delegate?.getPeerNickname(peerID) ?: "unknown",
                     content = savedPath,
-                    type = com.gap.droid.features.file.FileUtils.messageTypeForMime(file.mimeType),
+                    type = com.gapmesh.droid.features.file.FileUtils.messageTypeForMime(file.mimeType),
                     senderPeerID = peerID,
                     timestamp = Date(packet.timestamp.toLong())
                 )
@@ -432,18 +439,18 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             }
 
             // Try file packet first (voice, image, etc.) and log outcome for FILE_TRANSFER
-            val isFileTransfer = com.gap.droid.protocol.MessageType.fromValue(packet.type) == com.gap.droid.protocol.MessageType.FILE_TRANSFER
-            val file = com.gap.droid.model.BitchatFilePacket.decode(packet.payload)
+            val isFileTransfer = com.gapmesh.droid.protocol.MessageType.fromValue(packet.type) == com.gapmesh.droid.protocol.MessageType.FILE_TRANSFER
+            val file = com.gapmesh.droid.model.BitchatFilePacket.decode(packet.payload)
             if (file != null) {
                 if (isFileTransfer) {
                     Log.d(TAG, "📥 FILE_TRANSFER decode success (private): name='${file.fileName}', size=${file.fileSize}, mime='${file.mimeType}', from=${peerID.take(8)}")
                 }
-                val savedPath = com.gap.droid.features.file.FileUtils.saveIncomingFile(appContext, file)
+                val savedPath = com.gapmesh.droid.features.file.FileUtils.saveIncomingFile(appContext, file)
                 val message = BitchatMessage(
                     id = java.util.UUID.randomUUID().toString().uppercase(),
                     sender = delegate?.getPeerNickname(peerID) ?: "unknown",
                     content = savedPath,
-                    type = com.gap.droid.features.file.FileUtils.messageTypeForMime(file.mimeType),
+                    type = com.gapmesh.droid.features.file.FileUtils.messageTypeForMime(file.mimeType),
                     senderPeerID = peerID,
                     timestamp = Date(packet.timestamp.toLong()),
                     isPrivate = true,
@@ -544,15 +551,15 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             val peerInfo = delegate?.getPeerInfo(fromPeerID)
             val noiseKey = peerInfo?.noisePublicKey
             if (noiseKey != null) {
-                com.gap.droid.favorites.FavoritesPersistenceService.shared.updatePeerFavoritedUs(noiseKey, isFavorite)
+                com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.updatePeerFavoritedUs(noiseKey, isFavorite)
                 if (npub != null) {
                     // Index by noise key and current mesh peerID for fast Nostr routing
-                    com.gap.droid.favorites.FavoritesPersistenceService.shared.updateNostrPublicKey(noiseKey, npub)
-                    com.gap.droid.favorites.FavoritesPersistenceService.shared.updateNostrPublicKeyForPeerID(fromPeerID, npub)
+                    com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.updateNostrPublicKey(noiseKey, npub)
+                    com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.updateNostrPublicKeyForPeerID(fromPeerID, npub)
                 }
 
                 // Determine iOS-style guidance text
-                val rel = com.gap.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKey)
+                val rel = com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKey)
                 val guidance = if (isFavorite) {
                     if (rel?.isFavorite == true) {
                         " — mutual! You can continue DMs via Nostr when out of mesh."
@@ -565,7 +572,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
 
                 // Emit system message via delegate callback
                 val action = if (isFavorite) "favorited" else "unfavorited"
-                val sys = com.gap.droid.model.BitchatMessage(
+                val sys = com.gapmesh.droid.model.BitchatMessage(
                     sender = "system",
                     content = "${peerInfo.nickname} $action you$guidance",
                     timestamp = java.util.Date(),

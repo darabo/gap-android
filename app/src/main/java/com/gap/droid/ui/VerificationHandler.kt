@@ -1,16 +1,16 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.content.Context
-import com.gap.droid.R
-import com.gap.droid.favorites.FavoritesPersistenceService
-import com.gap.droid.identity.SecureIdentityStateManager
-import com.gap.droid.mesh.BluetoothMeshService
-import com.gap.droid.model.BitchatMessage
-import com.gap.droid.noise.NoiseSession
-import com.gap.droid.nostr.GeohashAliasRegistry
-import com.gap.droid.services.VerificationService
-import com.gap.droid.util.dataFromHexString
-import com.gap.droid.util.hexEncodedString
+import com.gapmesh.droid.R
+import com.gapmesh.droid.favorites.FavoritesPersistenceService
+import com.gapmesh.droid.identity.SecureIdentityStateManager
+import com.gapmesh.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.noise.NoiseSession
+import com.gapmesh.droid.nostr.GeohashAliasRegistry
+import com.gapmesh.droid.services.VerificationService
+import com.gapmesh.droid.util.dataFromHexString
+import com.gapmesh.droid.util.hexEncodedString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

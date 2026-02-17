@@ -1,23 +1,23 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gap.droid.ui.theme.BASE_FONT_SIZE
+import com.gapmesh.droid.ui.theme.BASE_FONT_SIZE
 import androidx.compose.ui.res.stringResource
-import com.gap.droid.R
+import com.gapmesh.droid.R
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.launch
-import com.gap.droid.model.BitchatMessage
+import com.gapmesh.droid.model.BitchatMessage
+import com.gapmesh.droid.core.ui.component.sheet.BitchatBottomSheet
 
 /**
  * User Action Sheet for selecting actions on a specific user (slap, hug, block)
@@ -36,11 +36,6 @@ fun ChatUserSheet(
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     
-    // Bottom sheet state
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true
-    )
-    
     // iOS system colors (matches LocationChannelsSheet exactly)
     val colorScheme = MaterialTheme.colorScheme
     val isDark = colorScheme.background.red + colorScheme.background.green + colorScheme.background.blue < 1.5f
@@ -50,9 +45,8 @@ fun ChatUserSheet(
     val standardGrey = if (isDark) Color(0xFF8E8E93) else Color(0xFF6D6D70) // iOS grey
     
     if (isPresented) {
-        ModalBottomSheet(
+        BitchatBottomSheet(
             onDismissRequest = onDismiss,
-            sheetState = sheetState,
             modifier = modifier
         ) {
             Column(
@@ -136,7 +130,7 @@ fun ChatUserSheet(
                                 onClick = {
                                     // Check if we're in a geohash channel
                                     val selectedLocationChannel = viewModel.selectedLocationChannel.value
-                                    if (selectedLocationChannel is com.gap.droid.geohash.ChannelID.Location) {
+                                    if (selectedLocationChannel is com.gapmesh.droid.geohash.ChannelID.Location) {
                                         // Get user's nostr public key and add to geohash block list
                                         viewModel.blockUserInGeohash(targetNickname)
                                     } else {

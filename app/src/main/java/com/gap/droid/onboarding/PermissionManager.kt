@@ -1,4 +1,4 @@
-package com.gap.droid.onboarding
+package com.gapmesh.droid.onboarding
 
 import android.Manifest
 import android.content.Context
@@ -7,7 +7,7 @@ import android.os.Build
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.content.ContextCompat
-import com.gap.droid.R
+import com.gapmesh.droid.R
 
 /**
  * Centralized permission management for bitchat app
@@ -41,15 +41,15 @@ class PermissionManager(private val context: Context) {
     }
 
     /**
-     * Get required permissions that can be requested together.
+     * Get critical permissions required for core app functionality.
+     * These are the ONLY permissions requested during onboarding.
      * Background location is handled separately to ensure correct request order.
-     * Note: Notification permission is optional and not included here,
-     * so the app works without notification access.
+     * Note: Notification permission is optional and handled contextually.
      */
     fun getRequiredPermissions(): List<String> {
         val permissions = mutableListOf<String>()
 
-        // Bluetooth permissions (API level dependent)
+        // Bluetooth permissions (API level dependent) - CRITICAL for mesh
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             permissions.addAll(listOf(
                 Manifest.permission.BLUETOOTH_ADVERTISE,
@@ -63,15 +63,66 @@ class PermissionManager(private val context: Context) {
             ))
         }
 
-        // Location permissions (required for Bluetooth LE scanning)
+        // Location permissions (required for Bluetooth LE scanning) - CRITICAL for mesh
         permissions.addAll(listOf(
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.ACCESS_FINE_LOCATION
         ))
 
-        // Notification permission intentionally excluded to keep it optional
+        // WiFi Aware permission (Android 13+) - CRITICAL for high-bandwidth mesh
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.NEARBY_WIFI_DEVICES)
+        }
+
+        // NOTE: Storage permission moved to getDeferrablePermissions() - requested via Settings
+        // NOTE: Notification permission is in getOptionalPermissions() - requested contextually
 
         return permissions
+    }
+
+    /**
+     * Alias for getRequiredPermissions() - returns only critical permissions for onboarding.
+     */
+    fun getCriticalPermissions(): List<String> = getRequiredPermissions()
+
+    /**
+     * Get deferrable permissions that enhance the experience but aren't needed during onboarding.
+     * These are requested contextually when the user enables specific features in Settings.
+     */
+    fun getDeferrablePermissions(): List<String> {
+        val permissions = mutableListOf<String>()
+
+        // Storage permissions (for screenshot detection) - requested when enabling the feature
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
+        } else {
+            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+
+        return permissions
+    }
+
+    /**
+     * Check if storage permission is granted (for screenshot detection feature).
+     */
+    fun isStoragePermissionGranted(): Boolean {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+        return isPermissionGranted(permission)
+    }
+
+    /**
+     * Get the storage permission string for the current API level.
+     */
+    fun getStoragePermission(): String {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
     }
 
     /**
@@ -164,7 +215,7 @@ class PermissionManager(private val context: Context) {
     }
 
     /**
-     * Get categorized permission information for display
+     * Get categorized permission information for display (full list for diagnostics)
      */
     fun getCategorizedPermissions(): List<PermissionCategory> {
         val categories = mutableListOf<PermissionCategory>()
@@ -186,12 +237,28 @@ class PermissionManager(private val context: Context) {
         categories.add(
             PermissionCategory(
                 type = PermissionType.NEARBY_DEVICES,
-                description = "Required to discover bitchat users via Bluetooth",
+                typeName = context.getString(R.string.perm_type_nearby_devices),
+                description = context.getString(R.string.perm_nearby_devices_desc),
                 permissions = bluetoothPermissions,
                 isGranted = bluetoothPermissions.all { isPermissionGranted(it) },
-                systemDescription = "Allow bitchat to connect to nearby devices"
+                systemDescription = context.getString(R.string.perm_nearby_devices_system)
             )
         )
+
+        // WiFi Aware category (Android 13+ only)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val wifiAwarePermissions = listOf(Manifest.permission.NEARBY_WIFI_DEVICES)
+            categories.add(
+                PermissionCategory(
+                    type = PermissionType.WIFI_AWARE,
+                    typeName = context.getString(R.string.perm_type_wifi_aware),
+                    description = context.getString(R.string.perm_wifi_aware_desc),
+                    permissions = wifiAwarePermissions,
+                    isGranted = wifiAwarePermissions.all { isPermissionGranted(it) },
+                    systemDescription = context.getString(R.string.perm_wifi_aware_system)
+                )
+            )
+        }
 
         // Location category
         val locationPermissions = listOf(
@@ -202,10 +269,11 @@ class PermissionManager(private val context: Context) {
         categories.add(
             PermissionCategory(
                 type = PermissionType.PRECISE_LOCATION,
-                description = "Required by Android to discover nearby bitchat users via Bluetooth",
+                typeName = context.getString(R.string.perm_type_precise_location),
+                description = context.getString(R.string.perm_location_desc),
                 permissions = locationPermissions,
                 isGranted = locationPermissions.all { isPermissionGranted(it) },
-                systemDescription = "bitchat needs this to scan for nearby devices"
+                systemDescription = context.getString(R.string.perm_location_system)
             )
         )
 
@@ -214,6 +282,7 @@ class PermissionManager(private val context: Context) {
             categories.add(
                 PermissionCategory(
                     type = PermissionType.BACKGROUND_LOCATION,
+                    typeName = context.getString(R.string.background_location_required_title),
                     description = context.getString(R.string.perm_background_location_desc),
                     permissions = backgroundPermission,
                     isGranted = backgroundPermission.all { isPermissionGranted(it) },
@@ -227,28 +296,118 @@ class PermissionManager(private val context: Context) {
             categories.add(
                 PermissionCategory(
                     type = PermissionType.NOTIFICATIONS,
-                    description = "Receive notifications when you receive private messages",
+                    typeName = context.getString(R.string.perm_type_notifications),
+                    description = context.getString(R.string.perm_notifications_desc),
                     permissions = listOf(Manifest.permission.POST_NOTIFICATIONS),
                     isGranted = isPermissionGranted(Manifest.permission.POST_NOTIFICATIONS),
-                    systemDescription = "Allow bitchat to send you notifications"
+                    systemDescription = context.getString(R.string.perm_notifications_system)
                 )
             )
         }
-
-        // Microphone category removed from onboarding
 
         // Battery optimization category (if applicable)
         if (isBatteryOptimizationSupported()) {
             categories.add(
                 PermissionCategory(
                     type = PermissionType.BATTERY_OPTIMIZATION,
-                    description = "Disable battery optimization to ensure bitchat runs reliably in the background and maintains mesh network connections",
+                    typeName = context.getString(R.string.perm_type_battery_optimization),
+                    description = context.getString(R.string.perm_battery_desc),
                     permissions = listOf("BATTERY_OPTIMIZATION"), // Custom identifier
                     isGranted = isBatteryOptimizationDisabled(),
-                    systemDescription = "Allow bitchat to run without battery restrictions"
+                    systemDescription = context.getString(R.string.perm_battery_system)
                 )
             )
         }
+
+        // Storage category (kept in full list for diagnostics)
+        val storagePermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            listOf(Manifest.permission.READ_MEDIA_IMAGES)
+        } else {
+            listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+        
+        categories.add(
+            PermissionCategory(
+                type = PermissionType.STORAGE,
+                typeName = context.getString(R.string.perm_type_storage),
+                description = context.getString(R.string.perm_storage_desc),
+                permissions = storagePermissions,
+                isGranted = storagePermissions.all { isPermissionGranted(it) },
+                systemDescription = context.getString(R.string.perm_storage_system)
+            )
+        )
+
+        return categories
+    }
+
+    /**
+     * Get streamlined permission categories for onboarding display.
+     * Only shows the essential permissions needed to use the mesh network.
+     * Storage, Background Location, Notifications, and Battery Optimization are
+     * excluded to reduce onboarding friction - they're requested later via Settings.
+     */
+    fun getCategorizedPermissionsForOnboarding(): List<PermissionCategory> {
+        val categories = mutableListOf<PermissionCategory>()
+
+        // Combined "Mesh Network" category explanation
+        val bluetoothPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            listOf(
+                Manifest.permission.BLUETOOTH_ADVERTISE,
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.BLUETOOTH_SCAN
+            )
+        } else {
+            listOf(
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.BLUETOOTH_ADMIN
+            )
+        }
+
+        // Nearby Devices (Bluetooth)
+        categories.add(
+            PermissionCategory(
+                type = PermissionType.NEARBY_DEVICES,
+                typeName = context.getString(R.string.perm_type_nearby_devices),
+                description = context.getString(R.string.perm_nearby_devices_desc),
+                permissions = bluetoothPermissions,
+                isGranted = bluetoothPermissions.all { isPermissionGranted(it) },
+                systemDescription = context.getString(R.string.perm_nearby_devices_system)
+            )
+        )
+
+        // WiFi Aware (Android 13+ only)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val wifiAwarePermissions = listOf(Manifest.permission.NEARBY_WIFI_DEVICES)
+            categories.add(
+                PermissionCategory(
+                    type = PermissionType.WIFI_AWARE,
+                    typeName = context.getString(R.string.perm_type_wifi_aware),
+                    description = context.getString(R.string.perm_wifi_aware_desc),
+                    permissions = wifiAwarePermissions,
+                    isGranted = wifiAwarePermissions.all { isPermissionGranted(it) },
+                    systemDescription = context.getString(R.string.perm_wifi_aware_system)
+                )
+            )
+        }
+
+        // Location (required for BLE scanning)
+        val locationPermissions = listOf(
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        categories.add(
+            PermissionCategory(
+                type = PermissionType.PRECISE_LOCATION,
+                typeName = context.getString(R.string.perm_type_precise_location),
+                description = context.getString(R.string.perm_location_desc),
+                permissions = locationPermissions,
+                isGranted = locationPermissions.all { isPermissionGranted(it) },
+                systemDescription = context.getString(R.string.perm_location_system)
+            )
+        )
+
+        // NOTE: Background Location, Notifications, Battery Optimization, and Storage
+        // are intentionally EXCLUDED from onboarding - they are requested later via Settings
 
         return categories
     }
@@ -296,6 +455,7 @@ class PermissionManager(private val context: Context) {
  */
 data class PermissionCategory(
     val type: PermissionType,
+    val typeName: String,
     val description: String,
     val permissions: List<String>,
     val isGranted: Boolean,
@@ -304,10 +464,12 @@ data class PermissionCategory(
 
 enum class PermissionType(val nameValue: String) {
     NEARBY_DEVICES("Nearby Devices"),
+    WIFI_AWARE("WiFi Aware"),
     PRECISE_LOCATION("Precise Location"),
     BACKGROUND_LOCATION("Background Location"),
     MICROPHONE("Microphone"),
     NOTIFICATIONS("Notifications"),
+    STORAGE("Storage"),
     BATTERY_OPTIMIZATION("Battery Optimization"),
     OTHER("Other")
 }

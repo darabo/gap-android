@@ -1,9 +1,9 @@
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import android.util.Log
-import com.gap.droid.protocol.BitchatPacket
-import com.gap.droid.protocol.MessageType
-import com.gap.droid.model.RoutedPacket
+import com.gapmesh.droid.protocol.BitchatPacket
+import com.gapmesh.droid.protocol.MessageType
+import com.gapmesh.droid.model.RoutedPacket
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
@@ -16,7 +16,7 @@ import kotlinx.coroutines.channels.actor
  * from the same peer simultaneously, causing session management conflicts.
  */
 class PacketProcessor(private val myPeerID: String) {
-    private val debugManager by lazy { try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance() } catch (e: Exception) { null } }
+    private val debugManager by lazy { try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance() } catch (e: Exception) { null } }
     
     companion object {
         private const val TAG = "PacketProcessor"
@@ -111,6 +111,9 @@ class PacketProcessor(private val myPeerID: String) {
             
             override fun broadcastPacket(routed: RoutedPacket) {
                 delegate?.relayPacket(routed)
+            }
+            override fun sendToPeer(peerID: String, routed: RoutedPacket): Boolean {
+                return delegate?.sendToPeer(peerID, routed) ?: false
             }
         }
     }
@@ -323,4 +326,5 @@ interface PacketProcessorDelegate {
     fun sendAnnouncementToPeer(peerID: String)
     fun sendCachedMessages(peerID: String)
     fun relayPacket(routed: RoutedPacket)
+    fun sendToPeer(peerID: String, routed: RoutedPacket): Boolean
 }

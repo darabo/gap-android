@@ -1,4 +1,4 @@
-package com.gap.droid.util
+package com.gapmesh.droid.util
 
 import java.util.UUID
 
@@ -15,9 +15,14 @@ object AppConstants {
         const val STALE_PEER_TIMEOUT_MS: Long = 180_000L // 3 minutes
         const val PEER_CLEANUP_INTERVAL_MS: Long = 60_000L
 
-        // BLE connection tracking (tuned for budget device stability)
-        const val CONNECTION_RETRY_DELAY_MS: Long = 3_000L  // Faster reconnection
-        const val MAX_CONNECTION_ATTEMPTS: Int = 6           // More retry attempts
+        // BLE connection tracking - flagship defaults
+        const val CONNECTION_RETRY_DELAY_MS: Long = 3_000L  // Fast reconnection for flagship
+        const val MAX_CONNECTION_ATTEMPTS: Int = 6           // Standard retry attempts
+        
+        // BLE connection tracking - budget device overrides (MediaTek, low RAM, etc.)
+        const val CONNECTION_RETRY_DELAY_BUDGET_MS: Long = 5_000L  // Longer delay for budget BLE stacks
+        const val MAX_CONNECTION_ATTEMPTS_BUDGET: Int = 8           // More retries for unstable connections
+        
         const val CONNECTION_CLEANUP_DELAY_MS: Long = 500L
         const val CONNECTION_CLEANUP_INTERVAL_MS: Long = 30_000L
         const val BROADCAST_CLEANUP_DELAY_MS: Long = 500L
@@ -26,7 +31,8 @@ object AppConstants {
         const val RSSI_UPDATE_INTERVAL_MS: Long = 5_000L
 
         object Gatt {
-            val SERVICE_UUID: UUID = UUID.fromString("F47B5E2D-4A9E-4C5A-9B3F-8E1D2C3A4B5C")
+            // Must match ServiceUuidRotation.FALLBACK_UUID for cross-platform GATT service discovery
+            val SERVICE_UUID: UUID = UUID.fromString("7ACD9057-811D-4D17-AB14-DA891780FA3A")
             val CHARACTERISTIC_UUID: UUID = UUID.fromString("A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D")
             val DESCRIPTOR_UUID: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
         }
@@ -119,8 +125,8 @@ object AppConstants {
         const val MESSAGE_DEDUP_TIMEOUT_MS: Long = 30_000L
         const val SYSTEM_EVENT_DEDUP_TIMEOUT_MS: Long = 5_000L
         const val ACTIVE_PEERS_NOTIFICATION_INTERVAL_MS: Long = 300_000L
-        const val ACTION_FORCE_FINISH: String = "com.gap.droid.ACTION_FORCE_FINISH"
-        const val PERMISSION_FORCE_FINISH: String = "com.gap.droid.permission.FORCE_FINISH"
+        const val ACTION_FORCE_FINISH: String = "com.gapmesh.droid.ACTION_FORCE_FINISH"
+        const val PERMISSION_FORCE_FINISH: String = "com.gapmesh.droid.permission.FORCE_FINISH"
     }
 
     object Media {

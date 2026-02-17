@@ -1,9 +1,9 @@
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import android.util.Log
-import com.gap.droid.protocol.BitchatPacket
-import com.gap.droid.protocol.MessageType
-import com.gap.droid.protocol.SpecialRecipients
+import com.gapmesh.droid.protocol.BitchatPacket
+import com.gapmesh.droid.protocol.MessageType
+import com.gapmesh.droid.protocol.SpecialRecipients
 import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -16,10 +16,10 @@ class StoreForwardManager {
     
     companion object {
         private const val TAG = "StoreForwardManager"
-        private const val MESSAGE_CACHE_TIMEOUT = com.gap.droid.util.AppConstants.StoreForward.MESSAGE_CACHE_TIMEOUT_MS  // 12 hours for regular peers
-        private const val MAX_CACHED_MESSAGES = com.gap.droid.util.AppConstants.StoreForward.MAX_CACHED_MESSAGES  // For regular peers
-        private const val MAX_CACHED_MESSAGES_FAVORITES = com.gap.droid.util.AppConstants.StoreForward.MAX_CACHED_MESSAGES_FAVORITES  // For favorites
-        private const val CLEANUP_INTERVAL = com.gap.droid.util.AppConstants.StoreForward.CLEANUP_INTERVAL_MS // 10 minutes
+        private const val MESSAGE_CACHE_TIMEOUT = com.gapmesh.droid.util.AppConstants.StoreForward.MESSAGE_CACHE_TIMEOUT_MS  // 12 hours for regular peers
+        private const val MAX_CACHED_MESSAGES = com.gapmesh.droid.util.AppConstants.StoreForward.MAX_CACHED_MESSAGES  // For regular peers
+        private const val MAX_CACHED_MESSAGES_FAVORITES = com.gapmesh.droid.util.AppConstants.StoreForward.MAX_CACHED_MESSAGES_FAVORITES  // For favorites
+        private const val CLEANUP_INTERVAL = com.gapmesh.droid.util.AppConstants.StoreForward.CLEANUP_INTERVAL_MS // 10 minutes
     }
     
     /**

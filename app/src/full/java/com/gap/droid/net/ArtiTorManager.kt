@@ -1,8 +1,8 @@
-package com.gap.droid.net
+package com.gapmesh.droid.net
 
 import android.app.Application
 import android.util.Log
-import com.gap.droid.util.AppConstants
+import com.gapmesh.droid.util.AppConstants
 import info.guardianproject.arti.ArtiLogListener
 import info.guardianproject.arti.ArtiProxy
 import kotlinx.coroutines.CoroutineScope
@@ -317,7 +317,7 @@ class ArtiTorManager private constructor() {
         } catch (_: Throwable) {
         }
         try {
-            com.gap.droid.nostr.NostrRelayManager.shared.resetAllConnections()
+            com.gapmesh.droid.nostr.NostrRelayManager.shared.resetAllConnections()
         } catch (_: Throwable) {
         }
     }

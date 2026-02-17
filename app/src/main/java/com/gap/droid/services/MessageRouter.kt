@@ -1,17 +1,17 @@
-package com.gap.droid.services
+package com.gapmesh.droid.services
 
 import android.content.Context
 import android.util.Log
-import com.gap.droid.mesh.BluetoothMeshService
-import com.gap.droid.model.ReadReceipt
-import com.gap.droid.nostr.NostrTransport
+import com.gapmesh.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.model.ReadReceipt
+import com.gapmesh.droid.nostr.NostrTransport
 
 /**
  * Routes messages between BLE mesh and Nostr transports, matching iOS behavior.
  */
 class MessageRouter private constructor(
     private val context: Context,
-    private val mesh: BluetoothMeshService,
+    private var mesh: BluetoothMeshService,
     private val nostr: NostrTransport
 ) {
     companion object {
@@ -19,22 +19,22 @@ class MessageRouter private constructor(
         @Volatile private var INSTANCE: MessageRouter? = null
         fun tryGetInstance(): MessageRouter? = INSTANCE
         fun getInstance(context: Context, mesh: BluetoothMeshService): MessageRouter {
-            return INSTANCE ?: synchronized(this) {
-                val nostr = NostrTransport.getInstance(context)
-                INSTANCE?.also {
-                    // Update mesh reference if needed and keep senderPeerID in sync
-                    it.nostr.senderPeerID = mesh.myPeerID
-                    return it
-                }
-                MessageRouter(context.applicationContext, mesh, nostr).also { instance ->
-                    instance.nostr.senderPeerID = mesh.myPeerID
-                    // Register for favorites changes to flush outbox
-                    try {
-                        com.gap.droid.favorites.FavoritesPersistenceService.shared.addListener(instance.favoriteListener)
-                    } catch (_: Exception) {}
-                    INSTANCE = instance
+            val instance = INSTANCE ?: synchronized(this) {
+                INSTANCE ?: run {
+                    val nostr = NostrTransport.getInstance(context)
+                    MessageRouter(context.applicationContext, mesh, nostr).also { instance ->
+                        // Register for favorites changes to flush outbox
+                        try {
+                            com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.addListener(instance.favoriteListener)
+                        } catch (_: Exception) {}
+                        INSTANCE = instance
+                    }
                 }
             }
+            // Always update mesh reference and sync peer ID
+            instance.mesh = mesh
+            instance.nostr.senderPeerID = mesh.myPeerID
+            return instance
         }
     }
 
@@ -42,7 +42,7 @@ class MessageRouter private constructor(
     private val outbox = mutableMapOf<String, MutableList<Triple<String, String, String>>>()
 
     // Listener for favorites changes to flush outbox when npub mapping appears/changes
-    private val favoriteListener = object: com.gap.droid.favorites.FavoritesChangeListener {
+    private val favoriteListener = object: com.gapmesh.droid.favorites.FavoritesChangeListener {
 
         override fun onFavoriteChanged(noiseKeyHex: String) {
             flushOutboxFor(noiseKeyHex)
@@ -57,12 +57,12 @@ class MessageRouter private constructor(
 
     fun sendPrivate(content: String, toPeerID: String, recipientNickname: String, messageID: String) {
         // First: if this is a geohash DM alias (nostr_<pub16>), route via Nostr using global registry
-        if (com.gap.droid.nostr.GeohashAliasRegistry.contains(toPeerID)) {
+        if (com.gapmesh.droid.nostr.GeohashAliasRegistry.contains(toPeerID)) {
             Log.d(TAG, "Routing PM via Nostr (geohash) to alias ${toPeerID.take(12)}… id=${messageID.take(8)}…")
-            val recipientHex = com.gap.droid.nostr.GeohashAliasRegistry.get(toPeerID)
+            val recipientHex = com.gapmesh.droid.nostr.GeohashAliasRegistry.get(toPeerID)
             if (recipientHex != null) {
                 // Resolve the conversation's source geohash, so we can send from anywhere
-                val sourceGeohash = com.gap.droid.nostr.GeohashConversationRegistry.get(toPeerID)
+                val sourceGeohash = com.gapmesh.droid.nostr.GeohashConversationRegistry.get(toPeerID)
 
                 // If repository knows the source geohash, pass it so NostrTransport derives the correct identity
                 nostr.sendPrivateMessageGeohash(content, recipientHex, messageID, sourceGeohash)
@@ -100,10 +100,10 @@ class MessageRouter private constructor(
     fun sendDeliveryAck(messageID: String, toPeerID: String) {
         // Mesh delivery ACKs are sent by the receiver automatically.
         // Only route via Nostr when mesh path isn't available or when this is a geohash alias
-        if (com.gap.droid.nostr.GeohashAliasRegistry.contains(toPeerID)) {
-            val recipientHex = com.gap.droid.nostr.GeohashAliasRegistry.get(toPeerID)
+        if (com.gapmesh.droid.nostr.GeohashAliasRegistry.contains(toPeerID)) {
+            val recipientHex = com.gapmesh.droid.nostr.GeohashAliasRegistry.get(toPeerID)
             if (recipientHex != null) {
-                nostr.sendDeliveryAckGeohash(messageID, recipientHex, try { com.gap.droid.nostr.NostrIdentityBridge.getCurrentNostrIdentity(context)!! } catch (_: Exception) { return })
+                nostr.sendDeliveryAckGeohash(messageID, recipientHex, try { com.gapmesh.droid.nostr.NostrIdentityBridge.getCurrentNostrIdentity(context)!! } catch (_: Exception) { return })
                 return
             }
         }
@@ -114,7 +114,7 @@ class MessageRouter private constructor(
 
     fun sendFavoriteNotification(toPeerID: String, isFavorite: Boolean) {
         if (mesh.getPeerInfo(toPeerID)?.isConnected == true) {
-            val myNpub = try { com.gap.droid.nostr.NostrIdentityBridge.getCurrentNostrIdentity(context)?.npub } catch (_: Exception) { null }
+            val myNpub = try { com.gapmesh.droid.nostr.NostrIdentityBridge.getCurrentNostrIdentity(context)?.npub } catch (_: Exception) { null }
             val content = if (isFavorite) "[FAVORITED]:${myNpub ?: ""}" else "[UNFAVORITED]:${myNpub ?: ""}"
             val nickname = mesh.getPeerNicknames()[toPeerID] ?: toPeerID
             mesh.sendPrivateMessage(content, toPeerID, nickname)
@@ -165,11 +165,11 @@ class MessageRouter private constructor(
             // Full Noise key hex
             if (peerID.length == 64 && peerID.matches(Regex("^[0-9a-fA-F]+$"))) {
                 val noiseKey = hexToBytes(peerID)
-                val fav = com.gap.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKey)
+                val fav = com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKey)
                 fav?.isMutual == true && fav.peerNostrPublicKey != null
             } else if (peerID.length == 16 && peerID.matches(Regex("^[0-9a-fA-F]+$"))) {
                 // Ephemeral 16-hex mesh ID: resolve via prefix match in favorites
-                val fav = com.gap.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(peerID)
+                val fav = com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(peerID)
                 fav?.isMutual == true && fav.peerNostrPublicKey != null
             } else {
                 false

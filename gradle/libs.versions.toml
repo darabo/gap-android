@@ -1,7 +1,7 @@
 [versions]
 # Android and Kotlin
-agp = "8.13.2"
-kotlin = "2.2.0"
+agp = "9.0.1"
+kotlin = "2.2.10"
 compileSdk = "35"
 minSdk = "26" # API 26 for proper BLE support
 targetSdk = "35"
@@ -63,6 +63,9 @@ kotlinx-coroutines-test = "1.6"
 
 lifecycle-process = "2.8.7"
 
+# WorkManager
+workmanager = "2.10.1"
+
 [libraries]
 # AndroidX Core
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
@@ -113,6 +116,9 @@ gms-location = { module = "com.google.android.gms:play-services-location", versi
 
 # Security
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "security-crypto" }
+
+# WorkManager
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workmanager" }
 
 # QR
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing-core" }

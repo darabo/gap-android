@@ -20,13 +20,13 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package com.gap.droid.noise.southernstorm.crypto;
+package com.gapmesh.droid.noise.southernstorm.crypto;
 
 import java.security.DigestException;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
-import com.gap.droid.noise.southernstorm.protocol.Destroyable;
+import com.gapmesh.droid.noise.southernstorm.protocol.Destroyable;
 
 /**
  * Fallback implementation of SHA256.
@@ -44,55 +44,53 @@ public class SHA256MessageDigest extends MessageDigest implements Destroyable {
 	 */
 	public SHA256MessageDigest() {
 		super("SHA-256");
-		h = new int [8];
-		block = new byte [64];
-		w = new int [64];
+		h = new int[8];
+		block = new byte[64];
+		w = new int[64];
 		engineReset();
 	}
 
 	@Override
 	public void destroy() {
-		Arrays.fill(h, (int)0);
-		Arrays.fill(block, (byte)0);
-		Arrays.fill(w, (int)0);
+		Arrays.fill(h, (int) 0);
+		Arrays.fill(block, (byte) 0);
+		Arrays.fill(w, (int) 0);
 	}
 
-	private static void writeBE32(byte[] buf, int offset, int value)
-	{
-		buf[offset] = (byte)(value >> 24);
-		buf[offset + 1] = (byte)(value >> 16);
-		buf[offset + 2] = (byte)(value >> 8);
-		buf[offset + 3] = (byte)value;
+	private static void writeBE32(byte[] buf, int offset, int value) {
+		buf[offset] = (byte) (value >> 24);
+		buf[offset + 1] = (byte) (value >> 16);
+		buf[offset + 2] = (byte) (value >> 8);
+		buf[offset + 3] = (byte) value;
 	}
 
 	@Override
 	protected byte[] engineDigest() {
-		byte[] digest = new byte [32];
+		byte[] digest = new byte[32];
 		try {
 			engineDigest(digest, 0, 32);
 		} catch (DigestException e) {
 			// Shouldn't happen, but just in case.
-			Arrays.fill(digest, (byte)0);
+			Arrays.fill(digest, (byte) 0);
 		}
 		return digest;
 	}
 
 	@Override
-	protected int engineDigest(byte[] buf, int offset, int len) throws DigestException
-	{
+	protected int engineDigest(byte[] buf, int offset, int len) throws DigestException {
 		if (len < 32)
 			throw new DigestException("Invalid digest length for SHA256");
 		if (posn <= (64 - 9)) {
-			block[posn] = (byte)0x80;
-			Arrays.fill(block, posn + 1, 64 - 8, (byte)0);
+			block[posn] = (byte) 0x80;
+			Arrays.fill(block, posn + 1, 64 - 8, (byte) 0);
 		} else {
-			block[posn] = (byte)0x80;
-			Arrays.fill(block, posn + 1, 64, (byte)0);
+			block[posn] = (byte) 0x80;
+			Arrays.fill(block, posn + 1, 64, (byte) 0);
 			transform(block, 0);
-			Arrays.fill(block, 0, 64 - 8, (byte)0);
+			Arrays.fill(block, 0, 64 - 8, (byte) 0);
 		}
-		writeBE32(block, 64 - 8, (int)(length >> 32));
-		writeBE32(block, 64 - 4, (int)length);
+		writeBE32(block, 64 - 8, (int) (length >> 32));
+		writeBE32(block, 64 - 4, (int) length);
 		transform(block, 0);
 		posn = 0;
 		for (int index = 0; index < 8; ++index)
@@ -154,32 +152,30 @@ public class SHA256MessageDigest extends MessageDigest implements Destroyable {
 		}
 	}
 
-    private static final int[] k = {
-        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
-        0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
-        0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
-        0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
-        0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
-        0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
-        0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
-        0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
-        0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-    };
+	private static final int[] k = {
+			0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
+			0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+			0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+			0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+			0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
+			0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+			0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
+			0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+			0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+			0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+			0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
+			0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+			0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
+			0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+			0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+			0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+	};
 
-    private static int rightRotate(int value, int n)
-    {
-    	return (value >>> n) | (value << (32 - n));
-    }
+	private static int rightRotate(int value, int n) {
+		return (value >>> n) | (value << (32 - n));
+	}
 
-	private void transform(byte[] m, int offset)
-	{
+	private void transform(byte[] m, int offset) {
 		int a, b, c, d, e, f, g, h;
 		int temp1, temp2;
 		int index;
@@ -193,43 +189,44 @@ public class SHA256MessageDigest extends MessageDigest implements Destroyable {
 		f = this.h[5];
 		g = this.h[6];
 		h = this.h[7];
-		
+
 		// Convert the 16 input message words from big endian to host byte order.
 		for (index = 0; index < 16; ++index) {
 			w[index] = ((m[offset] & 0xFF) << 24) |
-					   ((m[offset + 1] & 0xFF) << 16) |
-					   ((m[offset + 2] & 0xFF) << 8) |
-					    (m[offset + 3] & 0xFF);
+					((m[offset + 1] & 0xFF) << 16) |
+					((m[offset + 2] & 0xFF) << 8) |
+					(m[offset + 3] & 0xFF);
 			offset += 4;
 		}
-		
-	    // Extend the first 16 words to 64.
-	    for (index = 16; index < 64; ++index) {
-	        w[index] = w[index - 16] + w[index - 7] +
-	            (rightRotate(w[index - 15], 7) ^
-	             rightRotate(w[index - 15], 18) ^
-	             (w[index - 15] >>> 3)) +
-	            (rightRotate(w[index - 2], 17) ^
-	             rightRotate(w[index - 2], 19) ^
-	             (w[index - 2] >>> 10));
-	    }
-	    
-	    // Compression function main loop.
-	    for (index = 0; index < 64; ++index) {
-	        temp1 = (h) + k[index] + w[index] +
-	                (rightRotate((e), 6) ^ rightRotate((e), 11) ^ rightRotate((e), 25)) +
-	                (((e) & (f)) ^ ((~(e)) & (g)));
-            temp2 = (rightRotate((a), 2) ^ rightRotate((a), 13) ^ rightRotate((a), 22)) +
-                    (((a) & (b)) ^ ((a) & (c)) ^ ((b) & (c)));
-            h = g;
-            g = f;
-            f = e;
-            e = d + temp1;
-            d = c;
-            c = b;
-            b = a;
-            a = temp1 + temp2;
-	    }
+
+		// Extend the first 16 words to 64.
+		for (index = 16; index < 64; ++index) {
+			w[index] = w[index - 16] + w[index - 7] +
+					(rightRotate(w[index - 15], 7) ^
+							rightRotate(w[index - 15], 18) ^
+							(w[index - 15] >>> 3))
+					+
+					(rightRotate(w[index - 2], 17) ^
+							rightRotate(w[index - 2], 19) ^
+							(w[index - 2] >>> 10));
+		}
+
+		// Compression function main loop.
+		for (index = 0; index < 64; ++index) {
+			temp1 = (h) + k[index] + w[index] +
+					(rightRotate((e), 6) ^ rightRotate((e), 11) ^ rightRotate((e), 25)) +
+					(((e) & (f)) ^ ((~(e)) & (g)));
+			temp2 = (rightRotate((a), 2) ^ rightRotate((a), 13) ^ rightRotate((a), 22)) +
+					(((a) & (b)) ^ ((a) & (c)) ^ ((b) & (c)));
+			h = g;
+			g = f;
+			f = e;
+			e = d + temp1;
+			d = c;
+			c = b;
+			b = a;
+			a = temp1 + temp2;
+		}
 
 		// Add the compressed chunk to the current hash value.
 		this.h[0] += a;

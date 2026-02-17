@@ -1,9 +1,9 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.gap.droid.mesh.BluetoothMeshService
-import com.gap.droid.model.BitchatMessage
+import com.gapmesh.droid.mesh.BluetoothMeshService
+import com.gapmesh.droid.model.BitchatMessage
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope

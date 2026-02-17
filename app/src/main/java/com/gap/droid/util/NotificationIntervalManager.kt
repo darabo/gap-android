@@ -1,4 +1,4 @@
-package com.gap.droid.util
+package com.gapmesh.droid.util
 
 class NotificationIntervalManager {
   private var _lastNetworkNotificationTime = 0L

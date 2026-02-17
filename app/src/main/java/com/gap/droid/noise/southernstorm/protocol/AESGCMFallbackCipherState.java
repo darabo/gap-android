@@ -20,15 +20,15 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package com.gap.droid.noise.southernstorm.protocol;
+package com.gapmesh.droid.noise.southernstorm.protocol;
 
 import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.ShortBufferException;
 
-import com.gap.droid.noise.southernstorm.crypto.GHASH;
-import com.gap.droid.noise.southernstorm.crypto.RijndaelAES;
+import com.gapmesh.droid.noise.southernstorm.crypto.GHASH;
+import com.gapmesh.droid.noise.southernstorm.crypto.RijndaelAES;
 
 /**
  * Fallback implementation of "AESGCM" on platforms where
@@ -47,13 +47,12 @@ class AESGCMFallbackCipherState implements CipherState {
 	/**
 	 * Constructs a new cipher state for the "AESGCM" algorithm.
 	 */
-	public AESGCMFallbackCipherState()
-	{
+	public AESGCMFallbackCipherState() {
 		aes = new RijndaelAES();
 		n = 0;
-		iv = new byte [16];
-		enciv = new byte [16];
-		hashKey = new byte [16];
+		iv = new byte[16];
+		enciv = new byte[16];
+		hashKey = new byte[16];
 		ghash = new GHASH();
 		haskey = false;
 	}
@@ -89,10 +88,10 @@ class AESGCMFallbackCipherState implements CipherState {
 		haskey = true;
 
 		// Generate the hashing key by encrypting a block of zeroes.
-		Arrays.fill(hashKey, (byte)0);
+		Arrays.fill(hashKey, (byte) 0);
 		aes.encrypt(hashKey, 0, hashKey, 0);
 		ghash.reset(hashKey, 0);
-		
+
 		// Reset the nonce.
 		n = 0;
 	}
@@ -101,42 +100,41 @@ class AESGCMFallbackCipherState implements CipherState {
 	public boolean hasKey() {
 		return haskey;
 	}
-	
+
 	/**
 	 * Set up to encrypt or decrypt the next packet.
 	 * 
 	 * @param ad The associated data for the packet.
 	 */
-	private void setup(byte[] ad)
-	{
+	private void setup(byte[] ad) {
 		// Check for nonce wrap-around.
 		if (n == -1L)
 			throw new IllegalStateException("Nonce has wrapped around");
-		
+
 		// Format the counter/IV block.
 		iv[0] = 0;
 		iv[1] = 0;
 		iv[2] = 0;
 		iv[3] = 0;
-		iv[4] = (byte)(n >> 56);
-		iv[5] = (byte)(n >> 48);
-		iv[6] = (byte)(n >> 40);
-		iv[7] = (byte)(n >> 32);
-		iv[8] = (byte)(n >> 24);
-		iv[9] = (byte)(n >> 16);
-		iv[10] = (byte)(n >> 8);
-		iv[11] = (byte)n;
+		iv[4] = (byte) (n >> 56);
+		iv[5] = (byte) (n >> 48);
+		iv[6] = (byte) (n >> 40);
+		iv[7] = (byte) (n >> 32);
+		iv[8] = (byte) (n >> 24);
+		iv[9] = (byte) (n >> 16);
+		iv[10] = (byte) (n >> 8);
+		iv[11] = (byte) n;
 		iv[12] = 0;
 		iv[13] = 0;
 		iv[14] = 0;
 		iv[15] = 1;
 		++n;
-		
+
 		// Encrypt a block of zeroes to generate the hash key to XOR
 		// the GHASH tag with at the end of the encrypt/decrypt operation.
-		Arrays.fill(hashKey, (byte)0);
+		Arrays.fill(hashKey, (byte) 0);
 		aes.encrypt(iv, 0, hashKey, 0);
-		
+
 		// Initialize the GHASH with the associated data value.
 		ghash.reset();
 		if (ad != null) {
@@ -148,16 +146,16 @@ class AESGCMFallbackCipherState implements CipherState {
 	/**
 	 * Encrypts a block in CTR mode.
 	 * 
-	 * @param plaintext The plaintext to encrypt.
-	 * @param plaintextOffset Offset of the first plaintext byte.
-	 * @param ciphertext The resulting ciphertext.
+	 * @param plaintext        The plaintext to encrypt.
+	 * @param plaintextOffset  Offset of the first plaintext byte.
+	 * @param ciphertext       The resulting ciphertext.
 	 * @param ciphertextOffset Offset of the first ciphertext byte.
-	 * @param length The number of bytes to encrypt.
+	 * @param length           The number of bytes to encrypt.
 	 * 
-	 * This function can also be used to decrypt.
+	 *                         This function can also be used to decrypt.
 	 */
-	private void encryptCTR(byte[] plaintext, int plaintextOffset, byte[] ciphertext, int ciphertextOffset, int length)
-	{
+	private void encryptCTR(byte[] plaintext, int plaintextOffset, byte[] ciphertext, int ciphertextOffset,
+			int length) {
 		while (length > 0) {
 			// Increment the IV and encrypt it to get the next keystream block.
 			if (++(iv[15]) == 0)
@@ -165,14 +163,14 @@ class AESGCMFallbackCipherState implements CipherState {
 					if (++(iv[13]) == 0)
 						++(iv[12]);
 			aes.encrypt(iv, 0, enciv, 0);
-			
+
 			// XOR the keystream block with the plaintext to create the ciphertext.
 			int temp = length;
 			if (temp > 16)
 				temp = 16;
 			for (int index = 0; index < temp; ++index)
-				ciphertext[ciphertextOffset + index] = (byte)(plaintext[plaintextOffset + index] ^ enciv[index]);
-			
+				ciphertext[ciphertextOffset + index] = (byte) (plaintext[plaintextOffset + index] ^ enciv[index]);
+
 			// Advance to the next block.
 			plaintextOffset += temp;
 			ciphertextOffset += temp;
@@ -187,7 +185,8 @@ class AESGCMFallbackCipherState implements CipherState {
 		int space;
 		if (ciphertextOffset < 0 || ciphertextOffset > ciphertext.length)
 			throw new IllegalArgumentException();
-    if (length < 0 || plaintextOffset < 0 || plaintextOffset > plaintext.length || length > plaintext.length || (plaintext.length - plaintextOffset) < length)
+		if (length < 0 || plaintextOffset < 0 || plaintextOffset > plaintext.length || length > plaintext.length
+				|| (plaintext.length - plaintextOffset) < length)
 			throw new IllegalArgumentException();
 		space = ciphertext.length - ciphertextOffset;
 		if (!haskey) {
@@ -221,7 +220,8 @@ class AESGCMFallbackCipherState implements CipherState {
 			space = ciphertext.length - ciphertextOffset;
 		if (length > space)
 			throw new ShortBufferException();
-		if (length < 0 || plaintextOffset < 0 || plaintextOffset > plaintext.length || length > ciphertext.length || (ciphertext.length - ciphertextOffset) < length)
+		if (length < 0 || plaintextOffset < 0 || plaintextOffset > plaintext.length || length > ciphertext.length
+				|| (ciphertext.length - ciphertextOffset) < length)
 			throw new IllegalArgumentException();
 		space = plaintext.length - plaintextOffset;
 		if (!haskey) {

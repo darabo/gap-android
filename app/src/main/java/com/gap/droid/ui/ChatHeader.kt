@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 
 import android.util.Log
@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,14 +22,16 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.res.stringResource
-import com.gap.droid.R
+import com.gapmesh.droid.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gap.droid.core.ui.utils.singleOrTripleClickable
+import com.gapmesh.droid.core.ui.utils.singleOrTripleClickable
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
@@ -55,28 +58,34 @@ fun isFavoriteReactive(
 }
 
 @Composable
-fun TorStatusDot(
+fun ConnectionStatusDot(
+    selectedLocationChannel: com.gapmesh.droid.geohash.ChannelID?,
+    isConnected: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val torProvider = remember { com.gap.droid.net.ArtiTorManager.getInstance() }
-    val torStatus by torProvider.statusFlow.collectAsState()
-    
-    if (torStatus.mode != com.gap.droid.net.TorMode.OFF) {
-        val dotColor = when {
+    val dotColor = if (selectedLocationChannel is com.gapmesh.droid.geohash.ChannelID.Location) {
+        // Geohash mode: Show Tor connection status
+        val torProvider = remember { com.gapmesh.droid.net.ArtiTorManager.getInstance() }
+        val torStatus by torProvider.statusFlow.collectAsState()
+        
+        when {
+            torStatus.mode == com.gapmesh.droid.net.TorMode.OFF -> Color.Red // Tor required for geohash
             torStatus.running && torStatus.bootstrapPercent < 100 -> Color(0xFFFF9500) // Orange - bootstrapping
             torStatus.running && torStatus.bootstrapPercent >= 100 -> Color(0xFF00C851) // Green - connected
-            else -> Color.Red // Red - error/disconnected
+            else -> Color.Red // Error
         }
-        Canvas(
-            modifier = modifier
-        ) {
-            val radius = size.minDimension / 2
-            drawCircle(
-                color = dotColor,
-                radius = radius,
-                center = Offset(size.width / 2, size.height / 2)
-            )
-        }
+    } else {
+        // Mesh mode: Show mesh connection status
+        if (isConnected) Color(0xFF00C851) else Color.Red
+    }
+
+    Canvas(modifier = modifier) {
+        val radius = size.minDimension / 2
+        drawCircle(
+            color = dotColor,
+            radius = radius,
+            center = Offset(size.width / 2, size.height / 2)
+        )
     }
 }
 
@@ -127,9 +136,26 @@ fun NicknameEditor(
     val colorScheme = MaterialTheme.colorScheme
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
+    var isEditing by remember { mutableStateOf(false) }
+    var editText by remember { mutableStateOf(value) }
+    val focusRequester = remember { FocusRequester() }
+    
+    // Update editText when value changes externally
+    LaunchedEffect(value) {
+        if (!isEditing) {
+            editText = value
+        }
+    }
+    
+    // Auto-focus when entering edit mode
+    LaunchedEffect(isEditing) {
+        if (isEditing) {
+            focusRequester.requestFocus()
+        }
+    }
     
     // Auto-scroll to end when text changes (simulates cursor following)
-    LaunchedEffect(value) {
+    LaunchedEffect(editText) {
         scrollState.animateScrollTo(scrollState.maxValue)
     }
     
@@ -143,25 +169,83 @@ fun NicknameEditor(
             color = colorScheme.primary.copy(alpha = 0.8f)
         )
         
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            textStyle = MaterialTheme.typography.bodyMedium.copy(
-                color = colorScheme.primary,
-                fontFamily = FontFamily.Monospace
-            ),
-            cursorBrush = SolidColor(colorScheme.primary),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(
-                onDone = { 
+        if (isEditing) {
+            BasicTextField(
+                value = editText,
+                onValueChange = { editText = it },
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                    color = colorScheme.primary,
+                    fontFamily = FontFamily.Monospace
+                ),
+                cursorBrush = SolidColor(colorScheme.primary),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        if (editText.isNotBlank()) {
+                            onValueChange(editText)
+                        }
+                        isEditing = false
+                        focusManager.clearFocus()
+                    }
+                ),
+                modifier = Modifier
+                    .widthIn(max = 120.dp)
+                    .horizontalScroll(scrollState)
+                    .focusRequester(focusRequester)
+            )
+            
+            Spacer(modifier = Modifier.width(4.dp))
+            
+            IconButton(
+                onClick = {
+                    if (editText.isNotBlank()) {
+                        onValueChange(editText)
+                    }
+                    isEditing = false
                     focusManager.clearFocus()
-                }
-            ),
-            modifier = Modifier
-                .widthIn(max = 120.dp)
-                .horizontalScroll(scrollState)
-        )
+                },
+                modifier = Modifier.size(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = "Save",
+                    tint = colorScheme.primary,
+                    modifier = Modifier.size(12.dp)
+                )
+            }
+        } else {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorScheme.primary,
+                fontFamily = FontFamily.Monospace,
+                modifier = Modifier
+                    .widthIn(max = 120.dp)
+                    .horizontalScroll(scrollState)
+                    .clickable {
+                        editText = value
+                        isEditing = true
+                    }
+            )
+            
+            Spacer(modifier = Modifier.width(4.dp))
+            
+            IconButton(
+                onClick = {
+                    editText = value
+                    isEditing = true
+                },
+                modifier = Modifier.size(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Edit,
+                    contentDescription = "Edit",
+                    tint = colorScheme.primary.copy(alpha = 0.6f),
+                    modifier = Modifier.size(12.dp)
+                )
+            }
+        }
     }
 }
 
@@ -171,7 +255,7 @@ fun PeerCounter(
     joinedChannels: Set<String>,
     hasUnreadChannels: Map<String, Int>,
     isConnected: Boolean,
-    selectedLocationChannel: com.gap.droid.geohash.ChannelID?,
+    selectedLocationChannel: com.gapmesh.droid.geohash.ChannelID?,
     geohashPeople: List<GeoPerson>,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -180,13 +264,13 @@ fun PeerCounter(
     
     // Compute channel-aware people count and color (matches iOS logic exactly)
     val (peopleCount, countColor) = when (selectedLocationChannel) {
-        is com.gap.droid.geohash.ChannelID.Location -> {
+        is com.gapmesh.droid.geohash.ChannelID.Location -> {
             // Geohash channel: show geohash participants
             val count = geohashPeople.size
             val green = Color(0xFF00C851) // Standard green
             Pair(count, if (count > 0) green else Color.Gray)
         }
-        is com.gap.droid.geohash.ChannelID.Mesh,
+        is com.gapmesh.droid.geohash.ChannelID.Mesh,
         null -> {
             // Mesh channel: show Bluetooth-connected peers (excluding self)
             val count = connectedPeers.size
@@ -202,7 +286,7 @@ fun PeerCounter(
         Icon(
             imageVector = Icons.Default.Group,
             contentDescription = when (selectedLocationChannel) {
-                is com.gap.droid.geohash.ChannelID.Location -> stringResource(R.string.cd_geohash_participants)
+                is com.gapmesh.droid.geohash.ChannelID.Location -> stringResource(R.string.cd_geohash_participants)
                 else -> stringResource(R.string.cd_connected_peers)
             },
             modifier = Modifier.size(16.dp),
@@ -310,7 +394,7 @@ private fun PrivateChatHeader(
     peerNicknames: Map<String, String>,
     isFavorite: Boolean,
     sessionState: String?,
-    selectedLocationChannel: com.gap.droid.geohash.ChannelID?,
+    selectedLocationChannel: com.gapmesh.droid.geohash.ChannelID?,
     geohashPeople: List<GeoPerson>,
     onBackClick: () -> Unit,
     onToggleFavorite: () -> Unit,
@@ -328,9 +412,9 @@ private fun PrivateChatHeader(
             if (isNostrDM) return@remember false
             if (peerID.length == 64 && peerID.matches(Regex("^[0-9a-fA-F]+$"))) {
                 val noiseKeyBytes = peerID.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
-                com.gap.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKeyBytes)?.isMutual == true
+                com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKeyBytes)?.isMutual == true
             } else if (peerID.length == 16 && peerID.matches(Regex("^[0-9a-fA-F]+$"))) {
-                com.gap.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(peerID)?.isMutual == true
+                com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(peerID)?.isMutual == true
             } else false
         } catch (_: Exception) { false }
     }
@@ -339,11 +423,11 @@ private fun PrivateChatHeader(
     val titleText: String = if (isNostrDM) {
         // For geohash DMs, get the actual source geohash and proper display name
         val (conversationGeohash, baseName) = try {
-            val repoField = com.gap.droid.ui.GeohashViewModel::class.java.getDeclaredField("repo")
+            val repoField = com.gapmesh.droid.ui.GeohashViewModel::class.java.getDeclaredField("repo")
             repoField.isAccessible = true
-            val repo = repoField.get(viewModel.geohashViewModel) as com.gap.droid.nostr.GeohashRepository
+            val repo = repoField.get(viewModel.geohashViewModel) as com.gapmesh.droid.nostr.GeohashRepository
             val gh = repo.getConversationGeohash(peerID) ?: "geohash"
-            val fullPubkey = com.gap.droid.nostr.GeohashAliasRegistry.get(peerID) ?: ""
+            val fullPubkey = com.gapmesh.droid.nostr.GeohashAliasRegistry.get(peerID) ?: ""
             val displayName = if (fullPubkey.isNotEmpty()) {
                 repo.displayNameForGeohashConversation(fullPubkey, gh)
             } else {
@@ -361,9 +445,9 @@ private fun PrivateChatHeader(
             val titleFromFavorites = try {
                 if (peerID.length == 64 && peerID.matches(Regex("^[0-9a-fA-F]+$"))) {
                     val noiseKeyBytes = peerID.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
-                    com.gap.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKeyBytes)?.peerNickname
+                    com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKeyBytes)?.peerNickname
                 } else if (peerID.length == 16 && peerID.matches(Regex("^[0-9a-fA-F]+$"))) {
-                    com.gap.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(peerID)?.peerNickname
+                    com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(peerID)?.peerNickname
                 } else null
             } catch (_: Exception) { null }
             titleFromFavorites ?: peerID.take(12)
@@ -387,7 +471,7 @@ private fun PrivateChatHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Filled.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.back),
                     modifier = Modifier.size(16.dp),
                     tint = colorScheme.primary
@@ -493,7 +577,7 @@ private fun ChannelHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Filled.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.back),
                     modifier = Modifier.size(16.dp),
                     tint = colorScheme.primary
@@ -553,7 +637,7 @@ private fun MainHeader(
 
     // Bookmarks store for current geohash toggle (iOS parity)
     val context = androidx.compose.ui.platform.LocalContext.current
-    val bookmarksStore = remember { com.gap.droid.geohash.GeohashBookmarksStore.getInstance(context) }
+    val bookmarksStore = remember { com.gapmesh.droid.geohash.GeohashBookmarksStore.getInstance(context) }
     val bookmarks by bookmarksStore.bookmarks.collectAsStateWithLifecycle()
 
     Row(
@@ -586,7 +670,7 @@ private fun MainHeader(
         // Right section with location channels button and peer counter
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp) // Increased spacing
         ) {
 
             // Unread private messages badge (click to open most recent DM)
@@ -609,9 +693,18 @@ private fun MainHeader(
                     onClick = onLocationChannelsClick
                 )
 
+                // Connection status dot (Mesh vs Tor)
+                ConnectionStatusDot(
+                    selectedLocationChannel = selectedLocationChannel,
+                    isConnected = isConnected,
+                    modifier = Modifier
+                        .size(16.dp) // Increased for better visibility
+                        .padding(start = 6.dp, end = 2.dp)
+                )
+
                 // Bookmark toggle for current geohash (not shown for mesh)
                 val currentGeohash: String? = when (val sc = selectedLocationChannel) {
-                    is com.gap.droid.geohash.ChannelID.Location -> sc.channel.geohash
+                    is com.gapmesh.droid.geohash.ChannelID.Location -> sc.channel.geohash
                     else -> null
                 }
                 if (currentGeohash != null) {
@@ -638,29 +731,13 @@ private fun MainHeader(
                 viewModel = viewModel,
                 onClick = onLocationNotesClick
             )
-
-            // Tor status dot when Tor is enabled
-            TorStatusDot(
-                modifier = Modifier
-                    .size(8.dp)
-                    .padding(start = 0.dp, end = 2.dp)
-            )
             
             // PoW status indicator
             PoWStatusIndicator(
                 modifier = Modifier,
                 style = PoWIndicatorStyle.COMPACT
             )
-            Spacer(modifier = Modifier.width(2.dp))
-            PeerCounter(
-                connectedPeers = connectedPeers.filter { it != viewModel.meshService.myPeerID },
-                joinedChannels = joinedChannels,
-                hasUnreadChannels = hasUnreadChannels,
-                isConnected = isConnected,
-                selectedLocationChannel = selectedLocationChannel,
-                geohashPeople = geohashPeople,
-                onClick = onSidebarClick
-            )
+            // PeerCounter removed - now shown in bottom navigation People tab
         }
     }
 }
@@ -677,14 +754,14 @@ private fun LocationChannelsButton(
     val teleported by viewModel.isTeleported.collectAsStateWithLifecycle()
     
     val (badgeText, badgeColor) = when (selectedChannel) {
-        is com.gap.droid.geohash.ChannelID.Mesh -> {
-            "#mesh" to Color(0xFF007AFF) // iOS blue for mesh
+        is com.gapmesh.droid.geohash.ChannelID.Mesh -> {
+            stringResource(R.string.mesh_network_header) to Color(0xFF007AFF) // iOS blue for mesh
         }
-        is com.gap.droid.geohash.ChannelID.Location -> {
-            val geohash = (selectedChannel as com.gap.droid.geohash.ChannelID.Location).channel.geohash
+        is com.gapmesh.droid.geohash.ChannelID.Location -> {
+            val geohash = (selectedChannel as com.gapmesh.droid.geohash.ChannelID.Location).channel.geohash
             "#$geohash" to Color(0xFF00C851) // Green for location
         }
-        null -> "#mesh" to Color(0xFF007AFF) // Default to mesh
+        null -> stringResource(R.string.mesh_network_header) to Color(0xFF007AFF) // Default to mesh
     }
     
     Button(

@@ -1,8 +1,8 @@
-package com.gap.droid.crypto
+package com.gapmesh.droid.crypto
 
 import android.content.Context
 import android.util.Log
-import com.gap.droid.noise.NoiseEncryptionService
+import com.gapmesh.droid.noise.NoiseEncryptionService
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair
 import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator
 import org.bouncycastle.crypto.params.Ed25519KeyGenerationParameters
@@ -208,7 +208,7 @@ open class EncryptionService(private val context: Context) {
     /**
      * Get session state for a peer (for UI state display)
      */
-    fun getSessionState(peerID: String): com.gap.droid.noise.NoiseSession.NoiseSessionState {
+    fun getSessionState(peerID: String): com.gapmesh.droid.noise.NoiseSession.NoiseSessionState {
         return noiseService.getSessionState(peerID)
     }
     

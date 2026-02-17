@@ -1,10 +1,10 @@
-package com.gap.droid.mesh
+package com.gapmesh.droid.mesh
 
 import android.bluetooth.*
 import android.content.Context
 import android.util.Log
-import com.gap.droid.model.RoutedPacket
-import com.gap.droid.protocol.BitchatPacket
+import com.gapmesh.droid.model.RoutedPacket
+import com.gapmesh.droid.protocol.BitchatPacket
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 
@@ -107,7 +107,7 @@ class BluetoothConnectionManager(
         powerManager.delegate = this
         // Observe debug settings to enforce role state while active
         try {
-            val dbg = com.gap.droid.ui.debug.DebugSettingsManager.getInstance()
+            val dbg = com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance()
             // Role enable/disable
             connectionScope.launch {
                 dbg.gattServerEnabled.collect { enabled ->
@@ -123,11 +123,19 @@ class BluetoothConnectionManager(
             }
             // Connection caps: enforce on change
             connectionScope.launch {
-                dbg.maxConnectionsOverall.collect {
+                dbg.maxConnectionsOverall.collect { maxOverall ->
                     if (!isActive) return@collect
+                    // 1. Enforce client limits (handled by tracker)
                     connectionTracker.enforceConnectionLimits()
-                    // Also enforce server side best-effort
-                    serverManager.enforceServerLimit(dbg.maxServerConnections.value)
+                    
+                    // 2. Enforce overall limit on server connections if needed
+                    // (Tracker knows about all connections but can't disconnect servers directly)
+                    val maxServer = dbg.maxServerConnections.value
+                    val excessServers = connectionTracker.getExcessServerConnections(maxServer, maxOverall)
+                    excessServers.forEach { device ->
+                        Log.d(TAG, "Disconnecting server ${device.address} due to overall cap")
+                        serverManager.disconnectDevice(device)
+                    }
                 }
             }
             connectionScope.launch {
@@ -137,9 +145,18 @@ class BluetoothConnectionManager(
                 }
             }
             connectionScope.launch {
-                dbg.maxServerConnections.collect {
+                dbg.maxServerConnections.collect { maxServer ->
                     if (!isActive) return@collect
-                    serverManager.enforceServerLimit(dbg.maxServerConnections.value)
+                    // Enforce server specific limit
+                    serverManager.enforceServerLimit(maxServer)
+                    
+                    // Also check if this change puts us over the overall limit
+                    val maxOverall = dbg.maxConnectionsOverall.value
+                    val excessServers = connectionTracker.getExcessServerConnections(maxServer, maxOverall)
+                    excessServers.forEach { device ->
+                        Log.d(TAG, "Disconnecting server ${device.address} due to overall cap")
+                        serverManager.disconnectDevice(device)
+                    }
                 }
             }
         } catch (_: Exception) { }
@@ -174,7 +191,7 @@ class BluetoothConnectionManager(
                 powerManager.start()
                 
                 // Start server/client based on debug settings
-                val dbg = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance() } catch (_: Exception) { null }
+                val dbg = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance() } catch (_: Exception) { null }
                 val startServer = dbg?.gattServerEnabled?.value != false
                 val startClient = dbg?.gattClientEnabled?.value != false
 
@@ -262,6 +279,16 @@ class BluetoothConnectionManager(
         onPacketOutbound?.invoke(routed.packet, null)
         
         packetBroadcaster.broadcastPacket(
+            routed,
+            serverManager.getGattServer(),
+            serverManager.getCharacteristic()
+        )
+    }
+
+    fun sendToPeer(peerID: String, routed: RoutedPacket): Boolean {
+        if (!isActive) return false
+        return packetBroadcaster.sendToPeer(
+            peerID,
             routed,
             serverManager.getGattServer(),
             serverManager.getCharacteristic()
@@ -374,7 +401,7 @@ class BluetoothConnectionManager(
             val wasUsingDutyCycle = powerManager.shouldUseDutyCycle()
             
             // Update advertising with new power settings if server enabled
-            val serverEnabled = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance().gattServerEnabled.value } catch (_: Exception) { true }
+            val serverEnabled = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattServerEnabled.value } catch (_: Exception) { true }
             if (serverEnabled) {
                 serverManager.restartAdvertising()
             } else {
@@ -385,7 +412,7 @@ class BluetoothConnectionManager(
             val nowUsingDutyCycle = powerManager.shouldUseDutyCycle()
             if (wasUsingDutyCycle != nowUsingDutyCycle) {
                 Log.d(TAG, "Duty cycle behavior changed (${wasUsingDutyCycle} -> ${nowUsingDutyCycle}), restarting scan")
-                val clientEnabled = try { com.gap.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
+                val clientEnabled = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
                 if (clientEnabled) {
                     clientManager.restartScanning()
                 } else {
@@ -399,7 +426,7 @@ class BluetoothConnectionManager(
             connectionTracker.enforceConnectionLimits()
             // Best-effort server cap
             try {
-                val maxServer = com.gap.droid.ui.debug.DebugSettingsManager.getInstance().maxServerConnections.value
+                val maxServer = com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().maxServerConnections.value
                 serverManager.enforceServerLimit(maxServer)
             } catch (_: Exception) { }
         }

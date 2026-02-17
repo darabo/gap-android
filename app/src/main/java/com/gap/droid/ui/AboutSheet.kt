@@ -1,4 +1,4 @@
-package com.gap.droid.ui
+package com.gapmesh.droid.ui
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -9,18 +9,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.filled.NetworkCheck
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -28,18 +30,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gap.droid.nostr.NostrProofOfWork
-import com.gap.droid.nostr.PoWPreferenceManager
+import com.gapmesh.droid.nostr.NostrProofOfWork
+import com.gapmesh.droid.nostr.PoWPreferenceManager
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gap.droid.R
-import com.gap.droid.core.ui.component.button.CloseButton
-import com.gap.droid.net.TorMode
-import com.gap.droid.net.TorPreferenceManager
-import com.gap.droid.net.ArtiTorManager
+import com.gapmesh.droid.R
+import com.gapmesh.droid.core.ui.component.button.CloseButton
+import com.gapmesh.droid.core.ui.component.sheet.BitchatBottomSheet
+import com.gapmesh.droid.net.TorMode
+import com.gapmesh.droid.net.TorPreferenceManager
+import com.gapmesh.droid.net.ArtiTorManager
+import com.gapmesh.droid.onboarding.LanguagePreferenceManager
+import com.gapmesh.droid.util.ApkShareHelper
+import androidx.compose.material.icons.filled.Share
 
 /**
  * Feature row for displaying app capabilities
@@ -205,6 +210,8 @@ fun AboutSheet(
     isPresented: Boolean,
     onDismiss: () -> Unit,
     onShowDebug: (() -> Unit)? = null,
+    nickname: String = "",
+    onNicknameChange: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -217,10 +224,6 @@ fun AboutSheet(
             "1.0.0" // fallback version
         }
     }
-
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true
-    )
 
     val lazyListState = rememberLazyListState()
     val isScrolled by remember {
@@ -237,12 +240,9 @@ fun AboutSheet(
     val isDark = colorScheme.background.red + colorScheme.background.green + colorScheme.background.blue < 1.5f
     
     if (isPresented) {
-        ModalBottomSheet(
-            modifier = modifier.statusBarsPadding(),
+        BitchatBottomSheet(
+            modifier = modifier,
             onDismissRequest = onDismiss,
-            sheetState = sheetState,
-            containerColor = colorScheme.background,
-            dragHandle = null
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 LazyColumn(
@@ -334,13 +334,13 @@ fun AboutSheet(
                     item(key = "appearance") {
                         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                             Text(
-                                text = "THEME",
+                                text = stringResource(R.string.about_theme_section).uppercase(),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = colorScheme.onBackground.copy(alpha = 0.5f),
                                 letterSpacing = 0.5.sp,
                                 modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                             )
-                            val themePref by com.gap.droid.ui.theme.ThemePreferenceManager.themeFlow.collectAsState()
+                            val themePref by com.gapmesh.droid.ui.theme.ThemePreferenceManager.themeFlow.collectAsState()
                             Surface(
                                 modifier = Modifier.fillMaxWidth(),
                                 color = colorScheme.surface,
@@ -355,21 +355,115 @@ fun AboutSheet(
                                     ThemeChip(
                                         label = stringResource(R.string.about_system),
                                         selected = themePref.isSystem,
-                                        onClick = { com.gap.droid.ui.theme.ThemePreferenceManager.set(context, com.gap.droid.ui.theme.ThemePreference.System) },
+                                        onClick = { com.gapmesh.droid.ui.theme.ThemePreferenceManager.set(context, com.gapmesh.droid.ui.theme.ThemePreference.System) },
                                         modifier = Modifier.weight(1f)
                                     )
                                     ThemeChip(
                                         label = stringResource(R.string.about_light),
                                         selected = themePref.isLight,
-                                        onClick = { com.gap.droid.ui.theme.ThemePreferenceManager.set(context, com.gap.droid.ui.theme.ThemePreference.Light) },
+                                        onClick = { com.gapmesh.droid.ui.theme.ThemePreferenceManager.set(context, com.gapmesh.droid.ui.theme.ThemePreference.Light) },
                                         modifier = Modifier.weight(1f)
                                     )
                                     ThemeChip(
                                         label = stringResource(R.string.about_dark),
                                         selected = themePref.isDark,
-                                        onClick = { com.gap.droid.ui.theme.ThemePreferenceManager.set(context, com.gap.droid.ui.theme.ThemePreference.Dark) },
+                                        onClick = { com.gapmesh.droid.ui.theme.ThemePreferenceManager.set(context, com.gapmesh.droid.ui.theme.ThemePreference.Dark) },
                                         modifier = Modifier.weight(1f)
                                     )
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Language Selection Section
+                    item(key = "language") {
+                        val currentLanguage by LanguagePreferenceManager.currentLanguage.collectAsState()
+                        
+                        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            Text(
+                                text = stringResource(R.string.about_language).uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                letterSpacing = 0.5.sp,
+                                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                            )
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = colorScheme.surface,
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    ThemeChip(
+                                        label = stringResource(R.string.language_english),
+                                        selected = currentLanguage == LanguagePreferenceManager.AppLanguage.ENGLISH,
+                                        onClick = { LanguagePreferenceManager.setLanguage(context, LanguagePreferenceManager.AppLanguage.ENGLISH) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    ThemeChip(
+                                        label = stringResource(R.string.language_farsi),
+                                        selected = currentLanguage == LanguagePreferenceManager.AppLanguage.FARSI,
+                                        onClick = { LanguagePreferenceManager.setLanguage(context, LanguagePreferenceManager.AppLanguage.FARSI) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Username Section
+                    if (onNicknameChange != null) {
+                        item(key = "username") {
+                            var editedNickname by remember { mutableStateOf(nickname) }
+                            
+                            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                                Text(
+                                    text = stringResource(R.string.change_username).uppercase(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                    letterSpacing = 0.5.sp,
+                                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                                )
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = colorScheme.surface,
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text(
+                                            text = "@",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = colorScheme.primary
+                                        )
+                                        OutlinedTextField(
+                                            value = editedNickname,
+                                            onValueChange = { newValue ->
+                                                editedNickname = newValue
+                                                onNicknameChange(newValue)
+                                            },
+                                            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                                fontFamily = FontFamily.Monospace,
+                                                color = colorScheme.onSurface
+                                            ),
+                                            singleLine = true,
+                                            modifier = Modifier.weight(1f),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedBorderColor = colorScheme.primary,
+                                                unfocusedBorderColor = colorScheme.outline.copy(alpha = 0.5f)
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -380,7 +474,7 @@ fun AboutSheet(
                         LaunchedEffect(Unit) { PoWPreferenceManager.init(context) }
                         val powEnabled by PoWPreferenceManager.powEnabled.collectAsState()
                         val powDifficulty by PoWPreferenceManager.powDifficulty.collectAsState()
-                        var backgroundEnabled by remember { mutableStateOf(com.gap.droid.service.MeshServicePreferences.isBackgroundEnabled(true)) }
+                        var backgroundEnabled by remember { mutableStateOf(com.gapmesh.droid.service.MeshServicePreferences.isBackgroundEnabled(true)) }
                         val torMode = remember { mutableStateOf(TorPreferenceManager.get(context)) }
                         val torProvider = remember { ArtiTorManager.getInstance() }
                         val torStatus by torProvider.statusFlow.collectAsState()
@@ -388,7 +482,7 @@ fun AboutSheet(
 
                         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                             Text(
-                                text = "SETTINGS",
+                                text = stringResource(R.string.about_settings_section).uppercase(),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = colorScheme.onBackground.copy(alpha = 0.5f),
                                 letterSpacing = 0.5.sp,
@@ -408,11 +502,11 @@ fun AboutSheet(
                                         checked = backgroundEnabled,
                                         onCheckedChange = { enabled ->
                                             backgroundEnabled = enabled
-                                            com.gap.droid.service.MeshServicePreferences.setBackgroundEnabled(enabled)
+                                            com.gapmesh.droid.service.MeshServicePreferences.setBackgroundEnabled(enabled)
                                             if (!enabled) {
-                                                com.gap.droid.service.MeshForegroundService.stop(context)
+                                                com.gapmesh.droid.service.MeshForegroundService.stop(context)
                                             } else {
-                                                com.gap.droid.service.MeshForegroundService.start(context)
+                                                com.gapmesh.droid.service.MeshForegroundService.start(context)
                                             }
                                         }
                                     )
@@ -439,7 +533,7 @@ fun AboutSheet(
                                     // Tor Toggle
                                     SettingsToggleRow(
                                         icon = Icons.Filled.Security,
-                                        title = "Tor Network",
+                                        title = stringResource(R.string.about_tor_network),
                                         subtitle = stringResource(R.string.about_tor_route),
                                         checked = torMode.value == TorMode.ON,
                                         onCheckedChange = { enabled ->
@@ -464,6 +558,145 @@ fun AboutSheet(
                                             }
                                         } else null
                                     )
+                                    
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 56.dp),
+                                        color = colorScheme.outline.copy(alpha = 0.12f)
+                                    )
+                                    
+                                    // Legacy Compatibility Toggle (Bitchat interop)
+                                    var legacyEnabled by remember { mutableStateOf(com.gapmesh.droid.service.MeshServicePreferences.isLegacyCompatibilityEnabled(false)) }
+                                    SettingsToggleRow(
+                                        icon = Icons.Filled.NetworkCheck,
+                                        title = stringResource(R.string.about_legacy_compat_title),
+                                        subtitle = stringResource(R.string.about_legacy_compat_desc),
+                                        checked = legacyEnabled,
+                                        onCheckedChange = { enabled ->
+                                            legacyEnabled = enabled
+                                            com.gapmesh.droid.service.MeshServicePreferences.setLegacyCompatibilityEnabled(enabled)
+                                        }
+                                    )
+                                    
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 56.dp),
+                                        color = colorScheme.outline.copy(alpha = 0.12f)
+                                    )
+                                    
+                                    // Screenshot Notifications Toggle
+                                    LaunchedEffect(Unit) { com.gapmesh.droid.service.ScreenshotPreferenceManager.init(context) }
+                                    val screenshotEnabled by com.gapmesh.droid.service.ScreenshotPreferenceManager.isEnabled.collectAsState()
+                                    val permissionManager = remember { com.gapmesh.droid.onboarding.PermissionManager(context) }
+                                    val hasStoragePermission = remember(screenshotEnabled) { permissionManager.isStoragePermissionGranted() }
+                                    
+                                    SettingsToggleRow(
+                                        icon = Icons.Filled.Security,
+                                        title = stringResource(R.string.screenshot_notifications_title),
+                                        subtitle = if (!hasStoragePermission && screenshotEnabled) {
+                                            stringResource(R.string.screenshot_notifications_permission_needed)
+                                        } else {
+                                            stringResource(R.string.screenshot_notifications_desc)
+                                        },
+                                        checked = screenshotEnabled,
+                                        onCheckedChange = { enabled ->
+                                            com.gapmesh.droid.service.ScreenshotPreferenceManager.setScreenshotNotificationsEnabled(enabled)
+                                            // Note: Permission request will be handled by the system when
+                                            // ScreenshotDetector tries to access storage
+                                        }
+                                    )
+
+                                    // Decoy PIN change section
+                                    if (com.gapmesh.droid.service.DecoyModeManager.hasPIN(context)) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(start = 56.dp),
+                                            color = colorScheme.outline.copy(alpha = 0.12f)
+                                        )
+                                        var showPinDialog by remember { mutableStateOf(false) }
+                                        Surface(
+                                            onClick = { showPinDialog = true },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = Color.Transparent
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Calculate,
+                                                    contentDescription = null,
+                                                    tint = colorScheme.primary,
+                                                    modifier = Modifier.size(22.dp)
+                                                )
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        stringResource(R.string.decoy_settings_title),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight = FontWeight.Medium,
+                                                        color = colorScheme.onSurface
+                                                    )
+                                                    Text(
+                                                        stringResource(R.string.decoy_settings_desc),
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = colorScheme.onSurface.copy(alpha = 0.6f)
+                                                    )
+                                                }
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                    contentDescription = null,
+                                                    tint = colorScheme.onSurface.copy(alpha = 0.3f),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        }
+
+                                        // PIN change dialog
+                                        if (showPinDialog) {
+                                            var newPin by remember { mutableStateOf("") }
+                                            var confirmPin by remember { mutableStateOf("") }
+                                            val mismatch = confirmPin.isNotEmpty() && newPin != confirmPin
+                                            val canSave = newPin.length in 4..8 && newPin == confirmPin
+
+                                            AlertDialog(
+                                                onDismissRequest = { showPinDialog = false },
+                                                title = { Text(stringResource(R.string.decoy_settings_change_title)) },
+                                                text = {
+                                                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                                        OutlinedTextField(
+                                                            value = newPin,
+                                                            onValueChange = { newPin = it.filter { c -> c.isDigit() }.take(8) },
+                                                            label = { Text(stringResource(R.string.decoy_settings_new_pin)) },
+                                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                                            singleLine = true
+                                                        )
+                                                        OutlinedTextField(
+                                                            value = confirmPin,
+                                                            onValueChange = { confirmPin = it.filter { c -> c.isDigit() }.take(8) },
+                                                            label = { Text(stringResource(R.string.decoy_settings_confirm_pin)) },
+                                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                                            singleLine = true,
+                                                            isError = mismatch,
+                                                            supportingText = if (mismatch) {{ Text(stringResource(R.string.decoy_settings_mismatch)) }} else null
+                                                        )
+                                                    }
+                                                },
+                                                confirmButton = {
+                                                    TextButton(
+                                                        onClick = {
+                                                            com.gapmesh.droid.service.DecoyModeManager.setPIN(context, newPin)
+                                                            showPinDialog = false
+                                                            android.widget.Toast.makeText(context, context.getString(R.string.decoy_settings_saved), android.widget.Toast.LENGTH_SHORT).show()
+                                                        },
+                                                        enabled = canSave
+                                                    ) { Text(stringResource(R.string.decoy_settings_save)) }
+                                                },
+                                                dismissButton = {
+                                                    TextButton(onClick = { showPinDialog = false }) { Text(stringResource(R.string.cancel)) }
+                                                }
+                                            )
+                                        }
+                                    }
                                 }
                             }
                             
@@ -502,7 +735,7 @@ fun AboutSheet(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(
-                                                text = "Difficulty",
+                                                text = stringResource(R.string.about_difficulty),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Medium,
                                                 color = colorScheme.onSurface
@@ -574,7 +807,7 @@ fun AboutSheet(
                                             }
                                             Surface(color = statusColor, shape = CircleShape, modifier = Modifier.size(10.dp)) {}
                                             Text(
-                                                text = if (torStatus.running) "Connected (${torStatus.bootstrapPercent}%)" else "Disconnected",
+                                                text = if (torStatus.running) stringResource(R.string.tor_status_connected, torStatus.bootstrapPercent) else stringResource(R.string.tor_status_disconnected),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Medium,
                                                 color = colorScheme.onSurface
@@ -592,6 +825,97 @@ fun AboutSheet(
                                     }
                                 }
                             }
+                        }
+                    }
+
+                    // Share App Section
+                    item(key = "share_app") {
+                        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            Text(
+                                text = stringResource(R.string.share_app_title).uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                letterSpacing = 0.5.sp,
+                                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                            )
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = colorScheme.surface,
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Column {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Share,
+                                            contentDescription = null,
+                                            tint = colorScheme.primary,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(14.dp))
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.share_app_title),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Medium,
+                                                color = colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.share_app_desc),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = colorScheme.onSurface.copy(alpha = 0.6f),
+                                                lineHeight = 16.sp
+                                            )
+                                        }
+                                    }
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 56.dp),
+                                        color = colorScheme.outline.copy(alpha = 0.12f)
+                                    )
+                                    // Share button
+                                    Surface(
+                                        onClick = { ApkShareHelper.shareApk(context) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        color = Color.Transparent
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Share,
+                                                contentDescription = null,
+                                                tint = if (isDark) Color(0xFF32D74B) else Color(0xFF248A3D),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = stringResource(R.string.share_app_button),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = if (isDark) Color(0xFF32D74B) else Color(0xFF248A3D)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            Text(
+                                text = stringResource(R.string.share_app_size_note),
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = colorScheme.onBackground.copy(alpha = 0.4f),
+                                modifier = Modifier.padding(start = 16.dp, top = 6.dp)
+                            )
                         }
                     }
 
@@ -682,27 +1006,6 @@ fun AboutSheet(
     }
 }
 
-@Composable
-fun CloseButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    IconButton(
-        onClick = onClick,
-        modifier = modifier
-            .size(32.dp),
-        colors = IconButtonDefaults.iconButtonColors(
-            contentColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            containerColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
-        )
-    ) {
-        Icon(
-            imageVector = Icons.Default.Close,
-            contentDescription = "Close",
-            modifier = Modifier.size(18.dp)
-        )
-    }
-}
 /**
  * Password prompt dialog for password-protected channels
  * Kept as dialog since it requires user input

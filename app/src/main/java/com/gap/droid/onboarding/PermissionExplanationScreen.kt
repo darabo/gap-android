@@ -1,4 +1,4 @@
-package com.gap.droid.onboarding
+package com.gapmesh.droid.onboarding
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Power
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,7 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
-import com.gap.droid.R
+import com.gapmesh.droid.R
 
 /**
  * Permission explanation screen shown before requesting permissions
@@ -186,7 +187,7 @@ private fun PermissionCategoryCard(
     ) {
         Icon(
             imageVector = getPermissionIcon(category.type),
-            contentDescription = category.type.nameValue,
+            contentDescription = category.typeName,
             tint = colorScheme.primary,
             modifier = Modifier
                 .padding(top = 2.dp)
@@ -195,7 +196,7 @@ private fun PermissionCategoryCard(
         Spacer(modifier = Modifier.width(16.dp))
         Column {
             Text(
-                text = category.type.nameValue,
+                text = category.typeName,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
                 color = colorScheme.onBackground
@@ -214,11 +215,13 @@ private fun PermissionCategoryCard(
 private fun getPermissionIcon(permissionType: PermissionType): ImageVector {
     return when (permissionType) {
         PermissionType.NEARBY_DEVICES -> Icons.Filled.Bluetooth
+        PermissionType.WIFI_AWARE -> Icons.Filled.Wifi
         PermissionType.PRECISE_LOCATION -> Icons.Filled.LocationOn
         PermissionType.BACKGROUND_LOCATION -> Icons.Filled.LocationOn
         PermissionType.MICROPHONE -> Icons.Filled.Mic
         PermissionType.NOTIFICATIONS -> Icons.Filled.Notifications
         PermissionType.BATTERY_OPTIMIZATION -> Icons.Filled.Power
+        PermissionType.STORAGE -> Icons.Filled.Settings // Or another suitable icon
         PermissionType.OTHER -> Icons.Filled.Settings
     }
 }

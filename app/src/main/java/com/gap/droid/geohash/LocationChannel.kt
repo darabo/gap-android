@@ -1,4 +1,4 @@
-package com.gap.droid.geohash
+package com.gapmesh.droid.geohash
 
 /**
  * Levels of location channels mapped to geohash precisions.
