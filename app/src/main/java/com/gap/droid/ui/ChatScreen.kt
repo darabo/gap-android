@@ -107,9 +107,9 @@ fun ChatScreen(viewModel: ChatViewModel) {
         }
     }
 
-    // Determine whether to show media buttons (only hide in geohash location chats)
+    // Determine whether to show media buttons (only hide in geohash location chats and private messaging)
     val showMediaButtons = when {
-        selectedPrivatePeer != null -> true
+        selectedPrivatePeer != null -> false  // Disable media buttons in private messaging
         currentChannel != null -> true
         else -> selectedLocationChannel !is com.gapmesh.droid.geohash.ChannelID.Location
     }

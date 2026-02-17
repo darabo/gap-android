@@ -928,7 +928,7 @@ private fun PrivateChatSheet(
                         currentChannel = null,
                         nickname = nickname,
                         colorScheme = colorScheme,
-                        showMediaButtons = true
+                        showMediaButtons = false  // Disable media buttons in private messaging
                     )
                 }
 
