@@ -102,9 +102,9 @@
     <string name="pick_image">انتخاب تصویر</string>
 
     <!-- برگهٔ درباره -->
-    <string name="about_tagline">گفت‌وگوی مِش غیرمتمرکز با رمزگذاری سرتاسری</string>
-    <string name="about_offline_mesh_title">گفت‌وگوی مِش آفلاین</string>
-    <string name="about_offline_mesh_desc">بدون اینترنت یا سرور، مستقیماً از طریق Bluetooth LE ارتباط برقرار کنید. پیام‌ها از طریق دستگاه‌های نزدیک رله می‌شوند تا بُرد افزایش یابد.</string>
+    <string name="about_tagline">گفت‌وگوی مش غیرمتمرکز با رمزگذاری سرتاسری</string>
+    <string name="about_offline_mesh_title">گفت‌وگوی مش آفلاین</string>
+    <string name="about_offline_mesh_desc">بدون اینترنت یا سرور، مستقیماً از طریق بلوتوث کم‌مصرف (Bluetooth LE) ارتباط برقرار کنید. پیام‌ها از طریق دستگاه‌های نزدیک رله می‌شوند تا بُرد افزایش یابد.</string>
     <string name="about_online_geohash_title">کانال‌های geohash آنلاین</string>
     <string name="about_online_geohash_desc">از طریق کانال‌های مبتنی بر geohash با افراد منطقهٔ خود ارتباط برقرار کنید. مِش را از طریق رله‌های عمومی اینترنت گسترش دهید.</string>
     <string name="about_e2e_title">رمزگذاری سرتاسری</string>
@@ -142,7 +142,7 @@
     <string name="about_footer">متن‌باز • حریم خصوصی در اولویت • غیرمتمرکز</string>
     <!-- اشتراک‌گذاری برنامه -->
     <string name="share_app_title">اشتراک‌گذاری برنامه همراه سبک</string>
-    <string name="share_app_desc">گپ مش را با دستگاه‌های نزدیک از طریق بلوتوث، اشتراک‌گذاری نزدیک یا هر روش انتقال فایل دیگری به اشتراک بگذارید.</string>
+    <string name="share_app_desc">گپ مش را با دستگاه‌های نزدیک از طریق بلوتوث، اشتراک‌گذاری نزدیک (Nearby Share) یا هر روش انتقال فایل دیگری به اشتراک بگذارید.</string>
     <string name="share_app_button">اشتراک‌گذاری APK سبک</string>
     <string name="share_app_size_note">اندازه فایل: ~۴.۵ مگابایت</string>
     <string name="close_plain">بستن</string>
@@ -240,7 +240,7 @@
     <string name="disable_location_services">غیرفعال‌کردن خدمات مکان</string>
     <string name="enable_location_services">فعال‌کردن خدمات مکان</string>
     <string name="mesh_label">mesh</string>
-    <string name="mesh_network_header">#مِش</string>
+    <string name="mesh_network_header">#مش</string>
     <string name="location_level_block">بلوک</string>
     <string name="location_level_neighborhood">محله</string>
     <string name="location_level_city">شهر</string>
@@ -315,7 +315,7 @@
     <string name="bluetooth_needs_bullets">• یافتن کاربران نزدیک\n• ایجاد اتصال‌های شبکهٔ مِش\n• ارسال و دریافت پیام‌ها\n• کار بدون اینترنت یا سرور</string>
     <string name="enable_bluetooth">فعال‌کردن بلوتوث</string>
     <string name="bluetooth_not_supported">بلوتوث پشتیبانی نمی‌شود</string>
-    <string name="bluetooth_unsupported_explanation">این دستگاه از Bluetooth Low Energy (BLE) که برای کارکرد گپ مش لازم است پشتیبانی نمی‌کند.\n\nگپ مش برای ایجاد شبکهٔ مِش و ارتباط با دستگاه‌های نزدیک بدون اینترنت به BLE نیاز دارد.</string>
+    <string name="bluetooth_unsupported_explanation">این دستگاه از بلوتوث کم‌مصرف (BLE) که برای کارکرد گپ مش لازم است پشتیبانی نمی‌کند.\n\nگپ مش برای ایجاد شبکهٔ مش و ارتباط با دستگاه‌های نزدیک بدون اینترنت به BLE نیاز دارد.</string>
     <string name="checking_bluetooth_status">در حال بررسی وضعیت بلوتوث …</string>
     <string name="battery_optimization_detected_title">بهینه‌سازی باتری شناسایی شد</string>
     <string name="battery_optimization_enabled_title">بهینه‌سازی باتری فعال است</string>
@@ -486,9 +486,9 @@
     <!-- پیام‌های سیستم -->
     <string name="system_screenshot_public">از صفحه عکس گرفت</string>
     <string name="system_screenshot_local">شما از صفحه عکس گرفتید</string>
-    <string name="system_tor_starting">در حال راه‌اندازی مخابره...</string>
-    <string name="system_tor_running">مخابره راه‌اندازی شد، تمام چت‌ها برای حفظ حریم خصوصی IP از طریق Tor مسیریابی می‌شوند.</string>
-    <string name="system_tor_restarting">مخابره در حال راه‌اندازی مجدد برای بازیابی اتصال...</string>
+    <string name="system_tor_starting">در حال برقراری اتصال...</string>
+    <string name="system_tor_running">اتصال برقرار شد، تمام چت‌ها برای حفظ حریم خصوصی IP از طریق Tor مسیریابی می‌شوند.</string>
+    <string name="system_tor_restarting">اتصال در حال راه‌اندازی مجدد برای بازیابی اتصال...</string>
     <string name="background_location_required_title">نیاز به مکان در پس‌زمینه</string>
     <string name="background_location_required_subtitle">دسترسی به مکان در پس‌زمینه لازم است</string>
     <string name="background_location_explanation">گپ مش برای حفظ اتصال مش هنگام بستن برنامه به دسترسی مکان در پس‌زمینه نیاز دارد.</string>
@@ -506,17 +506,17 @@
     <string name="perm_storage_system">عکس‌ها و ویدیوها / حافظه</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_welcome">به گپ خوش آمدید</string>
-    <string name="onboarding_identity_desc">هویت دیجیتال شما در مِش.</string>
+    <string name="onboarding_welcome">به گپ مش خوش آمدید</string>
+    <string name="onboarding_identity_desc">هویت دیجیتال شما در مش.</string>
     <string name="onboarding_username_label">نام کاربری شما</string>
     <string name="onboarding_privacy_note">توجه: تغییر نام کاربری از حالت ناشناس ممکن است حریم خصوصی شما را کاهش دهد اگر نام قابل شناسایی انتخاب کنید.</string>
-    <string name="onboarding_bg_title">پس‌زمینه و مِش</string>
+    <string name="onboarding_bg_title">پس‌زمینه و مش</string>
     <string name="onboarding_bg_option">اجرای برنامه در پس‌زمینه؟</string>
     <string name="onboarding_enabled_rec">فعال (توصیه شده)</string>
     <string name="onboarding_disabled">غیرفعال</string>
     <string name="onboarding_bg_enabled_desc">✓ اتصال پایدارتر\n✓ دریافت پیام در حالت قفل\n⚠ مصرف باتری بیشتر</string>
     <string name="onboarding_bg_disabled_desc">✓ صرفه‌جویی در باتری\n⚠ قطع اتصال هنگام بستن برنامه\n⚠ تأخیر در پیام‌ها</string>
-    <string name="onboarding_mesh_title">مِش چگونه کار می‌کند</string>
+    <string name="onboarding_mesh_title">مش چگونه کار می‌کند</string>
     <string name="onboarding_mesh_desc">گپ یک شبکهٔ آفلاین با بلوتوث ایجاد می‌کند. پیام‌ها بین گوشی‌ها جابه‌جا می‌شوند. همهٔ چت‌ها رمزگذاری شده و هرگز با هیچ سرور مرکزی به اشتراک گذاشته نمی‌شوند.</string>
     <string name="onboarding_features_title">ویژگی‌ها و وضعیت</string>
     <string name="onboarding_feature_geo_title">مکانی (Geohash)</string>
