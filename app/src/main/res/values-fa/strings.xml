@@ -141,7 +141,7 @@
     <string name="about_debug_settings">تنظیمات اشکال‌زدایی</string>
     <string name="about_footer">متن‌باز • حریم خصوصی در اولویت • غیرمتمرکز</string>
     <!-- اشتراک‌گذاری برنامه -->
-    <string name="share_app_title">اشتراک‌گذاری برنامه همراه سبک</string>
+    <string name="share_app_title">اشتراک‌گذاری نسخه سبک برنامه</string>
     <string name="share_app_desc">گپ مش را با دستگاه‌های نزدیک از طریق بلوتوث، اشتراک‌گذاری نزدیک (Nearby Share) یا هر روش انتقال فایل دیگری به اشتراک بگذارید.</string>
     <string name="share_app_button">اشتراک‌گذاری APK سبک</string>
     <string name="share_app_size_note">اندازه فایل: ~۴.۵ مگابایت</string>
@@ -509,7 +509,7 @@
     <string name="onboarding_welcome">به گپ مش خوش آمدید</string>
     <string name="onboarding_identity_desc">هویت دیجیتال شما در مش.</string>
     <string name="onboarding_username_label">نام کاربری شما</string>
-    <string name="onboarding_privacy_note">توجه: تغییر نام کاربری از حالت ناشناس ممکن است حریم خصوصی شما را کاهش دهد اگر نام قابل شناسایی انتخاب کنید.</string>
+    <string name="onboarding_privacy_note">توجه: اگر نامی قابل شناسایی انتخاب کنید، تغییر نام کاربری از حالت ناشناس ممکن است حریم خصوصی شما را کاهش دهد.</string>
     <string name="onboarding_bg_title">پس‌زمینه و مش</string>
     <string name="onboarding_bg_option">اجرای برنامه در پس‌زمینه؟</string>
     <string name="onboarding_enabled_rec">فعال (توصیه شده)</string>

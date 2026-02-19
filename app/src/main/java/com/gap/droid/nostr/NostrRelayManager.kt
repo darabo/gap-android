@@ -129,9 +129,14 @@ class NostrRelayManager private constructor() {
 
     /**
      * Compute and connect to relays for a given geohash (nearest + optional defaults), cache the mapping.
+     * If Tor is enabled but still bootstrapping, waits (up to 60 s) for the proxy to become ready
+     * before opening connections so they don't immediately fail with ECONNREFUSED.
      */
     fun ensureGeohashRelaysConnected(geohash: String, nRelays: Int = 5, includeDefaults: Boolean = false) {
         try {
+            // Gate on Tor readiness to avoid wasting connections against a dead SOCKS proxy
+            awaitTorIfBootstrapping()
+
             val nearest = RelayDirectory.closestRelaysForGeohash(geohash, nRelays)
             val selected = if (includeDefaults) {
                 (nearest + Companion.defaultRelays()).toSet()
@@ -146,6 +151,31 @@ class NostrRelayManager private constructor() {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to ensure relays for $geohash: ${e.message}")
         }
+    }
+
+    /**
+     * If Tor is ON but not yet bootstrapped, block the current coroutine
+     * (up to 60 s) until the proxy is fully functional.  This prevents
+     * geohash relay connections from hitting a non-listening SOCKS port.
+     */
+    private fun awaitTorIfBootstrapping() {
+        try {
+            val tor = ArtiTorManager.getInstance()
+            val status = tor.statusFlow.value
+            if (status.mode != com.gapmesh.droid.net.TorMode.ON) return
+            if (tor.isProxyEnabled()) return
+
+            Log.d(TAG, "⏳ Tor is bootstrapping — waiting before connecting geohash relays…")
+            val deadline = System.currentTimeMillis() + 60_000L
+            while (System.currentTimeMillis() < deadline) {
+                if (tor.isProxyEnabled()) {
+                    Log.d(TAG, "✅ Tor is ready — proceeding with geohash relay connections")
+                    return
+                }
+                Thread.sleep(500)
+            }
+            Log.w(TAG, "⚠️ Timed out waiting for Tor bootstrap — attempting connections anyway")
+        } catch (_: Exception) {}
     }
 
     /**

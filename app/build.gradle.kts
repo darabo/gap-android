@@ -65,6 +65,17 @@ android {
         }
     }
 
+    // Disable language resource splitting in App Bundles so that ALL translations
+    // (e.g. values-fa for Farsi) are always included, regardless of the user's
+    // device locale. Without this, setApplicationLocales("fa") may resolve to
+    // English because the Play Store strips resources for locales not configured
+    // on the device.
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
+
     // APK splits for GitHub/F-Droid releases - creates arm64, x86_64, and universal APKs
     // Disabled for App Bundle builds (Play Store) since AAB handles architecture automatically
     // See: https://issuetracker.google.com/402800800

@@ -222,7 +222,10 @@ class ArtiTorManager private constructor() {
                             state = TorState.STARTING
                         )
                         socksAddr = InetSocketAddress("127.0.0.1", currentSocksPort)
-                        resetNetworkConnections()
+                        // Only reset OkHttp clients so they pick up the SOCKS proxy.
+                        // Do NOT reconnect relays yet — Arti isn't listening.
+                        // Relay connections will be reset after bootstrap completes.
+                        try { OkHttpProvider.reset() } catch (_: Throwable) {}
                         startArti(application, useDelay = false)
                         appScope.launch {
                             waitUntilBootstrapped()

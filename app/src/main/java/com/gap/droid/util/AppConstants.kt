@@ -114,9 +114,13 @@ object AppConstants {
     object Tor {
         const val DEFAULT_SOCKS_PORT: Int = 9060
         const val RESTART_DELAY_MS: Long = 2_000L
-        const val INACTIVITY_TIMEOUT_MS: Long = 5_000L
+        // Arti can legitimately be quiet for >5s while waiting for guard nodes
+        // during bootstrap. 15s prevents unnecessary restart loops.
+        const val INACTIVITY_TIMEOUT_MS: Long = 15_000L
         const val MAX_RETRY_ATTEMPTS: Int = 5
         const val STOP_TIMEOUT_MS: Long = 7_000L
+        // Tor connections route through multiple hops — 10s is too tight.
+        const val CONNECT_TIMEOUT_SECONDS: Long = 30
     }
 
     object UI {

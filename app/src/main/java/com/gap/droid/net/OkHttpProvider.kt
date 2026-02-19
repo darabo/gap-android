@@ -20,9 +20,10 @@ object OkHttpProvider {
 
     fun httpClient(): OkHttpClient {
         httpClientRef.get()?.let { return it }
+        val connectTimeout = effectiveConnectTimeout()
         val client = baseBuilderForCurrentProxy()
-            .callTimeout(15, TimeUnit.SECONDS)
-            .connectTimeout(10, TimeUnit.SECONDS)
+            .callTimeout(connectTimeout + 5, TimeUnit.SECONDS)
+            .connectTimeout(connectTimeout, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
             .build()
         httpClientRef.set(client)
@@ -31,13 +32,28 @@ object OkHttpProvider {
 
     fun webSocketClient(): OkHttpClient {
         wsClientRef.get()?.let { return it }
+        val connectTimeout = effectiveConnectTimeout()
         val client = baseBuilderForCurrentProxy()
-            .connectTimeout(10, TimeUnit.SECONDS)
+            .connectTimeout(connectTimeout, TimeUnit.SECONDS)
             .readTimeout(0, TimeUnit.SECONDS)
-            .writeTimeout(10, TimeUnit.SECONDS)
+            .writeTimeout(15, TimeUnit.SECONDS)
             .build()
         wsClientRef.set(client)
         return client
+    }
+
+    /**
+     * When traffic is routed through Tor (SOCKS proxy active), connections
+     * traverse multiple hops and need a longer timeout.  Without Tor the
+     * original 10 s value is fine.
+     */
+    private fun effectiveConnectTimeout(): Long {
+        val torProvider = ArtiTorManager.getInstance()
+        return if (torProvider.currentSocksAddress() != null) {
+            com.gapmesh.droid.util.AppConstants.Tor.CONNECT_TIMEOUT_SECONDS
+        } else {
+            10L
+        }
     }
 
     private fun baseBuilderForCurrentProxy(): OkHttpClient.Builder {
