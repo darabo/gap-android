@@ -91,7 +91,7 @@ private fun LocationNotesErrorSheet(
                 locationManager.enableLocationChannels()
                 locationManager.refreshChannels()
             }) {
-                Text("Enable Location")
+                Text(androidx.compose.ui.res.stringResource(com.gapmesh.droid.R.string.enable_location_action))
             }
         }
     }

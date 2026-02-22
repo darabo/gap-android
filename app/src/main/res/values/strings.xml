@@ -555,5 +555,16 @@
     <string name="decoy_settings_save">Save</string>
     <string name="decoy_settings_saved">Decoy PIN updated</string>
 
-</resources>
+    <!-- New dynamically found strings -->
+    <string name="take_photo">Take Photo</string>
+    <string name="choose_from_gallery">Choose from Gallery</string>
+    <string name="debug_overall">Overall</string>
+    <string name="debug_per_device">Per Device</string>
+    <string name="debug_per_peer">Per Peer</string>
+    <string name="debug_incoming">Incoming</string>
+    <string name="debug_outgoing">Outgoing</string>
+    <string name="enable_location_action">Enable Location</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_save">Save</string>
 
+</resources>
