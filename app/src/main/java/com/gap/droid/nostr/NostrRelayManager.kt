@@ -132,7 +132,7 @@ class NostrRelayManager private constructor() {
      * If Tor is enabled but still bootstrapping, waits (up to 60 s) for the proxy to become ready
      * before opening connections so they don't immediately fail with ECONNREFUSED.
      */
-    fun ensureGeohashRelaysConnected(geohash: String, nRelays: Int = 5, includeDefaults: Boolean = false) {
+    suspend fun ensureGeohashRelaysConnected(geohash: String, nRelays: Int = 5, includeDefaults: Boolean = false) {
         try {
             // Gate on Tor readiness to avoid wasting connections against a dead SOCKS proxy
             awaitTorIfBootstrapping()
@@ -158,7 +158,7 @@ class NostrRelayManager private constructor() {
      * (up to 60 s) until the proxy is fully functional.  This prevents
      * geohash relay connections from hitting a non-listening SOCKS port.
      */
-    private fun awaitTorIfBootstrapping() {
+    private suspend fun awaitTorIfBootstrapping() {
         try {
             val tor = ArtiTorManager.getInstance()
             val status = tor.statusFlow.value
@@ -172,7 +172,7 @@ class NostrRelayManager private constructor() {
                     Log.d(TAG, "✅ Tor is ready — proceeding with geohash relay connections")
                     return
                 }
-                Thread.sleep(500)
+                kotlinx.coroutines.delay(500)
             }
             Log.w(TAG, "⚠️ Timed out waiting for Tor bootstrap — attempting connections anyway")
         } catch (_: Exception) {}
@@ -188,7 +188,7 @@ class NostrRelayManager private constructor() {
     /**
      * Subscribe with explicit geohash routing; ensures connections exist, then targets only those relays.
      */
-    fun subscribeForGeohash(
+    suspend fun subscribeForGeohash(
         geohash: String,
         filter: NostrFilter,
         id: String = generateSubscriptionId(),
@@ -215,7 +215,7 @@ class NostrRelayManager private constructor() {
     /**
      * Send an event specifically to a geohash's relays (+ optional defaults).
      */
-    fun sendEventToGeohash(event: NostrEvent, geohash: String, includeDefaults: Boolean = false, nRelays: Int = 5) {
+    suspend fun sendEventToGeohash(event: NostrEvent, geohash: String, includeDefaults: Boolean = false, nRelays: Int = 5) {
         ensureGeohashRelaysConnected(geohash, nRelays, includeDefaults)
         val relayUrls = getRelaysForGeohash(geohash)
         if (relayUrls.isEmpty()) {

@@ -813,7 +813,10 @@ fun AboutSheet(
                                                 color = colorScheme.onSurface
                                             )
                                         }
-                                        if (torStatus.lastLogLine.isNotEmpty()) {
+                                        if (torStatus.lastLogLine.isNotEmpty() &&
+                                            !(torStatus.running && torStatus.bootstrapPercent >= 100 &&
+                                                torStatus.lastLogLine.contains("ERROR", ignoreCase = true))
+                                        ) {
                                             Text(
                                                 text = torStatus.lastLogLine.take(120),
                                                 fontSize = 11.sp,

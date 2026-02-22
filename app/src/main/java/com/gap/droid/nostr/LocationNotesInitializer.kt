@@ -2,6 +2,9 @@ package com.gapmesh.droid.nostr
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Initializer for LocationNotesManager with all dependencies
@@ -30,14 +33,23 @@ object LocationNotesInitializer {
                     
                     Log.d(TAG, "📍 Location Notes subscribing to geohash: $geohashFromFilter")
                     
-                    NostrRelayManager.getInstance(context).subscribeForGeohash(
-                        geohash = geohashFromFilter,
-                        filter = filter,
-                        id = id,
-                        handler = handler,
-                        includeDefaults = true,
-                        nRelays = 5
-                    )
+                    // Call the suspending function `subscribeForGeohash` in a coroutine
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            NostrRelayManager.getInstance(context).subscribeForGeohash(
+                                geohash = geohashFromFilter,
+                                filter = filter,
+                                id = id,
+                                handler = handler,
+                                includeDefaults = true,
+                                nRelays = 5
+                            )
+                        } catch (e: Exception) {
+                            Log.e(TAG, "❌ Failed to subscribe for geohash $geohashFromFilter: ${e.message}", e)
+                        }
+                    }
+                    
+                    id // return the id as requested by the synchronous `subscribe` lambda signature
                 },
                 unsubscribe = { id ->
                     NostrRelayManager.getInstance(context).unsubscribe(id)

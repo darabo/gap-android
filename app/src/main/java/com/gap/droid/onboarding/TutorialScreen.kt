@@ -66,6 +66,7 @@ fun TutorialScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .navigationBarsPadding()
                 .padding(24.dp)
         ) {
             Column(

@@ -3,6 +3,7 @@ package com.gapmesh.droid.nostr
 import android.app.Application
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
@@ -28,7 +29,7 @@ class NostrSubscriptionManager(
     }
 
     fun subscribeGeohash(geohash: String, sinceMs: Long, limit: Int, id: String, handler: (NostrEvent) -> Unit) {
-        scope.launch {
+        scope.launch(Dispatchers.IO) {
             val filter = NostrFilter.geohashEphemeral(geohash, sinceMs, limit)
             relayManager.subscribeForGeohash(geohash, filter, id, handler, includeDefaults = false, nRelays = 5)
         }

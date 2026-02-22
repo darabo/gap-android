@@ -33,6 +33,7 @@ class NotificationManager(
 
     companion object {
         private const val TAG = "NotificationManager"
+        private const val NOTIFICATION_ACCENT_COLOR = 0xFF008000.toInt() // Green accent for notifications
         private const val CHANNEL_ID = "bitchat_dm_notifications"
         private const val GEOHASH_CHANNEL_ID = "bitchat_geohash_notifications"
         private const val GROUP_KEY_DM = "bitchat_dm_group"
@@ -232,6 +233,7 @@ class NotificationManager(
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
+            .setColor(NOTIFICATION_ACCENT_COLOR)
             .setContentTitle(contentTitle)
             .setContentText(contentText)
             .setContentIntent(pendingIntent)
@@ -299,6 +301,7 @@ class NotificationManager(
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
+            .setColor(NOTIFICATION_ACCENT_COLOR)
             .setContentTitle(title)
             .setContentText(body)
             .setContentIntent(pendingIntent)
@@ -334,6 +337,7 @@ class NotificationManager(
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
           .setSmallIcon(R.drawable.ic_notification)
+          .setColor(NOTIFICATION_ACCENT_COLOR)
           .setContentTitle(contentTitle)
           .setContentText(contentText)
           .setContentIntent(pendingIntent)
@@ -365,6 +369,7 @@ class NotificationManager(
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
+            .setColor(NOTIFICATION_ACCENT_COLOR)
             .setContentTitle(context.getString(R.string.app_name))
             .setContentText(context.getString(R.string.notification_messages_from_people, totalMessages, senderCount))
             .setContentIntent(pendingIntent)
@@ -507,6 +512,7 @@ class NotificationManager(
 
         val builder = NotificationCompat.Builder(context, GEOHASH_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
+            .setColor(NOTIFICATION_ACCENT_COLOR)
             .setContentTitle(contentTitle)
             .setContentText(contentText)
             .setContentIntent(pendingIntent)
@@ -587,6 +593,7 @@ class NotificationManager(
 
         val builder = NotificationCompat.Builder(context, GEOHASH_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
+            .setColor(NOTIFICATION_ACCENT_COLOR)
             .setContentTitle(contentTitle)
             .setContentText(contentText)
             .setContentIntent(pendingIntent)
@@ -720,6 +727,7 @@ class NotificationManager(
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
+            .setColor(NOTIFICATION_ACCENT_COLOR)
             .setContentTitle(contentTitle)
             .setContentText(contentText)
             .setContentIntent(pendingIntent)
