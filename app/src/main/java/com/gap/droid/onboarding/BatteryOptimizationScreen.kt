@@ -44,7 +44,7 @@ fun BatteryOptimizationScreen(
     }
 
     Box(
-        modifier = modifier.padding(24.dp),
+        modifier = modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 24.dp),
         contentAlignment = Alignment.Center
     ) {
         when (status) {
@@ -95,30 +95,13 @@ private fun BatteryOptimizationEnabledContent(
                 .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header Section - matching AboutSheet style
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 32.sp
-                    ),
-                    color = colorScheme.onBackground
-                )
-
-                    Text(
-                        text = stringResource(R.string.battery_optimization_detected_title),
-                    fontSize = 12.sp,
-                    fontFamily = FontFamily.Monospace,
-                    color = colorScheme.onBackground.copy(alpha = 0.7f)
-                )
-            }
+            // Header Section - matching other onboarding screens
+            Text(
+                text = stringResource(R.string.battery_optimization_detected_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = colorScheme.onBackground
+            )
             
             // Battery optimization info section
             Surface(

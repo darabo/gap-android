@@ -240,6 +240,10 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             // Verify that the packet was signed by the signing private key corresponding to the announced signing public key
             verified = delegate?.verifyEd25519Signature(packet.signature!!, packet.toBinaryDataForSigning()!!, announcement.signingPublicKey) ?: false
             if (!verified) {
+                // Try legacy Bitchat padding
+                verified = delegate?.verifyEd25519Signature(packet.signature!!, packet.toBinaryDataForSigning(legacyFormat = true)!!, announcement.signingPublicKey) ?: false
+            }
+            if (!verified) {
                 Log.w(TAG, "⚠️ Signature verification for announce failed ${peerID.take(8)}")
             }
         }
@@ -253,10 +257,16 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             verified = false
         }
 
-        // Require verified announce; ignore otherwise (no backward compatibility)
+        // Require verified announce when legacy mode is off
         if (!verified) {
-            Log.w(TAG, "❌ Ignoring unverified announce from ${peerID.take(8)}...")
-            return false
+            if (com.gapmesh.droid.service.MeshServicePreferences.isLegacyCompatibilityEnabled(false)) {
+                if (com.gapmesh.droid.BuildConfig.DEBUG) {
+                    Log.d(TAG, "🔓 Legacy mode: accepting unverified announce from ${peerID.take(8)}…")
+                }
+            } else {
+                Log.w(TAG, "❌ Ignoring unverified announce from ${peerID.take(8)}...")
+                return false
+            }
         }
         
         // Successfully decoded TLV format exactly like iOS
@@ -275,7 +285,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             nickname = nickname,
             noisePublicKey = noisePublicKey,
             signingPublicKey = signingPublicKey,
-            isVerified = true
+            isVerified = verified
         ) ?: false
 
         // Update peer ID binding with noise public key for identity management
@@ -383,9 +393,10 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
         val packet = routed.packet
         val peerID = routed.peerID ?: "unknown"
         
-        // Enforce: only accept public messages from verified peers we know
+        // Enforce: only accept public messages from verified peers we know (or unverified in legacy mode)
         val peerInfo = delegate?.getPeerInfo(peerID)
-        if (peerInfo == null || !peerInfo.isVerifiedNickname) {
+        val legacyMode = com.gapmesh.droid.service.MeshServicePreferences.isLegacyCompatibilityEnabled(false)
+        if (peerInfo == null || (!peerInfo.isVerifiedNickname && !legacyMode)) {
             Log.w(TAG, "🚫 Dropping public message from unverified or unknown peer ${peerID.take(8)}...")
             return
         }

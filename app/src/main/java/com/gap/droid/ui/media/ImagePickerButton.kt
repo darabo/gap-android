@@ -109,7 +109,7 @@ fun ImagePickerButton(
             onDismissRequest = { showMenu = false }
         ) {
             androidx.compose.material3.DropdownMenuItem(
-                text = { androidx.compose.material3.Text("Take Photo") },
+                text = { androidx.compose.material3.Text(stringResource(com.gapmesh.droid.R.string.take_photo)) },
                 onClick = {
                     showMenu = false
                     if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -127,7 +127,7 @@ fun ImagePickerButton(
                 }
             )
             androidx.compose.material3.DropdownMenuItem(
-                text = { androidx.compose.material3.Text("Choose from Gallery") },
+                text = { androidx.compose.material3.Text(stringResource(com.gapmesh.droid.R.string.choose_from_gallery)) },
                 onClick = {
                     showMenu = false
                     imagePicker.launch("image/*")

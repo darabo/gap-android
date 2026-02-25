@@ -117,7 +117,8 @@ class VerificationHandler(
                         lastMutualToastAt[fp] = System.currentTimeMillis()
                         val name = resolvePeerDisplayName(peerID)
                         val body = context.getString(R.string.verify_mutual_match_body, name)
-                        addVerificationSystemMessage(peerID, context.getString(R.string.verify_mutual_system_message, name))
+                        // Store with English marker so MessageComponents can re-translate at display time
+                        addVerificationSystemMessage(peerID, "mutual verification with $name")
                         sendVerificationNotification(context.getString(R.string.verify_mutual_match_title), body, peerID)
                     }
                 }
@@ -160,7 +161,8 @@ class VerificationHandler(
                 identityManager.cachePeerNoiseKey(peerID, noiseKeyHex)
                 identityManager.cacheNoiseFingerprint(noiseKeyHex, fp)
             }
-            addVerificationSystemMessage(peerID, context.getString(R.string.verify_success_system_message, name))
+            // Store with English marker so MessageComponents can re-translate at display time
+            addVerificationSystemMessage(peerID, "verified $name")
             sendVerificationNotification(context.getString(R.string.verify_success_title), context.getString(R.string.verify_success_body, name), peerID)
 
             val lastChallenge = lastInboundVerifyChallengeAt[fp] ?: 0L
@@ -169,7 +171,8 @@ class VerificationHandler(
                 if (System.currentTimeMillis() - lastToast > 60_000L) {
                     lastMutualToastAt[fp] = System.currentTimeMillis()
                     val body = context.getString(R.string.verify_mutual_match_body, name)
-                    addVerificationSystemMessage(peerID, context.getString(R.string.verify_mutual_system_message, name))
+                    // Store with English marker so MessageComponents can re-translate at display time
+                    addVerificationSystemMessage(peerID, "mutual verification with $name")
                     sendVerificationNotification(context.getString(R.string.verify_mutual_match_title), body, peerID)
                 }
             }

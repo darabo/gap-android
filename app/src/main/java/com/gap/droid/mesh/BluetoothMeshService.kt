@@ -1052,7 +1052,8 @@ class BluetoothMeshService(private val context: Context) {
             )
             
             // Sign the packet using our signing key (exactly like iOS)
-            val signedPacket = encryptionService.signData(announcePacket.toBinaryDataForSigning()!!)?.let { signature ->
+            val isLegacyMode = try { com.gapmesh.droid.service.MeshServicePreferences.isLegacyCompatibilityEnabled(false) } catch (_: Exception) { false }
+            val signedPacket = encryptionService.signData(announcePacket.toBinaryDataForSigning(legacyFormat = isLegacyMode)!!)?.let { signature ->
                 announcePacket.copy(signature = signature)
             } ?: announcePacket
             
@@ -1115,7 +1116,8 @@ class BluetoothMeshService(private val context: Context) {
         )
         
         // Sign the packet using our signing key (exactly like iOS)
-        val signedPacket = encryptionService.signData(packet.toBinaryDataForSigning()!!)?.let { signature ->
+        val isLegacyMode = try { com.gapmesh.droid.service.MeshServicePreferences.isLegacyCompatibilityEnabled(false) } catch (_: Exception) { false }
+        val signedPacket = encryptionService.signData(packet.toBinaryDataForSigning(legacyFormat = isLegacyMode)!!)?.let { signature ->
             packet.copy(signature = signature)
         } ?: packet
         
@@ -1341,7 +1343,8 @@ class BluetoothMeshService(private val context: Context) {
             } catch (_: Exception) { packet }
 
             // Get the canonical packet data for signing (without signature)
-            val packetDataForSigning = withRoute.toBinaryDataForSigning()
+            val isLegacyMode = try { com.gapmesh.droid.service.MeshServicePreferences.isLegacyCompatibilityEnabled(false) } catch (_: Exception) { false }
+            val packetDataForSigning = withRoute.toBinaryDataForSigning(legacyFormat = isLegacyMode)
             if (packetDataForSigning == null) {
                 Log.w(TAG, "Failed to encode packet type ${packet.type} for signing, sending unsigned")
                 return withRoute

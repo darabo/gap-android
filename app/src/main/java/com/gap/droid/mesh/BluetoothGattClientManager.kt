@@ -551,7 +551,9 @@ class BluetoothGattClientManager(
 
             override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {                
                 if (status == BluetoothGatt.GATT_SUCCESS) {
+                    // Try Gap Mesh service UUID first, then Bitchat legacy UUID
                     val service = gatt.getService(AppConstants.Mesh.Gatt.SERVICE_UUID)
+                        ?: gatt.getService(ServiceUuidRotation.BITCHAT_LEGACY_UUID)
                     if (service != null) {
                         val characteristic = service.getCharacteristic(AppConstants.Mesh.Gatt.CHARACTERISTIC_UUID)
                         if (characteristic != null) {
@@ -566,12 +568,6 @@ class BluetoothGattClientManager(
                             if (descriptor != null) {
                                 descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
                                 gatt.writeDescriptor(descriptor)
-                                
-                                connectionScope.launch {
-                                    delay(200)
-                                    Log.i(TAG, "Client: Connection setup complete for $deviceAddress")
-                                    delegate?.onDeviceConnected(device)
-                                }
                             } else {
                                 Log.e(TAG, "Client: CCCD descriptor not found for $deviceAddress")
                                 gatt.disconnect()
@@ -594,6 +590,25 @@ class BluetoothGattClientManager(
                 } else {
                     Log.e(TAG, "Client: Service discovery failed with status $status for $deviceAddress")
                     gatt.disconnect()
+                }
+            }
+
+            override fun onDescriptorWrite(
+                gatt: BluetoothGatt,
+                descriptor: BluetoothGattDescriptor,
+                status: Int
+            ) {
+                val deviceAddress = gatt.device.address
+                if (status == BluetoothGatt.GATT_SUCCESS && descriptor.uuid == AppConstants.Mesh.Gatt.DESCRIPTOR_UUID) {
+                    Log.i(TAG, "Client: Notification descriptor written successfully for $deviceAddress")
+                    // Now safely notify upper layers the connection is ready for handshakes/data
+                    connectionScope.launch {
+                        delay(100)
+                        Log.i(TAG, "Client: Connection setup complete for $deviceAddress")
+                        delegate?.onDeviceConnected(device)
+                    }
+                } else {
+                    Log.e(TAG, "Client: Failed to write notification descriptor for $deviceAddress, status=$status")
                 }
             }
             

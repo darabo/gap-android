@@ -57,8 +57,6 @@ fun ChatScreen(viewModel: ChatViewModel) {
     val commandSuggestions by viewModel.commandSuggestions.collectAsStateWithLifecycle()
     val showMentionSuggestions by viewModel.showMentionSuggestions.collectAsStateWithLifecycle()
     val mentionSuggestions by viewModel.mentionSuggestions.collectAsStateWithLifecycle()
-    val showAppInfo by viewModel.showAppInfo.collectAsStateWithLifecycle()
-    val showMeshPeerListSheet by viewModel.showMeshPeerList.collectAsStateWithLifecycle()
     val showVerificationSheet by viewModel.showVerificationSheet.collectAsStateWithLifecycle()
     val showSecurityVerificationSheet by viewModel.showSecurityVerificationSheet.collectAsStateWithLifecycle()
     val geohashPeople by viewModel.geohashPeople.collectAsStateWithLifecycle()
@@ -67,7 +65,6 @@ fun ChatScreen(viewModel: ChatViewModel) {
     var showPasswordPrompt by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
     var passwordInput by remember { mutableStateOf("") }
-    var showLocationChannelsSheet by remember { mutableStateOf(false) }
     var showLocationNotesSheet by remember { mutableStateOf(false) }
     var showUserSheet by remember { mutableStateOf(false) }
     var selectedUserForSheet by remember { mutableStateOf("") }
@@ -146,7 +143,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 }
             }
     ) {
-        val headerHeight = 42.dp
+        val headerHeight = 30.dp
         
         // Main content area that responds to keyboard/window insets
         Column(
@@ -155,124 +152,180 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 .windowInsetsPadding(WindowInsets.ime) // This handles keyboard insets
                 .windowInsetsPadding(WindowInsets.navigationBars) // Add bottom padding when keyboard is not expanded
         ) {
-            // Header spacer - creates exact space for the floating header (status bar + compact header)
+            // Header spacer - creates exact space for the floating header
             Spacer(
                 modifier = Modifier
-                    .windowInsetsPadding(WindowInsets.statusBars)
                     .height(headerHeight)
             )
 
-            // Messages area - takes up available space, will compress when keyboard appears
-            MessagesList(
-                messages = displayMessages,
-                currentUserNickname = nickname,
-                meshService = viewModel.meshService,
-                modifier = Modifier.weight(1f),
-                forceScrollToBottom = forceScrollToBottom,
-                onScrolledUpChanged = { isUp -> isScrolledUp = isUp },
-                onNicknameClick = { fullSenderName ->
-                    // Single click - mention user in text input
-                    val currentText = messageText.text
-                    
-                    // Extract base nickname and hash suffix from full sender name
-                    val (baseName, hashSuffix) = splitSuffix(fullSenderName)
-                    
-                    // Check if we're in a geohash channel to include hash suffix
-                    val selectedLocationChannel = viewModel.selectedLocationChannel.value
-                    val mentionText = if (selectedLocationChannel is com.gapmesh.droid.geohash.ChannelID.Location && hashSuffix.isNotEmpty()) {
-                        // In geohash chat - include the hash suffix from the full display name
-                        "@$baseName$hashSuffix"
-                    } else {
-                        // Regular chat - just the base nickname
-                        "@$baseName"
-                    }
-                    
-                    val newText = when {
-                        currentText.isEmpty() -> "$mentionText "
-                        currentText.endsWith(" ") -> "$currentText$mentionText "
-                        else -> "$currentText $mentionText "
-                    }
-                    
-                    messageText = TextFieldValue(
-                        text = newText,
-                        selection = TextRange(newText.length)
+            // Tab content area - switches between Chat and other tab content
+            when (currentTab) {
+                BottomNavTab.MESH -> {
+                    // Messages area - takes up available space, will compress when keyboard appears
+                    MessagesList(
+                        messages = displayMessages,
+                        currentUserNickname = nickname,
+                        meshService = viewModel.meshService,
+                        modifier = Modifier.weight(1f),
+                        forceScrollToBottom = forceScrollToBottom,
+                        onScrolledUpChanged = { isUp -> isScrolledUp = isUp },
+                        onNicknameClick = { fullSenderName ->
+                            // Single click - mention user in text input
+                            val currentText = messageText.text
+                            
+                            // Extract base nickname and hash suffix from full sender name
+                            val (baseName, hashSuffix) = splitSuffix(fullSenderName)
+                            
+                            // Check if we're in a geohash channel to include hash suffix
+                            val selectedLocationChannel = viewModel.selectedLocationChannel.value
+                            val mentionText = if (selectedLocationChannel is com.gapmesh.droid.geohash.ChannelID.Location && hashSuffix.isNotEmpty()) {
+                                // In geohash chat - include the hash suffix from the full display name
+                                "@$baseName$hashSuffix"
+                            } else {
+                                // Regular chat - just the base nickname
+                                "@$baseName"
+                            }
+                            
+                            val newText = when {
+                                currentText.isEmpty() -> "$mentionText "
+                                currentText.endsWith(" ") -> "$currentText$mentionText "
+                                else -> "$currentText $mentionText "
+                            }
+                            
+                            messageText = TextFieldValue(
+                                text = newText,
+                                selection = TextRange(newText.length)
+                            )
+                        },
+                        onMessageLongPress = { message ->
+                            // Message long press - open user action sheet with message context
+                            // Extract base nickname from message sender (contains all necessary info)
+                            val (baseName, _) = splitSuffix(message.sender)
+                            selectedUserForSheet = baseName
+                            selectedMessageForSheet = message
+                            showUserSheet = true
+                        },
+                        onCancelTransfer = { msg ->
+                            viewModel.cancelMediaSend(msg.id)
+                        },
+                        onImageClick = { currentPath, allImagePaths, initialIndex ->
+                            viewerImagePaths = allImagePaths
+                            initialViewerIndex = initialIndex
+                            showFullScreenImageViewer = true
+                        }
                     )
-                },
-                onMessageLongPress = { message ->
-                    // Message long press - open user action sheet with message context
-                    // Extract base nickname from message sender (contains all necessary info)
-                    val (baseName, _) = splitSuffix(message.sender)
-                    selectedUserForSheet = baseName
-                    selectedMessageForSheet = message
-                    showUserSheet = true
-                },
-                onCancelTransfer = { msg ->
-                    viewModel.cancelMediaSend(msg.id)
-                },
-                onImageClick = { currentPath, allImagePaths, initialIndex ->
-                    viewerImagePaths = allImagePaths
-                    initialViewerIndex = initialIndex
-                    showFullScreenImageViewer = true
-                }
-            )
-            // Input area - stays at bottom
-        // Bridge file share from lower-level input to ViewModel
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        com.gapmesh.droid.ui.events.FileShareDispatcher.setHandler { peer, channel, path ->
-            viewModel.sendFileNote(peer, channel, path)
-        }
-    }
+                    // Input area - stays at bottom
+                    // Bridge file share from lower-level input to ViewModel
+                    androidx.compose.runtime.LaunchedEffect(Unit) {
+                        com.gapmesh.droid.ui.events.FileShareDispatcher.setHandler { peer, channel, path ->
+                            viewModel.sendFileNote(peer, channel, path)
+                        }
+                    }
 
-    ChatInputSection(
-        messageText = messageText,
-        onMessageTextChange = { newText: TextFieldValue ->
-            messageText = newText
-            viewModel.updateCommandSuggestions(newText.text)
-            viewModel.updateMentionSuggestions(newText.text)
-        },
-        onSend = {
-            if (messageText.text.trim().isNotEmpty()) {
-                viewModel.sendMessage(messageText.text.trim())
-                messageText = TextFieldValue("")
-                forceScrollToBottom = !forceScrollToBottom // Toggle to trigger scroll
+                    ChatInputSection(
+                        messageText = messageText,
+                        onMessageTextChange = { newText: TextFieldValue ->
+                            messageText = newText
+                            viewModel.updateCommandSuggestions(newText.text)
+                            viewModel.updateMentionSuggestions(newText.text)
+                        },
+                        onSend = {
+                            if (messageText.text.trim().isNotEmpty()) {
+                                viewModel.sendMessage(messageText.text.trim())
+                                messageText = TextFieldValue("")
+                                forceScrollToBottom = !forceScrollToBottom // Toggle to trigger scroll
+                            }
+                        },
+                        onSendVoiceNote = { peer, onionOrChannel, path ->
+                            viewModel.sendVoiceNote(peer, onionOrChannel, path)
+                        },
+                        onSendImageNote = { peer, onionOrChannel, path ->
+                            viewModel.sendImageNote(peer, onionOrChannel, path)
+                        },
+                        onSendFileNote = { peer, onionOrChannel, path ->
+                            viewModel.sendFileNote(peer, onionOrChannel, path)
+                        },
+                        showCommandSuggestions = showCommandSuggestions,
+                        commandSuggestions = commandSuggestions,
+                        showMentionSuggestions = showMentionSuggestions,
+                        mentionSuggestions = mentionSuggestions,
+                        onCommandSuggestionClick = { suggestion: CommandSuggestion ->
+                            val commandText = viewModel.selectCommandSuggestion(suggestion)
+                            messageText = TextFieldValue(
+                                text = commandText,
+                                selection = TextRange(commandText.length)
+                            )
+                        },
+                        onMentionSuggestionClick = { mention: String ->
+                            val mentionText = viewModel.selectMentionSuggestion(mention, messageText.text)
+                            messageText = TextFieldValue(
+                                text = mentionText,
+                                selection = TextRange(mentionText.length)
+                            )
+                        },
+                        selectedPrivatePeer = selectedPrivatePeer,
+                        currentChannel = currentChannel,
+                        nickname = nickname,
+                        colorScheme = colorScheme,
+                        showMediaButtons = showMediaButtons
+                    )
+                }
+
+                BottomNavTab.LOCATION -> {
+                    // Location channels tab content (inline, not as overlay)
+                    if (BuildConfig.HAS_GEOHASH) {
+                        LocationChannelsSheet(
+                            isPresented = true,
+                            onDismiss = { currentTab = BottomNavTab.MESH },
+                            viewModel = viewModel,
+                            modifier = Modifier.weight(1f),
+                            asInlineContent = true
+                        )
+                    } else {
+                        // Fallback for light build without geohash
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Location features not available",
+                                color = colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+                }
+
+                BottomNavTab.PEOPLE -> {
+                    // People/Network tab content (inline, not as overlay)
+                    MeshPeerListSheet(
+                        isPresented = true,
+                        viewModel = viewModel,
+                        onDismiss = { currentTab = BottomNavTab.MESH },
+                        onShowVerification = {
+                            currentTab = BottomNavTab.MESH
+                            viewModel.showVerificationSheet(fromSidebar = true)
+                        },
+                        modifier = Modifier.weight(1f),
+                        asInlineContent = true
+                    )
+                }
+
+                BottomNavTab.SETTINGS -> {
+                    // Settings/About tab content (inline, not as overlay)
+                    val currentNickname by viewModel.nickname.collectAsStateWithLifecycle()
+                    AboutSheet(
+                        isPresented = true,
+                        onDismiss = { currentTab = BottomNavTab.MESH },
+                        onShowDebug = { /* Debug handled via sheet */ },
+                        nickname = currentNickname,
+                        onNicknameChange = { viewModel.setNickname(it) },
+                        modifier = Modifier.weight(1f),
+                        asInlineContent = true
+                    )
+                }
             }
-        },
-        onSendVoiceNote = { peer, onionOrChannel, path ->
-            viewModel.sendVoiceNote(peer, onionOrChannel, path)
-        },
-        onSendImageNote = { peer, onionOrChannel, path ->
-            viewModel.sendImageNote(peer, onionOrChannel, path)
-        },
-        onSendFileNote = { peer, onionOrChannel, path ->
-            viewModel.sendFileNote(peer, onionOrChannel, path)
-        },
-        
-        showCommandSuggestions = showCommandSuggestions,
-        commandSuggestions = commandSuggestions,
-        showMentionSuggestions = showMentionSuggestions,
-        mentionSuggestions = mentionSuggestions,
-        onCommandSuggestionClick = { suggestion: CommandSuggestion ->
-                    val commandText = viewModel.selectCommandSuggestion(suggestion)
-                    messageText = TextFieldValue(
-                        text = commandText,
-                        selection = TextRange(commandText.length)
-                    )
-                },
-                onMentionSuggestionClick = { mention: String ->
-                    val mentionText = viewModel.selectMentionSuggestion(mention, messageText.text)
-                    messageText = TextFieldValue(
-                        text = mentionText,
-                        selection = TextRange(mentionText.length)
-                    )
-                },
-                selectedPrivatePeer = selectedPrivatePeer,
-                currentChannel = currentChannel,
-                nickname = nickname,
-                colorScheme = colorScheme,
-                showMediaButtons = showMediaButtons
-            )
             
-            // Bottom Navigation Bar
+            // Bottom Navigation Bar (always visible)
             // Unread count logic: show 0 when on chat tab and viewing latest (not scrolled up)
             val isViewingMeshChat = currentTab == BottomNavTab.MESH && 
                                     selectedPrivatePeer == null && 
@@ -285,19 +338,12 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     currentTab = tab
                     when (tab) {
                         BottomNavTab.MESH -> {
-                            // Already on mesh - clear any location/private selection
+                            // Switch back to mesh - clear any location/private selection
                             viewModel.endPrivateChat()
                             viewModel.switchToChannel(null)
                         }
-                        BottomNavTab.LOCATION -> {
-                            if (BuildConfig.HAS_GEOHASH) showLocationChannelsSheet = true
-                        }
-                        BottomNavTab.PEOPLE -> {
-                            viewModel.showMeshPeerList()
-                        }
-                        BottomNavTab.SETTINGS -> {
-                            viewModel.showAppInfo()
-                        }
+                        // Other tabs just switch content via currentTab state
+                        else -> { }
                     }
                 },
                 unreadMeshCount = meshUnreadCount,
@@ -314,10 +360,10 @@ fun ChatScreen(viewModel: ChatViewModel) {
             nickname = nickname,
             viewModel = viewModel,
             colorScheme = colorScheme,
-            onSidebarToggle = { viewModel.showMeshPeerList() },
-            onShowAppInfo = { viewModel.showAppInfo() },
+            onSidebarToggle = { currentTab = BottomNavTab.PEOPLE },
+            onShowAppInfo = { currentTab = BottomNavTab.SETTINGS },
             onPanicClear = { viewModel.panicClearAllData() },
-            onLocationChannelsClick = { if (BuildConfig.HAS_GEOHASH) showLocationChannelsSheet = true },
+            onLocationChannelsClick = { if (BuildConfig.HAS_GEOHASH) currentTab = BottomNavTab.LOCATION },
             onLocationNotesClick = { if (BuildConfig.HAS_GEOHASH) showLocationNotesSheet = true }
         )
 
@@ -330,15 +376,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
             }
         }
 
-        // Divider under header - positioned after status bar + header height
-        HorizontalDivider(
-            modifier = Modifier
-                .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .offset(y = headerHeight)
-                .zIndex(1f),
-            color = colorScheme.outline.copy(alpha = 0.3f)
-        )
+        // Divider removed — the header naturally separates from content below
 
         // Scroll-to-bottom floating button
         AnimatedVisibility(
@@ -380,7 +418,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
         )
     }
 
-    // Dialogs and Sheets
+    // Dialogs and Sheets (only overlays that aren't tab content)
     ChatDialogs(
         showPasswordDialog = showPasswordDialog,
         passwordPromptChannel = passwordPromptChannel,
@@ -399,16 +437,6 @@ fun ChatScreen(viewModel: ChatViewModel) {
             showPasswordDialog = false
             passwordInput = ""
         },
-        showAppInfo = showAppInfo,
-        onAppInfoDismiss = { 
-            viewModel.hideAppInfo()
-            currentTab = BottomNavTab.MESH // Reset to Chat tab
-        },
-        showLocationChannelsSheet = showLocationChannelsSheet,
-        onLocationChannelsSheetDismiss = { 
-            showLocationChannelsSheet = false
-            currentTab = BottomNavTab.MESH // Reset to Chat tab
-        },
         showLocationNotesSheet = showLocationNotesSheet,
         onLocationNotesSheetDismiss = { showLocationNotesSheet = false },
         showUserSheet = showUserSheet,
@@ -423,8 +451,6 @@ fun ChatScreen(viewModel: ChatViewModel) {
         onVerificationSheetDismiss = viewModel::hideVerificationSheet,
         showSecurityVerificationSheet = showSecurityVerificationSheet,
         onSecurityVerificationSheetDismiss = viewModel::hideSecurityVerificationSheet,
-        showMeshPeerListSheet = showMeshPeerListSheet,
-        onMeshPeerListDismiss = viewModel::hideMeshPeerList,
     )
 }
 
@@ -509,9 +535,8 @@ private fun ChatFloatingHeader(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .zIndex(1f)
-            .windowInsetsPadding(WindowInsets.statusBars), // Extend into status bar area
-        color = colorScheme.background // Solid background color extending into status bar
+            .zIndex(1f),
+        color = colorScheme.background
     ) {
         TopAppBar(
             title = {
@@ -537,6 +562,7 @@ private fun ChatFloatingHeader(
                     }
                 )
             },
+            windowInsets = WindowInsets(0), // Parent Surface already handles status bar insets
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = Color.Transparent
             ),
@@ -554,10 +580,6 @@ private fun ChatDialogs(
     onPasswordChange: (String) -> Unit,
     onPasswordConfirm: () -> Unit,
     onPasswordDismiss: () -> Unit,
-    showAppInfo: Boolean,
-    onAppInfoDismiss: () -> Unit,
-    showLocationChannelsSheet: Boolean,
-    onLocationChannelsSheetDismiss: () -> Unit,
     showLocationNotesSheet: Boolean,
     onLocationNotesSheetDismiss: () -> Unit,
     showUserSheet: Boolean,
@@ -569,8 +591,6 @@ private fun ChatDialogs(
     onVerificationSheetDismiss: () -> Unit,
     showSecurityVerificationSheet: Boolean,
     onSecurityVerificationSheetDismiss: () -> Unit,
-    showMeshPeerListSheet: Boolean,
-    onMeshPeerListDismiss: () -> Unit,
 ) {
     // Password dialog
     PasswordPromptDialog(
@@ -581,33 +601,6 @@ private fun ChatDialogs(
         onConfirm = onPasswordConfirm,
         onDismiss = onPasswordDismiss
     )
-
-    // About sheet
-    var showDebugSheet by remember { mutableStateOf(false) }
-    val currentNickname by viewModel.nickname.collectAsStateWithLifecycle()
-    AboutSheet(
-        isPresented = showAppInfo,
-        onDismiss = onAppInfoDismiss,
-        onShowDebug = { showDebugSheet = true },
-        nickname = currentNickname,
-        onNicknameChange = { viewModel.setNickname(it) }
-    )
-    if (showDebugSheet) {
-        com.gapmesh.droid.ui.debug.DebugSettingsSheet(
-            isPresented = showDebugSheet,
-            onDismiss = { showDebugSheet = false },
-            meshService = viewModel.meshService
-        )
-    }
-    
-    // Location channels sheet
-    if (BuildConfig.HAS_GEOHASH && showLocationChannelsSheet) {
-        LocationChannelsSheet(
-            isPresented = showLocationChannelsSheet,
-            onDismiss = onLocationChannelsSheetDismiss,
-            viewModel = viewModel
-        )
-    }
     
     // Location notes sheet (extracted to separate presenter)
     if (BuildConfig.HAS_GEOHASH && showLocationNotesSheet) {
@@ -625,18 +618,6 @@ private fun ChatDialogs(
             targetNickname = selectedUserForSheet,
             selectedMessage = selectedMessageForSheet,
             viewModel = viewModel
-        )
-    }
-    // MeshPeerList sheet (network view)
-    if (showMeshPeerListSheet){
-        MeshPeerListSheet(
-            isPresented = showMeshPeerListSheet,
-            viewModel = viewModel,
-            onDismiss = onMeshPeerListDismiss,
-            onShowVerification = {
-                onMeshPeerListDismiss()
-                viewModel.showVerificationSheet(fromSidebar = true)
-            }
         )
     }
 

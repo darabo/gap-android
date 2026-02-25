@@ -212,7 +212,8 @@ fun AboutSheet(
     onShowDebug: (() -> Unit)? = null,
     nickname: String = "",
     onNicknameChange: ((String) -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    asInlineContent: Boolean = false
 ) {
     val context = LocalContext.current
     
@@ -239,18 +240,16 @@ fun AboutSheet(
     val colorScheme = MaterialTheme.colorScheme
     val isDark = colorScheme.background.red + colorScheme.background.green + colorScheme.background.blue < 1.5f
     
-    if (isPresented) {
-        BitchatBottomSheet(
-            modifier = modifier,
-            onDismissRequest = onDismiss,
-        ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                LazyColumn(
-                    state = lazyListState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 80.dp, bottom = 32.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
-                ) {
+    // Content composable shared between sheet and inline modes
+    @Composable
+    fun AboutContent() {
+        Box(modifier = modifier.fillMaxWidth()) {
+            LazyColumn(
+                state = lazyListState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(top = if (asInlineContent) 16.dp else 80.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
                     // Header Section - App Identity
                     item(key = "header") {
                         Column(
@@ -989,22 +988,35 @@ fun AboutSheet(
                     }
                 }
 
-                // TopBar
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .fillMaxWidth()
-                        .height(64.dp)
-                        .background(MaterialTheme.colorScheme.background.copy(alpha = topBarAlpha))
-                ) {
-                    CloseButton(
-                        onClick = onDismiss,
-                        modifier = modifier
-                            .align(Alignment.CenterEnd)
-                            .padding(horizontal = 16.dp),
-                    )
+                // TopBar - only show close button when in sheet mode
+                if (!asInlineContent) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .height(64.dp)
+                            .background(MaterialTheme.colorScheme.background.copy(alpha = topBarAlpha))
+                    ) {
+                        CloseButton(
+                            onClick = onDismiss,
+                            modifier = modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(horizontal = 16.dp),
+                        )
+                    }
                 }
             }
+        }
+
+    if (asInlineContent) {
+        // Render content directly without sheet wrapper
+        AboutContent()
+    } else if (isPresented) {
+        BitchatBottomSheet(
+            modifier = modifier,
+            onDismissRequest = onDismiss,
+        ) {
+            AboutContent()
         }
     }
 }

@@ -311,18 +311,18 @@ fun DebugSettingsSheet(
                                 FilterChip(
                                     selected = graphMode == GraphMode.OVERALL,
                                     onClick = { graphMode = GraphMode.OVERALL },
-                                    label = { Text("Overall") }
+                                    label = { Text(stringResource(R.string.debug_overall)) }
                                 )
                                 FilterChip(
                                     selected = graphMode == GraphMode.PER_DEVICE,
                                     onClick = { graphMode = GraphMode.PER_DEVICE },
-                                    label = { Text("Per Device") },
+                                    label = { Text(stringResource(R.string.debug_per_device)) },
                                     leadingIcon = { Icon(Icons.Filled.Devices, contentDescription = null) }
                                 )
                                 FilterChip(
                                     selected = graphMode == GraphMode.PER_PEER,
                                     onClick = { graphMode = GraphMode.PER_PEER },
-                                    label = { Text("Per Peer") },
+                                    label = { Text(stringResource(R.string.debug_per_peer)) },
                                     leadingIcon = { Icon(Icons.Filled.SettingsEthernet, contentDescription = null) }
                                 )
                             }
@@ -411,7 +411,7 @@ fun DebugSettingsSheet(
                             // Helper functions moved to top-level composable below to avoid scope issues
 
                             // Render two blocks: Incoming and Outgoing
-                            Text("Incoming", fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colorScheme.onSurface.copy(alpha = 0.7f))
+                            Text(stringResource(R.string.debug_incoming), fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colorScheme.onSurface.copy(alpha = 0.7f))
                             Text(
                                 "${relayStats.lastSecondIncoming}/s • ${relayStats.lastMinuteIncoming}/m • ${relayStats.last15MinuteIncoming}/15m • total ${relayStats.totalIncomingCount}",
                                 fontFamily = FontFamily.Monospace, fontSize = 10.sp, color = colorScheme.onSurface.copy(alpha = 0.6f)
@@ -467,7 +467,7 @@ fun DebugSettingsSheet(
                             if (graphMode != GraphMode.OVERALL && stackedKeysIncoming.isNotEmpty()) { /* legend printed inside DrawGraphBlock */ }
 
                             Spacer(Modifier.height(8.dp))
-                            Text("Outgoing", fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colorScheme.onSurface.copy(alpha = 0.7f))
+                            Text(stringResource(R.string.debug_outgoing), fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = colorScheme.onSurface.copy(alpha = 0.7f))
                             Text(
                                 "${relayStats.lastSecondOutgoing}/s • ${relayStats.lastMinuteOutgoing}/m • ${relayStats.last15MinuteOutgoing}/15m • total ${relayStats.totalOutgoingCount}",
                                 fontFamily = FontFamily.Monospace, fontSize = 10.sp, color = colorScheme.onSurface.copy(alpha = 0.6f)

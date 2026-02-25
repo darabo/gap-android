@@ -52,7 +52,8 @@ fun LocationChannelsSheet(
     isPresented: Boolean,
     onDismiss: () -> Unit,
     viewModel: ChatViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    asInlineContent: Boolean = false
 ) {
     val context = LocalContext.current
     val locationManager = LocationChannelManager.getInstance(context)
@@ -77,7 +78,7 @@ fun LocationChannelsSheet(
     var customError by remember { mutableStateOf<String?>(null) }
     var isInputFocused by remember { mutableStateOf(false) }
 
-    // Bottom sheet state
+    // Bottom sheet state (only used when not inline)
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
@@ -113,20 +114,44 @@ fun LocationChannelsSheet(
     val standardGreen = if (isDark) Color(0xFF32D74B) else Color(0xFF248A3D) // iOS green
     val standardBlue = Color(0xFF007AFF) // iOS blue
 
-    if (isPresented) {
-        BitchatBottomSheet(
-            modifier = modifier,
-            onDismissRequest = onDismiss,
-            sheetState = sheetState,
-        ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 48.dp, bottom = 16.dp)
-                ) {
-                    // Header Section
-                    item(key = "header") {
+    // Content composable shared between sheet and inline modes
+    @Composable
+    fun LocationContent() {
+        Box(modifier = modifier.fillMaxWidth()) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(top = if (asInlineContent) 16.dp else 48.dp, bottom = 16.dp)
+            ) {
+                // Header Section
+                item(key = "header") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                            .padding(bottom = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.location_channels_title),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+
+                        Text(
+                            text = stringResource(R.string.location_channels_desc),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+
+                // Permission controls if services enabled
+                if (locationServicesEnabled) {
+                    item(key = "permissions") {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -134,433 +159,407 @@ fun LocationChannelsSheet(
                                 .padding(bottom = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Text(
-                                text = stringResource(R.string.location_channels_title),
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-
-                            Text(
-                                text = stringResource(R.string.location_channels_desc),
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Monospace,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                            )
-                        }
-                    }
-
-                    // Permission controls if services enabled
-                    if (locationServicesEnabled) {
-                        item(key = "permissions") {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 24.dp)
-                                    .padding(bottom = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                when (permissionState) {
-                                    LocationChannelManager.PermissionState.NOT_DETERMINED -> {
-                                        Button(
-                                            onClick = { locationManager.enableLocationChannels() },
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = standardGreen.copy(alpha = 0.12f),
-                                                contentColor = standardGreen
-                                            ),
-                                            modifier = Modifier.fillMaxWidth()
+                            when (permissionState) {
+                                LocationChannelManager.PermissionState.NOT_DETERMINED -> {
+                                    Button(
+                                        onClick = { locationManager.enableLocationChannels() },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = standardGreen.copy(alpha = 0.12f),
+                                            contentColor = standardGreen
+                                        ),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.grant_location_permission),
+                                            fontSize = 12.sp,
+                                            fontFamily = FontFamily.Monospace
+                                        )
+                                    }
+                                }
+                                LocationChannelManager.PermissionState.DENIED,
+                                LocationChannelManager.PermissionState.RESTRICTED -> {
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text(
+                                            text = stringResource(R.string.location_permission_denied),
+                                            fontSize = 11.sp,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = Color.Red.copy(alpha = 0.8f)
+                                        )
+                                        TextButton(
+                                            onClick = {
+                                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                    data = Uri.fromParts("package", context.packageName, null)
+                                                }
+                                                context.startActivity(intent)
+                                            }
                                         ) {
                                             Text(
-                                                text = stringResource(R.string.grant_location_permission),
-                                                fontSize = 12.sp,
+                                                text = stringResource(R.string.open_settings),
+                                                fontSize = 11.sp,
                                                 fontFamily = FontFamily.Monospace
                                             )
                                         }
                                     }
-                                    LocationChannelManager.PermissionState.DENIED,
-                                    LocationChannelManager.PermissionState.RESTRICTED -> {
-                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            Text(
-                                                text = stringResource(R.string.location_permission_denied),
-                                                fontSize = 11.sp,
-                                                fontFamily = FontFamily.Monospace,
-                                                color = Color.Red.copy(alpha = 0.8f)
-                                            )
-                                            TextButton(
-                                                onClick = {
-                                                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                                        data = Uri.fromParts("package", context.packageName, null)
-                                                    }
-                                                    context.startActivity(intent)
-                                                }
-                                            ) {
-                                                Text(
-                                                    text = stringResource(R.string.open_settings),
-                                                    fontSize = 11.sp,
-                                                    fontFamily = FontFamily.Monospace
-                                                )
-                                            }
-                                        }
-                                    }
-                                    LocationChannelManager.PermissionState.AUTHORIZED -> {
+                                }
+                                LocationChannelManager.PermissionState.AUTHORIZED -> {
+                                    Text(
+                                        text = stringResource(R.string.location_permission_granted),
+                                        fontSize = 11.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = standardGreen
+                                    )
+                                }
+                                null -> {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        CircularProgressIndicator(modifier = Modifier.size(12.dp))
                                         Text(
-                                            text = stringResource(R.string.location_permission_granted),
+                                            text = stringResource(R.string.checking_permissions),
                                             fontSize = 11.sp,
                                             fontFamily = FontFamily.Monospace,
-                                            color = standardGreen
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                         )
-                                    }
-                                    null -> {
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            CircularProgressIndicator(modifier = Modifier.size(12.dp))
-                                            Text(
-                                                text = stringResource(R.string.checking_permissions),
-                                                fontSize = 11.sp,
-                                                fontFamily = FontFamily.Monospace,
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                            )
-                                        }
                                     }
                                 }
                             }
                         }
                     }
+                }
 
-                    // Mesh option first
-                    item(key = "mesh") {
+                // Mesh option first
+                item(key = "mesh") {
+                    ChannelRow(
+                        title = meshTitleWithCount(viewModel),
+                        subtitle = stringResource(R.string.location_bluetooth_subtitle, bluetoothRangeString()),
+                        isSelected = selectedChannel is ChannelID.Mesh,
+                        titleColor = standardBlue,
+                        titleBold = meshCount(viewModel) > 0,
+                        trailingContent = null,
+                        onClick = {
+                            locationManager.select(ChannelID.Mesh)
+                            onDismiss()
+                        }
+                    )
+                }
+
+                // Nearby options (only show if location services are enabled)
+                // CRITICAL: Filter out .building level (precision 8) - iOS pattern
+                // iOS: let nearby = manager.availableChannels.filter { $0.level != .building }
+                if (availableChannels.isNotEmpty() && locationServicesEnabled) {
+                    val nearbyChannels = availableChannels.filter { it.level != GeohashChannelLevel.BUILDING }
+                    items(nearbyChannels) { channel ->
+                        val coverage = coverageString(channel.geohash.length)
+                        val nameBase = locationNames[channel.level]
+                        val namePart = nameBase?.let { formattedNamePrefix(channel.level) + it }
+                        val subtitlePrefix = "#${channel.geohash} • $coverage"
+                        val participantCount = geohashParticipantCounts[channel.geohash] ?: 0
+                        val highlight = participantCount > 0
+                        val isBookmarked = bookmarksStore.isBookmarked(channel.geohash)
+
                         ChannelRow(
-                            title = meshTitleWithCount(viewModel),
-                            subtitle = stringResource(R.string.location_bluetooth_subtitle, bluetoothRangeString()),
-                            isSelected = selectedChannel is ChannelID.Mesh,
-                            titleColor = standardBlue,
-                            titleBold = meshCount(viewModel) > 0,
-                            trailingContent = null,
+                            title = geohashTitleWithCount(channel, participantCount),
+                            subtitle = subtitlePrefix + (namePart?.let { " • $it" } ?: ""),
+                            isSelected = isChannelSelected(channel, selectedChannel),
+                            titleColor = standardGreen,
+                            titleBold = highlight,
+                            trailingContent = {
+                            IconButton(onClick = { bookmarksStore.toggle(channel.geohash) }) {
+                                Icon(
+                                    imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                                    contentDescription = if (isBookmarked) stringResource(R.string.cd_remove_bookmark) else stringResource(R.string.cd_add_bookmark),
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                                )
+                            }
+                            },
                             onClick = {
-                                locationManager.select(ChannelID.Mesh)
+                                // Selecting a suggested nearby channel is not a teleport
+                                locationManager.setTeleported(false)
+                                locationManager.select(ChannelID.Location(channel))
                                 onDismiss()
                             }
                         )
                     }
+                } else if (permissionState == LocationChannelManager.PermissionState.AUTHORIZED && locationServicesEnabled) {
+                    item {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                            Text(
+                                text = stringResource(R.string.finding_nearby_channels),
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                    }
+                }
 
-                    // Nearby options (only show if location services are enabled)
-                    // CRITICAL: Filter out .building level (precision 8) - iOS pattern
-                    // iOS: let nearby = manager.availableChannels.filter { $0.level != .building }
-                    if (availableChannels.isNotEmpty() && locationServicesEnabled) {
-                        val nearbyChannels = availableChannels.filter { it.level != GeohashChannelLevel.BUILDING }
-                        items(nearbyChannels) { channel ->
-                            val coverage = coverageString(channel.geohash.length)
-                            val nameBase = locationNames[channel.level]
-                            val namePart = nameBase?.let { formattedNamePrefix(channel.level) + it }
-                            val subtitlePrefix = "#${channel.geohash} • $coverage"
-                            val participantCount = geohashParticipantCounts[channel.geohash] ?: 0
-                            val highlight = participantCount > 0
-                            val isBookmarked = bookmarksStore.isBookmarked(channel.geohash)
+                // Bookmarked geohashes
+                if (bookmarks.isNotEmpty()) {
+                    item(key = "bookmarked_header") {
+                        Text(
+                            text = stringResource(R.string.bookmarked),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                                .padding(top = 8.dp, bottom = 4.dp)
+                        )
+                    }
+                    items(bookmarks) { gh ->
+                        val level = levelForLength(gh.length)
+                        val channel = GeohashChannel(level = level, geohash = gh)
+                        val coverage = coverageString(gh.length)
+                        val subtitlePrefix = "#${gh} • $coverage"
+                        val name = bookmarkNames[gh]
+                        val subtitle = subtitlePrefix + (name?.let { " • ${formattedNamePrefix(level)}$it" } ?: "")
+                        val participantCount = geohashParticipantCounts[gh] ?: 0
+                        val title = geohashHashTitleWithCount(gh, participantCount)
 
-                            ChannelRow(
-                                title = geohashTitleWithCount(channel, participantCount),
-                                subtitle = subtitlePrefix + (namePart?.let { " • $it" } ?: ""),
-                                isSelected = isChannelSelected(channel, selectedChannel),
-                                titleColor = standardGreen,
-                                titleBold = highlight,
-                                trailingContent = {
-                                IconButton(onClick = { bookmarksStore.toggle(channel.geohash) }) {
+                        ChannelRow(
+                            title = title,
+                            subtitle = subtitle,
+                            isSelected = isChannelSelected(channel, selectedChannel),
+                            titleColor = null,
+                            titleBold = participantCount > 0,
+                            trailingContent = {
+                                IconButton(onClick = { bookmarksStore.toggle(gh) }) {
                                     Icon(
-                                        imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
-                                        contentDescription = if (isBookmarked) stringResource(R.string.cd_remove_bookmark) else stringResource(R.string.cd_add_bookmark),
+                                        imageVector = Icons.Filled.Bookmark,
+                                        contentDescription = stringResource(R.string.cd_remove_bookmark),
                                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                                     )
                                 }
-                                },
-                                onClick = {
-                                    // Selecting a suggested nearby channel is not a teleport
+                            },
+                            onClick = {
+                                // For bookmarked selection, mark teleported based on regional membership
+                                val inRegional = availableChannels.any { it.geohash == gh }
+                                if (!inRegional && availableChannels.isNotEmpty()) {
+                                    locationManager.setTeleported(true)
+                                } else {
                                     locationManager.setTeleported(false)
-                                    locationManager.select(ChannelID.Location(channel))
-                                    onDismiss()
                                 }
-                            )
-                        }
-                    } else if (permissionState == LocationChannelManager.PermissionState.AUTHORIZED && locationServicesEnabled) {
-                        item {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                CircularProgressIndicator(modifier = Modifier.size(16.dp))
-                                Text(
-                                    text = stringResource(R.string.finding_nearby_channels),
-                                    fontSize = 12.sp,
-                                    fontFamily = FontFamily.Monospace
-                                )
+                                locationManager.select(ChannelID.Location(channel))
+                                onDismiss()
                             }
-                        }
+                        )
+                        LaunchedEffect(gh) { bookmarksStore.resolveNameIfNeeded(gh) }
                     }
+                }
 
-                    // Bookmarked geohashes
-                    if (bookmarks.isNotEmpty()) {
-                        item(key = "bookmarked_header") {
-                            Text(
-                                text = stringResource(R.string.bookmarked),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontFamily = FontFamily.Monospace,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 24.dp)
-                                    .padding(top = 8.dp, bottom = 4.dp)
-                            )
-                        }
-                        items(bookmarks) { gh ->
-                            val level = levelForLength(gh.length)
-                            val channel = GeohashChannel(level = level, geohash = gh)
-                            val coverage = coverageString(gh.length)
-                            val subtitlePrefix = "#${gh} • $coverage"
-                            val name = bookmarkNames[gh]
-                            val subtitle = subtitlePrefix + (name?.let { " • ${formattedNamePrefix(level)}$it" } ?: "")
-                            val participantCount = geohashParticipantCounts[gh] ?: 0
-                            val title = geohashHashTitleWithCount(gh, participantCount)
-
-                            ChannelRow(
-                                title = title,
-                                subtitle = subtitle,
-                                isSelected = isChannelSelected(channel, selectedChannel),
-                                titleColor = null,
-                                titleBold = participantCount > 0,
-                                trailingContent = {
-                                    IconButton(onClick = { bookmarksStore.toggle(gh) }) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Bookmark,
-                                            contentDescription = stringResource(R.string.cd_remove_bookmark),
-                                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                                        )
-                                    }
-                                },
-                                onClick = {
-                                    // For bookmarked selection, mark teleported based on regional membership
-                                    val inRegional = availableChannels.any { it.geohash == gh }
-                                    if (!inRegional && availableChannels.isNotEmpty()) {
-                                        locationManager.setTeleported(true)
-                                    } else {
-                                        locationManager.setTeleported(false)
-                                    }
-                                    locationManager.select(ChannelID.Location(channel))
-                                    onDismiss()
-                                }
-                            )
-                            LaunchedEffect(gh) { bookmarksStore.resolveNameIfNeeded(gh) }
-                        }
-                    }
-
-                    // Custom geohash teleport (iOS-style inline form)
-                    item(key = "custom_geohash") {
-                        Surface(
-                            color = Color.Transparent,
-                            shape = MaterialTheme.shapes.medium,
+                // Custom geohash teleport (iOS-style inline form)
+                item(key = "custom_geohash") {
+                    Surface(
+                        color = Color.Transparent,
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 2.dp)
+                    ) {
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 2.dp)
+                                .padding(horizontal = 16.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.hash_symbol),
+                            Text(
+                                text = stringResource(R.string.hash_symbol),
+                                fontSize = BASE_FONT_SIZE.sp,
+                                fontFamily = FontFamily.Monospace,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+
+                            BasicTextField(
+                                value = customGeohash,
+                                onValueChange = { newValue ->
+                                    // iOS-style geohash validation (base32 characters only)
+                                    val allowed = "0123456789bcdefghjkmnpqrstuvwxyz".toSet()
+                                    val filtered = newValue
+                                        .lowercase()
+                                        .replace("#", "")
+                                        .filter { it in allowed }
+                                        .take(12)
+
+                                    customGeohash = filtered
+                                    customError = null
+                                },
+                                textStyle = androidx.compose.ui.text.TextStyle(
                                     fontSize = BASE_FONT_SIZE.sp,
                                     fontFamily = FontFamily.Monospace,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                )
-
-                                BasicTextField(
-                                    value = customGeohash,
-                                    onValueChange = { newValue ->
-                                        // iOS-style geohash validation (base32 characters only)
-                                        val allowed = "0123456789bcdefghjkmnpqrstuvwxyz".toSet()
-                                        val filtered = newValue
-                                            .lowercase()
-                                            .replace("#", "")
-                                            .filter { it in allowed }
-                                            .take(12)
-
-                                        customGeohash = filtered
-                                        customError = null
+                                    color = MaterialTheme.colorScheme.onSurface
+                                ),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .onFocusChanged { focusState ->
+                                        isInputFocused = focusState.isFocused
+                                        if (focusState.isFocused && !asInlineContent) {
+                                            coroutineScope.launch {
+                                                sheetState.expand()
+                                                // Scroll to bottom to show input and remove button
+                                                listState.animateScrollToItem(
+                                                    index = listState.layoutInfo.totalItemsCount - 1
+                                                )
+                                            }
+                                        }
                                     },
-                                    textStyle = androidx.compose.ui.text.TextStyle(
-                                        fontSize = BASE_FONT_SIZE.sp,
-                                        fontFamily = FontFamily.Monospace,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    ),
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .onFocusChanged { focusState ->
-                                            isInputFocused = focusState.isFocused
-                                            if (focusState.isFocused) {
-                                                coroutineScope.launch {
-                                                    sheetState.expand()
-                                                    // Scroll to bottom to show input and remove button
-                                                    listState.animateScrollToItem(
-                                                        index = listState.layoutInfo.totalItemsCount - 1
-                                                    )
-                                                }
-                                            }
-                                        },
-                                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                        imeAction = androidx.compose.ui.text.input.ImeAction.Go
-                                    ),
-                                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                                        onGo = {
-                                            if (validateGeohash(customGeohash.trim().lowercase().replace("#", ""))) {
-                                                val normalized = customGeohash.trim().lowercase().replace("#", "")
-                                                val level = levelForLength(normalized.length)
-                                                val channel = GeohashChannel(level = level, geohash = normalized)
-                                                locationManager.setTeleported(true)
-                                                locationManager.select(ChannelID.Location(channel))
-                                                onDismiss()
-                                            } else {
-                                                customError = context.getString(R.string.invalid_geohash)
-                                            }
-                                        }
-                                    ),
-                                    singleLine = true,
-                                    decorationBox = { innerTextField ->
-                                        if (customGeohash.isEmpty()) {
-                                            Text(
-                                                text = stringResource(R.string.geohash_placeholder),
-                                                fontSize = BASE_FONT_SIZE.sp,
-                                                fontFamily = FontFamily.Monospace,
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                                            )
-                                        }
-                                        innerTextField()
-                                    }
-                                )
-
-                                val normalized = customGeohash.trim().lowercase().replace("#", "")
-                                
-                                // Map picker button
-                                IconButton(onClick = {
-                                    val initial = when {
-                                        normalized.isNotBlank() -> normalized
-                                        selectedChannel is ChannelID.Location -> (selectedChannel as ChannelID.Location).channel.geohash
-                                        else -> ""
-                                    }
-                                    val intent = Intent(context, GeohashPickerActivity::class.java).apply {
-                                        putExtra(GeohashPickerActivity.EXTRA_INITIAL_GEOHASH, initial)
-                                    }
-                                    mapPickerLauncher.launch(intent)
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Map,
-                                        contentDescription = stringResource(R.string.cd_open_map),
-                                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                                    )
-                                }
-
-                                val isValid = validateGeohash(normalized)
-
-                                // iOS-style teleport button
-                                Button(
-                                    onClick = {
-                                        if (isValid) {
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                    imeAction = androidx.compose.ui.text.input.ImeAction.Go
+                                ),
+                                keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                                    onGo = {
+                                        if (validateGeohash(customGeohash.trim().lowercase().replace("#", ""))) {
+                                            val normalized = customGeohash.trim().lowercase().replace("#", "")
                                             val level = levelForLength(normalized.length)
                                             val channel = GeohashChannel(level = level, geohash = normalized)
-                                            // Mark this selection as a manual teleport
                                             locationManager.setTeleported(true)
                                             locationManager.select(ChannelID.Location(channel))
                                             onDismiss()
                                         } else {
                                             customError = context.getString(R.string.invalid_geohash)
                                         }
-                                    },
-                                    enabled = isValid,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
-                                        contentColor = MaterialTheme.colorScheme.onSurface
-                                    )
-                                ) {
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.teleport),
-                                            fontSize = BASE_FONT_SIZE.sp,
-                                            fontFamily = FontFamily.Monospace
-                                        )
-                                        Icon(
-                                            imageVector = Icons.Filled.PinDrop,
-                                            contentDescription = stringResource(R.string.cd_teleport),
-                                            modifier = Modifier.size(14.dp),
-                                            tint = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Error message for custom geohash
-                    if (customError != null) {
-                        item(key = "geohash_error") {
-                            Text(
-                                text = customError!!,
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily.Monospace,
-                                color = Color.Red,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 24.dp)
-                            )
-                        }
-                    }
-
-                    // Location services toggle button
-                    item(key = "location_toggle") {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp)
-                                .padding(top = 8.dp)
-                        ) {
-                            Button(
-                                onClick = {
-                                    if (locationServicesEnabled) {
-                                        locationManager.disableLocationServices()
-                                    } else {
-                                        locationManager.enableLocationServices()
-                                    }
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (locationServicesEnabled) {
-                                        Color.Red.copy(alpha = 0.08f)
-                                    } else {
-                                        standardGreen.copy(alpha = 0.12f)
-                                    },
-                                    contentColor = if (locationServicesEnabled) {
-                                        Color(0xFFBF1A1A)
-                                    } else {
-                                        standardGreen
                                     }
                                 ),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = if (locationServicesEnabled) stringResource(R.string.disable_location_services) else stringResource(R.string.enable_location_services),
-                                    fontSize = 12.sp,
-                                    fontFamily = FontFamily.Monospace
+                                singleLine = true,
+                                decorationBox = { innerTextField ->
+                                    if (customGeohash.isEmpty()) {
+                                        Text(
+                                            text = stringResource(R.string.geohash_placeholder),
+                                            fontSize = BASE_FONT_SIZE.sp,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            )
+
+                            val normalized = customGeohash.trim().lowercase().replace("#", "")
+                            
+                            // Map picker button
+                            IconButton(onClick = {
+                                val initial = when {
+                                    normalized.isNotBlank() -> normalized
+                                    selectedChannel is ChannelID.Location -> (selectedChannel as ChannelID.Location).channel.geohash
+                                    else -> ""
+                                }
+                                val intent = Intent(context, GeohashPickerActivity::class.java).apply {
+                                    putExtra(GeohashPickerActivity.EXTRA_INITIAL_GEOHASH, initial)
+                                }
+                                mapPickerLauncher.launch(intent)
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Map,
+                                    contentDescription = stringResource(R.string.cd_open_map),
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                                 )
+                            }
+
+                            val isValid = validateGeohash(normalized)
+
+                            // iOS-style teleport button
+                            Button(
+                                onClick = {
+                                    if (isValid) {
+                                        val level = levelForLength(normalized.length)
+                                        val channel = GeohashChannel(level = level, geohash = normalized)
+                                        // Mark this selection as a manual teleport
+                                        locationManager.setTeleported(true)
+                                        locationManager.select(ChannelID.Location(channel))
+                                        onDismiss()
+                                    } else {
+                                        customError = context.getString(R.string.invalid_geohash)
+                                    }
+                                },
+                                enabled = isValid,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                )
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.teleport),
+                                        fontSize = BASE_FONT_SIZE.sp,
+                                        fontFamily = FontFamily.Monospace
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Filled.PinDrop,
+                                        contentDescription = stringResource(R.string.cd_teleport),
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
                             }
                         }
                     }
                 }
 
-                // TopBar (animated)
+                // Error message for custom geohash
+                if (customError != null) {
+                    item(key = "geohash_error") {
+                        Text(
+                            text = customError!!,
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = Color.Red,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                        )
+                    }
+                }
+
+                // Location services toggle button
+                item(key = "location_toggle") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                            .padding(top = 8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                if (locationServicesEnabled) {
+                                    locationManager.disableLocationServices()
+                                } else {
+                                    locationManager.enableLocationServices()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (locationServicesEnabled) {
+                                    Color.Red.copy(alpha = 0.08f)
+                                } else {
+                                    standardGreen.copy(alpha = 0.12f)
+                                },
+                                contentColor = if (locationServicesEnabled) {
+                                    Color(0xFFBF1A1A)
+                                } else {
+                                    standardGreen
+                                }
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = if (locationServicesEnabled) stringResource(R.string.disable_location_services) else stringResource(R.string.enable_location_services),
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                    }
+                }
+            }
+
+            // TopBar (animated) - only show close button when in sheet mode
+            if (!asInlineContent) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
@@ -576,6 +575,19 @@ fun LocationChannelsSheet(
                     )
                 }
             }
+        }
+    }
+
+    if (asInlineContent) {
+        // Render content directly without sheet wrapper
+        LocationContent()
+    } else if (isPresented) {
+        BitchatBottomSheet(
+            modifier = modifier,
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+        ) {
+            LocationContent()
         }
     }
 

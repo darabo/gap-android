@@ -209,7 +209,7 @@ fun NicknameEditor(
             ) {
                 Icon(
                     imageVector = Icons.Filled.Check,
-                    contentDescription = "Save",
+                    contentDescription = stringResource(R.string.action_save),
                     tint = colorScheme.primary,
                     modifier = Modifier.size(12.dp)
                 )
@@ -240,7 +240,7 @@ fun NicknameEditor(
             ) {
                 Icon(
                     imageVector = Icons.Filled.Edit,
-                    contentDescription = "Edit",
+                    contentDescription = stringResource(R.string.action_edit),
                     tint = colorScheme.primary.copy(alpha = 0.6f),
                     modifier = Modifier.size(12.dp)
                 )

@@ -139,7 +139,7 @@
   <string name="about_tor_on">tor on</string>
   <string name="about_tor_route">route internet over tor for enhanced privacy.</string>
   <string name="about_legacy_compat_title">Legacy Compatibility</string>
-  <string name="about_legacy_compat_desc">Allow Bitchat apps to discover you. May require restart. Disabling maximizes privacy.</string>
+  <string name="about_legacy_compat_desc">Allow Bitchat apps to discover you (requires restart). Disabling maximizes privacy.</string>
   <string name="about_tor_status">tor Status: %1$s, bootstrap %2$d%%</string>
   <string name="tor_status_connected">Connected (%1$d%%)</string>
   <string name="tor_status_disconnected">Disconnected</string>
@@ -329,7 +329,7 @@
   <string name="bluetooth_not_supported">Bluetooth Not Supported</string>
   <string name="bluetooth_unsupported_explanation">This device doesn\'t support Bluetooth Low Energy (BLE), which is required for Gap Mesh to function.\n\nGap Mesh needs BLE to create mesh networks and communicate with nearby devices without internet.</string>
   <string name="checking_bluetooth_status">Checking Bluetooth status...</string>
-  <string name="battery_optimization_detected_title">battery optimization detected</string>
+  <string name="battery_optimization_detected_title">Battery Optimization Detected</string>
   <string name="battery_optimization_enabled_title">Battery Optimization Enabled</string>
   <string name="battery_optimization_explanation_short">Gap Mesh needs to run in the background to maintain mesh connections. battery optimization can interrupt these connections.</string>
   <string name="benefits_of_disabling">Benefits of Disabling</string>
@@ -503,7 +503,7 @@
     <string name="perm_storage_system">Photos and Videos / Storage</string>
 
     <!-- Tutorial Onboarding -->
-    <string name="onboarding_welcome">Welcome to Gap</string>
+    <string name="onboarding_welcome">Welcome to Gap Mesh</string>
     <string name="onboarding_identity_desc">Your digital identity on the Mesh.</string>
     <string name="onboarding_username_label">Your Username</string>
     <string name="onboarding_privacy_note">Note: Changing your username from the anonymous default may reduce your privacy if you choose a recognizable name.</string>
@@ -555,5 +555,16 @@
     <string name="decoy_settings_save">Save</string>
     <string name="decoy_settings_saved">Decoy PIN updated</string>
 
-</resources>
+    <!-- New dynamically found strings -->
+    <string name="take_photo">Take Photo</string>
+    <string name="choose_from_gallery">Choose from Gallery</string>
+    <string name="debug_overall">Overall</string>
+    <string name="debug_per_device">Per Device</string>
+    <string name="debug_per_peer">Per Peer</string>
+    <string name="debug_incoming">Incoming</string>
+    <string name="debug_outgoing">Outgoing</string>
+    <string name="enable_location_action">Enable Location</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_save">Save</string>
 
+</resources>

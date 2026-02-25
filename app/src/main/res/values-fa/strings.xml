@@ -131,7 +131,7 @@
     <string name="about_tor_on">Tor روشن</string>
     <string name="about_tor_route">برای حفظ بیشتر حریم خصوصی، ترافیک اینترنت را از طریق Tor مسیریابی کنید.</string>
     <string name="about_legacy_compat_title">سازگاری با نسخه‌های قدیمی</string>
-    <string name="about_legacy_compat_desc">به برنامه‌های Bitchat اجازه پیدا کردن شما را بدهید. ممکن است نیاز به راه‌اندازی مجدد داشته باشد. غیرفعال‌کردن حریم خصوصی را به حداکثر می‌رساند.</string>
+    <string name="about_legacy_compat_desc">به برنامه‌های Bitchat اجازه پیدا کردن شما را بدهید (نیاز به راه‌اندازی مجدد دارد). غیرفعال‌کردن حریم خصوصی را به حداکثر می‌رساند.</string>
     <string name="about_tor_status">وضعیت Tor: %1$s، بوت‌استرپ %2$d%%</string>
     <string name="tor_status_connected">متصل (%1$d%%)</string>
     <string name="tor_status_disconnected">قطع شد</string>
@@ -558,5 +558,16 @@
     <string name="decoy_settings_save">ذخیره</string>
     <string name="decoy_settings_saved">پین فریب به‌روزرسانی شد</string>
 
-</resources>
+    <!-- New dynamically found strings -->
+    <string name="take_photo">گرفتن عکس</string>
+    <string name="choose_from_gallery">انتخاب از گالری</string>
+    <string name="debug_overall">کلی</string>
+    <string name="debug_per_device">هر دستگاه</string>
+    <string name="debug_per_peer">هر همتا</string>
+    <string name="debug_incoming">ورودی</string>
+    <string name="debug_outgoing">خروجی</string>
+    <string name="enable_location_action">فعال‌سازی مکان</string>
+    <string name="action_edit">ویرایش</string>
+    <string name="action_save">ذخیره</string>
 
+</resources>

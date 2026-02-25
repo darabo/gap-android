@@ -743,7 +743,19 @@ fun formatBubbleMessageContent(
     var translatedContent = content
         .replace("you took a screenshot", screenshotLocal) // Handle local message variant
         .replace("took a screenshot", screenshotPublic) // Handle public message variant
+
+    // Verification message translations
+    val mutualPrefix = "mutual verification with "
+    val verifiedPrefix = "verified "
     
+    if (translatedContent.startsWith(mutualPrefix)) {
+        val name = translatedContent.removePrefix(mutualPrefix)
+        translatedContent = stringResource(R.string.verify_mutual_system_message, name)
+    } else if (translatedContent.startsWith(verifiedPrefix)) {
+        val name = translatedContent.removePrefix(verifiedPrefix)
+        translatedContent = stringResource(R.string.verify_success_system_message, name)
+    }
+
     // URL pattern matching
     val urlPattern = """(https?://[^\s]+|www\.[^\s]+|[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}[^\s]*)""".toRegex()
     val mentionPattern = """@([\p{L}0-9_]+(?:#[a-fA-F0-9]{4})?)""".toRegex()

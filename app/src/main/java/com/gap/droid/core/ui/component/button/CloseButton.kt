@@ -27,7 +27,7 @@ fun CloseButton(
     ) {
         Icon(
             imageVector = Icons.Default.Close,
-            contentDescription = "Close",
+            contentDescription = androidx.compose.ui.res.stringResource(com.gapmesh.droid.R.string.close_plain),
             modifier = Modifier.Companion.size(18.dp)
         )
     }

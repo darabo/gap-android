@@ -345,6 +345,32 @@ class BluetoothGattServerManager(
         
         gattServer?.addService(service)
         
+        val legacyMode = try { 
+            com.gapmesh.droid.service.MeshServicePreferences.isLegacyCompatibilityEnabled(false) 
+        } catch (_: Exception) { false }
+        
+        if (legacyMode) {
+            // In legacy mode, we must add the original Bitchat service to our GATT database
+            // so pure Bitchat clients (who don't know the Gap Mesh UUID) can discover it
+            // Needs its own characteristic instance
+            val legacyChar = BluetoothGattCharacteristic(
+                AppConstants.Mesh.Gatt.CHARACTERISTIC_UUID,
+                BluetoothGattCharacteristic.PROPERTY_READ or 
+                BluetoothGattCharacteristic.PROPERTY_WRITE or 
+                BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE or
+                BluetoothGattCharacteristic.PROPERTY_NOTIFY,
+                BluetoothGattCharacteristic.PERMISSION_READ or 
+                BluetoothGattCharacteristic.PERMISSION_WRITE
+            )
+            legacyChar.addDescriptor(BluetoothGattDescriptor(
+                AppConstants.Mesh.Gatt.DESCRIPTOR_UUID,
+                BluetoothGattDescriptor.PERMISSION_READ or BluetoothGattDescriptor.PERMISSION_WRITE
+            ))
+            val legacyService = BluetoothGattService(com.gapmesh.droid.mesh.ServiceUuidRotation.BITCHAT_LEGACY_UUID, BluetoothGattService.SERVICE_TYPE_PRIMARY)
+            legacyService.addCharacteristic(legacyChar)
+            gattServer?.addService(legacyService)
+        }
+        
         Log.i(TAG, "GATT server setup complete")
     }
     
