@@ -284,11 +284,23 @@ class SecurityManager(private val encryptionService: EncryptionService, private 
             
             // 4. Verify Signature
             val signature = packet.signature!!
-            val isSignatureValid = encryptionService.verifyEd25519Signature(
+            var isSignatureValid = encryptionService.verifyEd25519Signature(
                 signature,
                 packetDataForSigning,
                 signingPublicKey
             )
+            
+            if (!isSignatureValid) {
+                // Try legacy format
+                val legacyPacketData = packet.toBinaryDataForSigning(legacyFormat = true)
+                if (legacyPacketData != null) {
+                    isSignatureValid = encryptionService.verifyEd25519Signature(
+                        signature,
+                        legacyPacketData,
+                        signingPublicKey
+                    )
+                }
+            }
             
             if (isSignatureValid) {
                 // Log.v(TAG, "✅ Signature verified for $peerID (type ${packet.type})")

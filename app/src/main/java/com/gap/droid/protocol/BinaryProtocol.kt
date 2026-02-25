@@ -80,14 +80,15 @@ data class BitchatPacket(
     )
 
     fun toBinaryData(): ByteArray? {
-        return BinaryProtocol.encode(this)
+        val padPolicy = type == MessageType.NOISE_HANDSHAKE.value || type == MessageType.NOISE_ENCRYPTED.value
+        return BinaryProtocol.encode(this, padding = padPolicy, compress = padPolicy)
     }
 
     /**
      * Create binary representation for signing (without signature and TTL fields)
      * TTL is excluded because it changes during packet relay operations
      */
-    fun toBinaryDataForSigning(): ByteArray? {
+    fun toBinaryDataForSigning(legacyFormat: Boolean = false): ByteArray? {
         // Create a copy without signature and with fixed TTL for signing
         // TTL must be excluded because it changes during relay
         val unsignedPacket = BitchatPacket(
@@ -99,11 +100,14 @@ data class BitchatPacket(
             payload = payload,
             signature = null, // Remove signature for signing
             route = route,
-            ttl = com.gapmesh.droid.util.AppConstants.SYNC_TTL_HOPS // Use fixed TTL=0 for signing to ensure relay compatibility
+            ttl = 0u // MUST BE 0 to match iOS BitchatPacket.toBinaryDataForSigning() fixed TTL=0
         )
-        // Disable padding AND compression for signing to ensure deterministic binary representation
-        // regardless of platform-specific zlib differences or padding randomization - matches iOS
-        return BinaryProtocol.encode(unsignedPacket, padding = false, compress = false)
+        // MUST ENABLE padding AND compression for signing to match iOS exactly. iOS signs the final padded data.
+        return if (legacyFormat) {
+            BinaryProtocol.encode(unsignedPacket, padding = true, compress = true)
+        } else {
+            BinaryProtocol.encode(unsignedPacket, padding = false, compress = false)
+        }
     }
 
     companion object {

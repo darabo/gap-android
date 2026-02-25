@@ -134,11 +134,12 @@ private fun IdentityStep(
     onIsEditingChange: (Boolean) -> Unit,
     onEditNameChange: (String) -> Unit
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(horizontalAlignment = Alignment.Start) {
         Text(
             stringResource(R.string.onboarding_welcome),
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1
         )
         Spacer(Modifier.height(16.dp))
         Text(
@@ -229,7 +230,9 @@ private fun ConnectivityStep(onBackgroundModeChange: (Boolean) -> Unit) {
         MeshServicePreferences.setBackgroundEnabled(backgroundEnabled)
     }
 
-    Column {
+    Column(
+        horizontalAlignment = Alignment.Start
+    ) {
         Text(
             stringResource(R.string.onboarding_bg_title),
             style = MaterialTheme.typography.headlineMedium,
@@ -279,7 +282,9 @@ private fun ConnectivityStep(onBackgroundModeChange: (Boolean) -> Unit) {
 
 @Composable
 private fun EducationStep() {
-    Column {
+    Column(
+        horizontalAlignment = Alignment.Start
+    ) {
         Text(
             stringResource(R.string.onboarding_features_title),
             style = MaterialTheme.typography.headlineMedium,

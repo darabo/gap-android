@@ -42,7 +42,8 @@ fun MeshPeerListSheet(
     viewModel: ChatViewModel,
     onDismiss: () -> Unit,
     onShowVerification: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    asInlineContent: Boolean = false
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
@@ -60,7 +61,7 @@ fun MeshPeerListSheet(
     var showPrivateChatSheet by remember { mutableStateOf(false) }
     var privateChatPeerID by remember { mutableStateOf<String?>(null) }
 
-    // Bottom sheet state
+    // Bottom sheet state (only used when not inline)
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
@@ -77,113 +78,111 @@ fun MeshPeerListSheet(
         label = "topBarAlpha"
     )
 
-    if (isPresented) {
-        ModalBottomSheet(
-            modifier = modifier.statusBarsPadding(),
-            onDismissRequest = onDismiss,
-            sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.background,
-            dragHandle = null
+    // Content composable shared between sheet and inline modes
+    @Composable
+    fun PeerListContent() {
+        Box(modifier = modifier.fillMaxWidth()) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(top = if (asInlineContent) 0.dp else 64.dp, bottom = 20.dp)
+            ) {
 
-        ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 64.dp, bottom = 20.dp)
-                ) {
-                    // Channels section
-                    if (joinedChannels.isNotEmpty()) {
-                        item(key = "channels_header") {
-                            Text(
-                                text = stringResource(id = R.string.channels).uppercase(),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = colorScheme.onSurface.copy(alpha = 0.7f),
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 24.dp)
-                                    .padding(top = 8.dp, bottom = 4.dp)
-                            )
-                        }
 
-                        items(
-                            items = joinedChannels.toList(),
-                            key = { "channel_$it" }
-                        ) { channel ->
-                            val isSelected = channel == currentChannel
-                            val unreadCount = unreadChannelMessages[channel] ?: 0
-
-                            ChannelRow(
-                                channel = channel,
-                                isSelected = isSelected,
-                                unreadCount = unreadCount,
-                                colorScheme = colorScheme,
-                                onChannelClick = {
-                                    // Check if this is a DM channel (starts with @)
-                                    if (channel.startsWith("@")) {
-                                        // Extract peer name and find the peer ID
-                                        val peerName = channel.removePrefix("@")
-                                        val peerID =
-                                            peerNicknames.entries.firstOrNull { it.value == peerName }?.key
-                                        if (peerID != null) {
-                                            privateChatPeerID = peerID
-                                            showPrivateChatSheet = true
-                                        }
-                                    } else {
-                                        // Regular channel switch
-                                        viewModel.switchToChannel(channel)
-                                        onDismiss()
-                                    }
-                                },
-                                onLeaveChannel = {
-                                    viewModel.leaveChannel(channel)
-                                },
-                            )
-                        }
+                // Channels section
+                if (joinedChannels.isNotEmpty()) {
+                    item(key = "channels_header") {
+                        Text(
+                            text = stringResource(id = R.string.channels).uppercase(),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = colorScheme.onSurface.copy(alpha = 0.7f),
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                                .padding(top = 8.dp, bottom = 4.dp)
+                        )
                     }
 
-                    // People section - switch between mesh and geohash lists (iOS-compatible)
-                    item(key = "people_section") {
-                        when (selectedLocationChannel) {
-                            is ChannelID.Location -> {
-                                // Show geohash people list when in location channel
-                                GeohashPeopleList(
-                                    viewModel = viewModel,
-                                    onTapPerson = onDismiss
-                                )
-                            }
+                    items(
+                        items = joinedChannels.toList(),
+                        key = { "channel_$it" }
+                    ) { channel ->
+                        val isSelected = channel == currentChannel
+                        val unreadCount = unreadChannelMessages[channel] ?: 0
 
-                            else -> {
-                                // Show mesh peer list when in mesh channel (default)
-                                PeopleSection(
-                                    modifier = Modifier.padding(top = if (joinedChannels.isNotEmpty()) 16.dp else 0.dp),
-                                    connectedPeers = connectedPeers,
-                                    peerNicknames = peerNicknames,
-                                    peerRSSI = peerRSSI,
-                                    nickname = nickname,
-                                    colorScheme = colorScheme,
-                                    selectedPrivatePeer = selectedPrivatePeer,
-                                    viewModel = viewModel,
-                                    onPrivateChatStart = { peerID ->
-                                        viewModel.startPrivateChat(peerID)
+                        ChannelRow(
+                            channel = channel,
+                            isSelected = isSelected,
+                            unreadCount = unreadCount,
+                            colorScheme = colorScheme,
+                            onChannelClick = {
+                                // Check if this is a DM channel (starts with @)
+                                if (channel.startsWith("@")) {
+                                    // Extract peer name and find the peer ID
+                                    val peerName = channel.removePrefix("@")
+                                    val peerID =
+                                        peerNicknames.entries.firstOrNull { it.value == peerName }?.key
+                                    if (peerID != null) {
                                         privateChatPeerID = peerID
                                         showPrivateChatSheet = true
                                     }
-                                )
-                            }
-                        }
+                                } else {
+                                    // Regular channel switch
+                                    viewModel.switchToChannel(channel)
+                                    onDismiss()
+                                }
+                            },
+                            onLeaveChannel = {
+                                viewModel.leaveChannel(channel)
+                            },
+                        )
                     }
                 }
 
-                // TopBar (animated)
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .fillMaxWidth()
-                        .height(64.dp)
-                        .background(colorScheme.background.copy(alpha = topBarAlpha))
-                ) {
+                // People section - switch between mesh and geohash lists (iOS-compatible)
+                item(key = "people_section") {
+                    when (selectedLocationChannel) {
+                        is ChannelID.Location -> {
+                            // Show geohash people list when in location channel
+                            GeohashPeopleList(
+                                viewModel = viewModel,
+                                onTapPerson = onDismiss
+                            )
+                        }
+
+                        else -> {
+                            // Show mesh peer list when in mesh channel (default)
+                            PeopleSection(
+                                modifier = Modifier.padding(top = if (joinedChannels.isNotEmpty()) 16.dp else 0.dp),
+                                connectedPeers = connectedPeers,
+                                peerNicknames = peerNicknames,
+                                peerRSSI = peerRSSI,
+                                nickname = nickname,
+                                colorScheme = colorScheme,
+                                selectedPrivatePeer = selectedPrivatePeer,
+                                viewModel = viewModel,
+                                onPrivateChatStart = { peerID ->
+                                    viewModel.startPrivateChat(peerID)
+                                    privateChatPeerID = peerID
+                                    showPrivateChatSheet = true
+                                },
+                                onShowVerification = if (asInlineContent) onShowVerification else null
+                            )
+                        }
+                    }
+                }
+            }
+
+            // TopBar (animated)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .height(if (asInlineContent) 0.dp else 64.dp)
+                    .background(colorScheme.background.copy(alpha = if (asInlineContent) 0f else topBarAlpha))
+            ) {
+                if (!asInlineContent) {
                     Text(
                         text = stringResource(id = R.string.your_network).uppercase(),
                         style = MaterialTheme.typography.titleMedium.copy(
@@ -224,6 +223,22 @@ fun MeshPeerListSheet(
                 }
             }
         }
+    }
+
+    if (asInlineContent) {
+        // Render content directly without sheet wrapper
+        PeerListContent()
+    } else if (isPresented) {
+        ModalBottomSheet(
+            modifier = modifier.statusBarsPadding(),
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.background,
+            dragHandle = null
+
+        ) {
+            PeerListContent()
+        }
 
         // Nested Private Chat Sheet (iOS-style)
         if (showPrivateChatSheet && privateChatPeerID != null) {
@@ -238,6 +253,20 @@ fun MeshPeerListSheet(
                 }
             )
         }
+    }
+
+    // Also show private chat sheet when inline
+    if (asInlineContent && showPrivateChatSheet && privateChatPeerID != null) {
+        PrivateChatSheet(
+            isPresented = showPrivateChatSheet,
+            peerID = privateChatPeerID!!,
+            viewModel = viewModel,
+            onDismiss = {
+                showPrivateChatSheet = false
+                privateChatPeerID = null
+                viewModel.endPrivateChat()
+            }
+        )
     }
 }
 
@@ -328,19 +357,38 @@ fun PeopleSection(
     colorScheme: ColorScheme,
     selectedPrivatePeer: String?,
     viewModel: ChatViewModel,
-    onPrivateChatStart: (String) -> Unit
+    onPrivateChatStart: (String) -> Unit,
+    onShowVerification: (() -> Unit)? = null
 ) {
     Column(modifier = modifier) {
-        Text(
-            text = stringResource(id = R.string.people).uppercase(),
-            style = MaterialTheme.typography.labelLarge,
-            color = colorScheme.onSurface.copy(alpha = 0.7f),
-            fontWeight = FontWeight.Bold,
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(top = 8.dp, bottom = 4.dp)
-        )
+                .padding(top = 8.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(id = R.string.people).uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+                color = colorScheme.onSurface.copy(alpha = 0.7f),
+                fontWeight = FontWeight.Bold,
+            )
+            if (onShowVerification != null) {
+                IconButton(
+                    onClick = onShowVerification,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.QrCode,
+                        contentDescription = stringResource(R.string.verify_title),
+                        tint = colorScheme.onSurface.copy(alpha = 0.8f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
 
         if (connectedPeers.isEmpty()) {
             Text(

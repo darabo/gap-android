@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,6 +43,8 @@ import com.gapmesh.droid.ui.ChatScreen
 import com.gapmesh.droid.ui.ChatViewModel
 import com.gapmesh.droid.ui.OrientationAwareActivity
 import com.gapmesh.droid.ui.theme.BitchatTheme
+import com.gapmesh.droid.ui.theme.ThemePreference
+import com.gapmesh.droid.ui.theme.ThemePreferenceManager
 import com.gapmesh.droid.nostr.PoWPreferenceManager
 import com.gapmesh.droid.services.VerificationService
 import com.gapmesh.droid.service.MeshServicePreferences
@@ -136,7 +139,21 @@ class MainActivity : OrientationAwareActivity() {
         }
 
         // Enable edge-to-edge display for modern Android look
-        enableEdgeToEdge()
+        // Read theme preference so we can pass the correct system bar styles
+        ThemePreferenceManager.init(applicationContext)
+        val themePref = ThemePreferenceManager.themeFlow.value
+        val useDark = when (themePref) {
+            ThemePreference.Dark -> true
+            ThemePreference.Light -> false
+            ThemePreference.System -> (resources.configuration.uiMode and
+                android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        }
+        enableEdgeToEdge(
+            statusBarStyle = if (useDark) SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = if (useDark) SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                else SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
+        )
 
         // Initialize permission management
         permissionManager = PermissionManager(this)

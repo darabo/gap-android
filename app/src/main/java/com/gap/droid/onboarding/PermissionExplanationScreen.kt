@@ -51,7 +51,7 @@ fun PermissionExplanationScreen(
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             
             // Header Section - matching AboutSheet style
             Column(

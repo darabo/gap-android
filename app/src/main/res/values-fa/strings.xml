@@ -131,7 +131,7 @@
     <string name="about_tor_on">Tor روشن</string>
     <string name="about_tor_route">برای حفظ بیشتر حریم خصوصی، ترافیک اینترنت را از طریق Tor مسیریابی کنید.</string>
     <string name="about_legacy_compat_title">سازگاری با نسخه‌های قدیمی</string>
-    <string name="about_legacy_compat_desc">به برنامه‌های Bitchat اجازه پیدا کردن شما را بدهید. ممکن است نیاز به راه‌اندازی مجدد داشته باشد. غیرفعال‌کردن حریم خصوصی را به حداکثر می‌رساند.</string>
+    <string name="about_legacy_compat_desc">به برنامه‌های Bitchat اجازه پیدا کردن شما را بدهید (نیاز به راه‌اندازی مجدد دارد). غیرفعال‌کردن حریم خصوصی را به حداکثر می‌رساند.</string>
     <string name="about_tor_status">وضعیت Tor: %1$s، بوت‌استرپ %2$d%%</string>
     <string name="tor_status_connected">متصل (%1$d%%)</string>
     <string name="tor_status_disconnected">قطع شد</string>
