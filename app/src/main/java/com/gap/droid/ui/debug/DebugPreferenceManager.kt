@@ -25,7 +25,7 @@ object DebugPreferenceManager {
     private lateinit var prefs: SharedPreferences
 
     fun init(context: Context) {
-        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs = com.gapmesh.droid.core.SecurePrefsFactory.create(context, PREFS_NAME)
     }
 
     private fun ready(): Boolean = ::prefs.isInitialized

@@ -12,6 +12,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -53,6 +54,7 @@ class GeohashPickerActivity : OrientationAwareActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         val initialGeohash = intent.getStringExtra(EXTRA_INITIAL_GEOHASH)?.trim()?.lowercase()
@@ -168,7 +170,8 @@ class GeohashPickerActivity : OrientationAwareActivity() {
                         Surface(
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
-                                .padding(top = 20.dp)
+                                .statusBarsPadding()
+                                .padding(top = 8.dp)
                                 .fillMaxWidth(0.75f),
                             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
                             shape = RoundedCornerShape(12.dp),
@@ -190,7 +193,8 @@ class GeohashPickerActivity : OrientationAwareActivity() {
                         Column(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
-                                .padding(bottom = 20.dp, start = 16.dp, end = 16.dp),
+                                .navigationBarsPadding()
+                                .padding(bottom = 12.dp, start = 16.dp, end = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {

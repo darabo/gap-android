@@ -29,13 +29,13 @@ object ThemePreferenceManager {
     val themeFlow: StateFlow<ThemePreference> = _themeFlow
 
     fun init(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = com.gapmesh.droid.core.SecurePrefsFactory.create(context, PREFS_NAME)
         val saved = prefs.getString(KEY_THEME, ThemePreference.System.name)
         _themeFlow.value = runCatching { ThemePreference.valueOf(saved!!) }.getOrDefault(ThemePreference.System)
     }
 
     fun set(context: Context, preference: ThemePreference) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = com.gapmesh.droid.core.SecurePrefsFactory.create(context, PREFS_NAME)
         prefs.edit().putString(KEY_THEME, preference.name).apply()
         _themeFlow.value = preference
     }

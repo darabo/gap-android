@@ -3,6 +3,7 @@ package com.gapmesh.droid.identity
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.gapmesh.droid.core.SecurePrefsFactory
 import java.security.SecureRandom
 
 /**
@@ -36,7 +37,7 @@ class EphemeralIdentityManager(context: Context) {
     }
 
     private val prefs: SharedPreferences =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        SecurePrefsFactory.create(context, PREFS_NAME)
     private val secureRandom = SecureRandom()
 
     // Current ephemeral ID

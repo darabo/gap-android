@@ -110,7 +110,7 @@
   <string name="cd_pick_file">Pick file</string>
 
   <!-- About sheet -->
-  <string name="about_tagline">decentralized mesh messaging with end-to-end encryption</string>
+  <string name="about_tagline">Decentralized mesh messaging with end-to-end encryption</string>
   <string name="about_offline_mesh_title">Offline Mesh Chat</string>
   <string name="about_offline_mesh_desc">Communicate directly via Bluetooth LE without internet or servers. Messages relay through nearby devices to extend range.</string>
   <string name="about_online_geohash_title">Online Geohash Channels</string>
@@ -121,7 +121,7 @@
   <string name="about_system">system</string>
   <string name="about_light">light</string>
   <string name="about_dark">dark</string>
-  <string name="about_pow">proof of work</string>
+  <string name="about_pow">Proof of work</string>
   <string name="about_pow_off">pow off</string>
   <string name="about_pow_on">pow on</string>
   <string name="about_pow_tip">add proof of work to geohash messages for spam deterrence.</string>
@@ -190,7 +190,7 @@
   <string name="cd_teleport">Teleport</string>
   <string name="cd_selected">Selected</string>
   <string name="notification_action_quit_bitchat">Quit Gap Mesh</string>
-  <string name="about_background_title">run in background</string>
+  <string name="about_background_title">Run in the background</string>
   <string name="about_background_desc">keep mesh active when app is closed (foreground service)</string>
   <string name="cd_leave_channel">Leave channel</string>
   <string name="cd_reachable_via_nostr">Reachable via Nostr</string>

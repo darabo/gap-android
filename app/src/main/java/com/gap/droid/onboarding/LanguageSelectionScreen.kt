@@ -33,7 +33,8 @@ fun LanguageSelectionScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colorScheme.background),
+            .background(colorScheme.background)
+            .systemBarsPadding(),
         contentAlignment = Alignment.Center
     ) {
         Column(

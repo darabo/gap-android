@@ -21,7 +21,7 @@ class PermissionManager(private val context: Context) {
         private const val KEY_FIRST_TIME_COMPLETE = "first_time_onboarding_complete"
     }
 
-    private val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val sharedPrefs = com.gapmesh.droid.core.SecurePrefsFactory.create(context, PREFS_NAME)
 
     /**
      * Check if this is the first time the user is launching the app

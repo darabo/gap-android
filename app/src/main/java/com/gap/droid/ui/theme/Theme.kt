@@ -1,9 +1,9 @@
 package com.gapmesh.droid.ui.theme
 
 import android.app.Activity
-import android.os.Build
-import android.view.View
-import android.view.WindowInsetsController
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -13,7 +13,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 
 // Colors that match the iOS bitchat theme
@@ -62,31 +61,30 @@ fun BitchatTheme(
 
     val colorScheme = if (shouldUseDark) DarkColorScheme else LightColorScheme
 
+    // Update system bar styles reactively when the theme changes.
+    // enableEdgeToEdge() is the recommended API that handles all SDK versions
+    // without using deprecated statusBarColor/navigationBarColor properties.
     val view = LocalView.current
-    SideEffect {
-        (view.context as? Activity)?.window?.let { window ->
-            // On Android 15+ (SDK 35), enableEdgeToEdge() handles system bar configuration
-            // These APIs are deprecated in SDK 35, so we only use them on older versions
-            if (Build.VERSION.SDK_INT < 35) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    window.insetsController?.setSystemBarsAppearance(
-                        if (!shouldUseDark) WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS else 0,
-                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                    )
+    if (!view.isInEditMode) {
+        SideEffect {
+            (view.context as? ComponentActivity)?.enableEdgeToEdge(
+                statusBarStyle = if (shouldUseDark) {
+                    SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
                 } else {
-                    @Suppress("DEPRECATION")
-                    window.decorView.systemUiVisibility = if (!shouldUseDark) {
-                        View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-                    } else 0
+                    SystemBarStyle.light(
+                        android.graphics.Color.TRANSPARENT,
+                        android.graphics.Color.TRANSPARENT
+                    )
+                },
+                navigationBarStyle = if (shouldUseDark) {
+                    SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                } else {
+                    SystemBarStyle.light(
+                        android.graphics.Color.TRANSPARENT,
+                        android.graphics.Color.TRANSPARENT
+                    )
                 }
-                @Suppress("DEPRECATION")
-                window.statusBarColor = colorScheme.background.toArgb()
-                @Suppress("DEPRECATION")
-                window.navigationBarColor = colorScheme.background.toArgb()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    window.isNavigationBarContrastEnforced = false
-                }
-            }
+            )
         }
     }
 

@@ -28,7 +28,7 @@ object ScreenshotPreferenceManager {
      */
     fun init(context: Context) {
         if (sharedPrefs == null) {
-            sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            sharedPrefs = com.gapmesh.droid.core.SecurePrefsFactory.create(context, PREFS_NAME)
             _isEnabled.value = sharedPrefs?.getBoolean(KEY_ENABLED, false) ?: false
         }
     }

@@ -14,7 +14,7 @@ object GeohashAliasRegistry {
 
     fun initialize(context: android.content.Context) {
         if (prefs == null) {
-            prefs = context.getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE)
+            prefs = com.gapmesh.droid.core.SecurePrefsFactory.create(context, PREFS_NAME)
             loadFromPrefs()
         }
     }

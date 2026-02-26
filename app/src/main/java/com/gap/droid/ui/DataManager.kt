@@ -3,6 +3,7 @@ package com.gapmesh.droid.ui
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.gapmesh.droid.core.SecurePrefsFactory
 import com.google.gson.Gson
 import kotlin.random.Random
 
@@ -15,7 +16,7 @@ class DataManager(private val context: Context) {
         private const val TAG = "DataManager"
     }
     
-    private val prefs: SharedPreferences = context.getSharedPreferences("bitchat_prefs", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = SecurePrefsFactory.create(context, "bitchat_prefs")
     private val gson = Gson()
     
     // Channel-related maps that need to persist state

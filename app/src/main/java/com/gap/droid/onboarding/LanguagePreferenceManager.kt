@@ -53,7 +53,7 @@ object LanguagePreferenceManager {
             appCompatLocales.get(0)?.language ?: AppLanguage.ENGLISH.code
         } else {
             // No locale override set — fall back to SharedPreferences, then default
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val prefs = com.gapmesh.droid.core.SecurePrefsFactory.create(context, PREFS_NAME)
             prefs.getString(KEY_LANGUAGE, AppLanguage.ENGLISH.code) ?: AppLanguage.ENGLISH.code
         }
         _currentLanguage.value = AppLanguage.fromCode(currentCode)

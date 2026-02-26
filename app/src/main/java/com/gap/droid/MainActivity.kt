@@ -9,9 +9,9 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -190,13 +190,13 @@ class MainActivity : OrientationAwareActivity() {
         
         setContent {
             BitchatTheme {
-                Scaffold(
+                Surface(
                     modifier = Modifier.fillMaxSize(),
-                    containerColor = MaterialTheme.colorScheme.background
-                ) { innerPadding ->
+                    color = MaterialTheme.colorScheme.background
+                ) {
                     OnboardingFlowScreen(modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding)
+                        .systemBarsPadding()
                     )
                 }
             }
@@ -774,7 +774,7 @@ class MainActivity : OrientationAwareActivity() {
                 Log.d("MainActivity", "App initialization complete")
                 
                 // Check if tutorial seen
-                val prefs = getSharedPreferences("onboarding_prefs", android.content.Context.MODE_PRIVATE)
+                val prefs = com.gapmesh.droid.core.SecurePrefsFactory.create(this@MainActivity, "onboarding_prefs")
                 val tutorialSeen = prefs.getBoolean("tutorial_seen", false)
                 
                 if (!tutorialSeen) {

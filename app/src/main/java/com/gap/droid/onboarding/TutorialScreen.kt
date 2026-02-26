@@ -44,7 +44,7 @@ fun TutorialScreen(
     
     // Persist background preference
     fun saveBackgroundPref(enabled: Boolean) {
-        context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        com.gapmesh.droid.core.SecurePrefsFactory.create(context, "app_prefs")
             .edit()
             .putBoolean("background_mode_enabled", enabled)
             .apply()
@@ -52,7 +52,7 @@ fun TutorialScreen(
     
     // Mark tutorial as seen when done
     fun finishTutorial() {
-        context.getSharedPreferences("onboarding_prefs", Context.MODE_PRIVATE)
+        com.gapmesh.droid.core.SecurePrefsFactory.create(context, "onboarding_prefs")
             .edit()
             .putBoolean("tutorial_seen", true)
             .apply()
@@ -66,6 +66,7 @@ fun TutorialScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .navigationBarsPadding()
                 .padding(24.dp)
         ) {

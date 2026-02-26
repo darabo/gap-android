@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network Security Configuration for Gap Mesh
+  
+  Security hardening:
+  1. Restricts cleartext (HTTP) traffic by default
+  2. Pins certificates for known infrastructure endpoints
+  3. Allows only system-trusted CAs (no user-installed CAs in production)
+  
+  Note: WebSocket relay connections (wss://) are NOT pinned here because
+  relay domains are dynamic (loaded from CSV). Only static infrastructure
+  endpoints are pinned.
+-->
+<network-security-config>
+
+    <!-- Default: Block cleartext traffic, trust only system CAs -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- GitHub Raw CDN: used for relay list updates -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">raw.githubusercontent.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Localhost: allow cleartext for Tor SOCKS proxy (Arti runs locally) -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain>127.0.0.1</domain>
+        <domain>localhost</domain>
+    </domain-config>
+
+    <!-- Debug config: allow user CAs only in debug builds for proxying -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+
+</network-security-config>

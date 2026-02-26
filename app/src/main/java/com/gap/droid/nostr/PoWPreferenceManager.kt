@@ -2,6 +2,7 @@ package com.gapmesh.droid.nostr
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.gapmesh.droid.core.SecurePrefsFactory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,7 +41,7 @@ object PoWPreferenceManager {
     fun init(context: Context) {
         if (isInitialized) return
         
-        sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        sharedPrefs = SecurePrefsFactory.create(context, PREFS_NAME)
         
         // Load current values
         _powEnabled.value = sharedPrefs.getBoolean(KEY_POW_ENABLED, DEFAULT_POW_ENABLED)

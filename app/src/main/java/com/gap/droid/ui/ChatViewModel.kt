@@ -33,6 +33,7 @@ import com.gapmesh.droid.util.hexEncodedString
 import java.security.MessageDigest
 import com.gapmesh.droid.net.ArtiTorManager
 import com.gapmesh.droid.R
+import com.gapmesh.droid.service.PanicWipeManager
 import com.gapmesh.droid.ui.ScreenshotDetector
 
 /**
@@ -1051,36 +1052,30 @@ import com.gapmesh.droid.ui.ScreenshotDetector
     fun panicClearAllData() {
         Log.w(TAG, "🚨 PANIC MODE ACTIVATED - Clearing all sensitive data")
         
-        // Clear all UI managers
+        // Clear all UI managers (in-memory state)
         messageManager.clearAllMessages()
         channelManager.clearAllChannels()
         privateChatManager.clearAllPrivateChats()
-        dataManager.clearAllData()
         
         // Clear all mesh service data
         clearAllMeshServiceData()
         
-        // Clear all cryptographic data
-        clearAllCryptographicData()
-        
         // Clear all notifications
         notificationManager.clearAllNotifications()
         
-        // Clear Nostr/geohash state, keys, connections, bookmarks, and reinitialize from scratch
+        // Clear Nostr/geohash state and reinitialize
         try {
-            // Clear geohash bookmarks too (panic should remove everything)
-            try {
-                val store = com.gapmesh.droid.geohash.GeohashBookmarksStore.getInstance(getApplication())
-                store.clearAll()
-            } catch (_: Exception) { }
-
             geohashViewModel.panicReset()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to reset Nostr/geohash: ${e.message}")
         }
 
+        // Delegate crash-resilient wipe to PanicWipeManager (handles prefs, crypto, 
+        // Keystore, favorites, media, files, cache — with checkpointed resume)
+        PanicWipeManager.executeWipe(getApplication())
+        
         // Reset nickname
-        val newNickname = "anon${Random.nextInt(1000, 9999)}"
+        val newNickname = "anon${kotlin.random.Random.nextInt(1000, 9999)}"
         state.setNickname(newNickname)
         dataManager.saveNickname(newNickname)
         

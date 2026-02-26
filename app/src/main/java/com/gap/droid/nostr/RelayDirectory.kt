@@ -3,6 +3,7 @@ package com.gapmesh.droid.nostr
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Log
+import com.gapmesh.droid.core.SecurePrefsFactory
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
@@ -123,7 +124,7 @@ object RelayDirectory {
     // ===== Implementation details =====
 
     private fun getPrefs(application: Application): SharedPreferences =
-        application.getSharedPreferences(PREFS_NAME, Application.MODE_PRIVATE)
+        SecurePrefsFactory.create(application, PREFS_NAME)
 
     private fun getDownloadedFile(application: Application): File =
         File(application.filesDir, DOWNLOADED_FILE)

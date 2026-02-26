@@ -35,9 +35,23 @@ object DecoyModeManager {
 
     private fun createPrefs(context: Context): SharedPreferences {
         return try {
-            val masterKey = MasterKey.Builder(context, MasterKey.DEFAULT_MASTER_KEY_ALIAS)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build()
+            val masterKey = try {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                    MasterKey.Builder(context, MasterKey.DEFAULT_MASTER_KEY_ALIAS)
+                        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                        .setRequestStrongBoxBacked(true)
+                        .build()
+                } else {
+                    MasterKey.Builder(context, MasterKey.DEFAULT_MASTER_KEY_ALIAS)
+                        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                        .build()
+                }
+            } catch (e: Exception) {
+                // StrongBox unavailable, fall back to standard Keystore
+                MasterKey.Builder(context, MasterKey.DEFAULT_MASTER_KEY_ALIAS)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build()
+            }
 
             EncryptedSharedPreferences.create(
                 context,

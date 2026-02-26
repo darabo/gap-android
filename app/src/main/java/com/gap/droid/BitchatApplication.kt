@@ -13,7 +13,13 @@ class BitchatApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Initialize device tier detection first (determines BLE parameters for budget/flagship)
+        // CRASH-RESILIENT WIPE: If a previous panic wipe was interrupted, resume it
+        // before any other initialization. This ensures data is fully cleared.
+        if (com.gapmesh.droid.service.PanicWipeManager.isWipeInProgress(this)) {
+            android.util.Log.w("BitchatApplication", "🚨 Resuming interrupted panic wipe")
+            com.gapmesh.droid.service.PanicWipeManager.executeWipe(this)
+            com.gapmesh.droid.service.DecoyModeManager.activateDecoy(this)
+        }
         try { com.gapmesh.droid.util.DeviceTierManager.initialize(this) } catch (_: Exception) { }
 
         // Initialize Tor first so any early network goes over Tor

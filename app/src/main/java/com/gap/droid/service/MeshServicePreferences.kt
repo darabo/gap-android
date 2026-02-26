@@ -2,6 +2,7 @@ package com.gapmesh.droid.service
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.gapmesh.droid.core.SecurePrefsFactory
 
 object MeshServicePreferences {
     private const val PREFS_NAME = "app_prefs"
@@ -12,7 +13,7 @@ object MeshServicePreferences {
     private lateinit var prefs: SharedPreferences
 
     fun init(context: Context) {
-        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs = SecurePrefsFactory.create(context, PREFS_NAME)
     }
 
     fun isAutoStartEnabled(default: Boolean = true): Boolean {

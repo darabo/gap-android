@@ -145,10 +145,11 @@ fun ChatScreen(viewModel: ChatViewModel) {
     ) {
         val headerHeight = 30.dp
         
-        // Main content area that responds to keyboard/window insets
+        // Main content area that responds to system bar and keyboard insets
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars) // Push content below the status/notification bar
                 .windowInsetsPadding(WindowInsets.ime) // This handles keyboard insets
                 .windowInsetsPadding(WindowInsets.navigationBars) // Add bottom padding when keyboard is not expanded
         ) {
@@ -535,6 +536,7 @@ private fun ChatFloatingHeader(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.statusBars) // Push header below the status/notification bar
             .zIndex(1f),
         color = colorScheme.background
     ) {

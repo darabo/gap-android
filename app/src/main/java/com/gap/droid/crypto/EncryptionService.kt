@@ -2,6 +2,7 @@ package com.gapmesh.droid.crypto
 
 import android.content.Context
 import android.util.Log
+import com.gapmesh.droid.core.SecurePrefsFactory
 import com.gapmesh.droid.noise.NoiseEncryptionService
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair
 import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator
@@ -142,7 +143,7 @@ open class EncryptionService(private val context: Context) {
         
         // Clear Ed25519 signing key from preferences
         try {
-            val prefs = context.getSharedPreferences("bitchat_crypto", Context.MODE_PRIVATE)
+            val prefs = SecurePrefsFactory.create(context, "bitchat_crypto")
             prefs.edit().remove(ED25519_PRIVATE_KEY_PREF).apply()
             Log.d(TAG, "🗑️ Cleared Ed25519 signing keys from preferences")
         } catch (e: Exception) {
@@ -385,7 +386,7 @@ open class EncryptionService(private val context: Context) {
      */
     private fun loadOrCreateEd25519KeyPair(): AsymmetricCipherKeyPair {
         try {
-            val prefs = context.getSharedPreferences("bitchat_crypto", Context.MODE_PRIVATE)
+            val prefs = SecurePrefsFactory.create(context, "bitchat_crypto")
             val storedKey = prefs.getString(ED25519_PRIVATE_KEY_PREF, null)
             
             if (storedKey != null) {
@@ -411,7 +412,7 @@ open class EncryptionService(private val context: Context) {
             val privateKeyBytes = privateKey.encoded
             val encodedKey = android.util.Base64.encodeToString(privateKeyBytes, android.util.Base64.DEFAULT)
             
-            val prefs = context.getSharedPreferences("bitchat_crypto", Context.MODE_PRIVATE)
+            val prefs = SecurePrefsFactory.create(context, "bitchat_crypto")
             prefs.edit().putString(ED25519_PRIVATE_KEY_PREF, encodedKey).apply()
             Log.d(TAG, "✅ Created and stored new Ed25519 signing key pair")
         } catch (e: Exception) {
