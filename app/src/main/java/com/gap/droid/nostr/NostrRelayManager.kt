@@ -644,6 +644,20 @@ class NostrRelayManager private constructor() {
         if (connections.containsKey(urlString)) {
             return
         }
+
+        // NIP-11 pre-flight: if we already have cached info, skip unusable relays.
+        // If not cached, fire-and-forget a fetch so future connections can benefit.
+        val cachedInfo = RelayInfoFetcher.getCached(urlString)
+        if (cachedInfo != null && !RelayCapabilityFilter.isUsable(cachedInfo)) {
+            Log.i(TAG, "⏭️ Skipping relay $urlString (paid/auth-required per NIP-11)")
+            return
+        }
+        if (cachedInfo == null) {
+            // Fire-and-forget NIP-11 fetch so it's available next time
+            scope.launch {
+                try { RelayInfoFetcher.fetch(urlString) } catch (_: Exception) { }
+            }
+        }
         
         Log.v(TAG, "Attempting to connect to Nostr relay: $urlString")
         

@@ -922,12 +922,78 @@ class MainActivity : OrientationAwareActivity() {
 
     private fun handleVerificationIntent(intent: Intent) {
         val uri = intent.data ?: return
-        if (uri.scheme != "bitchat" || uri.host != "verify") return
+        // Route to the appropriate deep link handler
+        handleDeepLink(uri, intent)
+    }
 
-        chatViewModel.showVerificationSheet()
-        val qr = VerificationService.verifyScannedQR(uri.toString())
-        if (qr != null) {
-            chatViewModel.beginQRVerification(qr)
+    /**
+     * Central deep-link router for all supported URI schemes:
+     *   - bitchat://verify        → QR verification (existing)
+     *   - gapmesh://verify        → QR verification (alias)
+     *   - gapmesh://chat          → open main chat
+     *   - gapmesh://private_chat/{pubkey}  → open private chat with peer
+     *   - gapmesh://geohash_chat/{geohash} → switch to geohash channel
+     *   - nostr:{npub|nprofile|nevent}     → (future) Nostr entity handling
+     */
+    private fun handleDeepLink(uri: android.net.Uri, intent: Intent) {
+        val scheme = uri.scheme?.lowercase()
+        val host = uri.host?.lowercase()
+
+        when {
+            // ---- Verification (bitchat:// or gapmesh://) ----
+            (scheme == "bitchat" || scheme == "gapmesh") && host == "verify" -> {
+                chatViewModel.showVerificationSheet()
+                val qr = VerificationService.verifyScannedQR(uri.toString())
+                if (qr != null) {
+                    chatViewModel.beginQRVerification(qr)
+                }
+            }
+
+            // ---- gapmesh://chat → open main tab ----
+            scheme == "gapmesh" && host == "chat" -> {
+                // No-op; the app is already open on the chat tab by default
+                Log.d("MainActivity", "Deep link: gapmesh://chat → main chat")
+            }
+
+            // ---- gapmesh://private_chat/{pubkey} ----
+            scheme == "gapmesh" && host == "private_chat" -> {
+                val pubkey = uri.pathSegments?.firstOrNull()
+                if (!pubkey.isNullOrBlank()) {
+                    Log.d("MainActivity", "Deep link: private_chat with $pubkey")
+                    chatViewModel.startPrivateChat(pubkey)
+                }
+            }
+
+            // ---- gapmesh://geohash_chat/{geohash} ----
+            scheme == "gapmesh" && host == "geohash_chat" -> {
+                val geohash = uri.pathSegments?.firstOrNull()
+                if (!geohash.isNullOrBlank()) {
+                    Log.d("MainActivity", "Deep link: geohash_chat #$geohash")
+                    val level = when (geohash.length) {
+                        7 -> com.gapmesh.droid.geohash.GeohashChannelLevel.BLOCK
+                        6 -> com.gapmesh.droid.geohash.GeohashChannelLevel.NEIGHBORHOOD
+                        5 -> com.gapmesh.droid.geohash.GeohashChannelLevel.CITY
+                        4 -> com.gapmesh.droid.geohash.GeohashChannelLevel.PROVINCE
+                        2 -> com.gapmesh.droid.geohash.GeohashChannelLevel.REGION
+                        else -> com.gapmesh.droid.geohash.GeohashChannelLevel.CITY
+                    }
+                    val geohashChannel = com.gapmesh.droid.geohash.GeohashChannel(level, geohash)
+                    val channelId = com.gapmesh.droid.geohash.ChannelID.Location(geohashChannel)
+                    chatViewModel.selectLocationChannel(channelId)
+                    chatViewModel.setCurrentGeohash(geohash)
+                }
+            }
+
+            // ---- nostr:{entity} → future NIP-19 bech32 handling ----
+            scheme == "nostr" -> {
+                val entity = uri.schemeSpecificPart
+                Log.d("MainActivity", "Deep link: nostr:$entity (NIP-19 routing not yet implemented)")
+                // TODO: Parse bech32 npub/nprofile/nevent and route accordingly
+            }
+
+            else -> {
+                Log.d("MainActivity", "Unhandled deep link: $uri")
+            }
         }
     }
 

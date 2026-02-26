@@ -33,6 +33,16 @@ class BitchatApplication : Application() {
         // Initialize relay directory (loads assets/nostr_relays.csv)
         RelayDirectory.initialize(this)
 
+        // Schedule periodic relay directory refresh via WorkManager (24h / 6h flex).
+        // Replaces the old in-process coroutine polling loop that died with the process.
+        com.gapmesh.droid.workers.RelayDirectoryUpdateWorker.schedule(this)
+
+        // Schedule periodic media cleanup workers.
+        // MediaCleanupWorker: deletes outgoing media older than 1h (reduces forensic surface).
+        // StaleDataCleanupWorker: removes zero-byte orphan files older than 7d.
+        com.gapmesh.droid.workers.MediaCleanupWorker.schedule(this)
+        com.gapmesh.droid.workers.StaleDataCleanupWorker.schedule(this)
+
         // Initialize LocationNotesManager dependencies early so sheet subscriptions can start immediately
         if (BuildConfig.HAS_GEOHASH) {
             try { com.gapmesh.droid.nostr.LocationNotesInitializer.initialize(this) } catch (_: Exception) { }

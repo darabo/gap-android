@@ -16,7 +16,6 @@ import kotlin.math.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -68,15 +67,13 @@ object RelayDirectory {
 
                 initialized = true
 
-                // Trigger an immediate fetch if the data is stale (older than 24h)
+                // Trigger a one-shot immediate fetch if the data is stale (older than 24h).
+                // Periodic refresh is handled by RelayDirectoryUpdateWorker via WorkManager.
                 ioScope.launch {
                     if (isStale(application)) {
                         fetchAndMaybeSwap(application)
                     }
                 }
-
-                // Start periodic staleness check every minute
-                startPeriodicRefresh(application)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to initialize RelayDirectory: ${e.message}")
             }
@@ -135,19 +132,16 @@ object RelayDirectory {
         return now - last >= ONE_DAY_MS
     }
 
-    private fun startPeriodicRefresh(application: Application) {
-        ioScope.launch {
-            while (true) {
-                try {
-                    if (isStale(application)) {
-                        fetchAndMaybeSwap(application)
-                    }
-                } catch (e: Exception) {
-                    Log.w(TAG, "Periodic refresh encountered an error: ${e.message}")
-                }
-                delay(TimeUnit.MINUTES.toMillis(1))
-            }
+    /**
+     * Public entry point for the WorkManager relay-update worker.
+     * Returns true if the relay list was actually refreshed.
+     */
+    fun refreshIfStale(application: Application): Boolean {
+        if (isStale(application)) {
+            fetchAndMaybeSwap(application)
+            return true
         }
+        return false
     }
 
     private fun fetchAndMaybeSwap(application: Application) {
