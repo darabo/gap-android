@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.gapmesh.droid.MainActivity
@@ -123,6 +124,8 @@ class MeshForegroundService : Service() {
     private val scope = CoroutineScope(Dispatchers.Default + serviceJob)
     private var isInForeground: Boolean = false
     private var isShuttingDown: Boolean = false
+    // Wake Lock to keep CPU awake during active mesh
+    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -138,6 +141,16 @@ class MeshForegroundService : Service() {
             android.util.Log.i("MeshForegroundService", "Created/adopted new BluetoothMeshService via holder")
         }
         MeshServiceHolder.attach(meshService!!)
+
+        // Initialize WakeLock
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "GapMesh:MeshForegroundServiceWakeLock"
+        )
+        // Acquire wake lock with a timeout (e.g., 24 hours) to prevent battery drain if service crashes
+        wakeLock?.acquire(24 * 60 * 60 * 1000L)
+        android.util.Log.d("MeshForegroundService", "WakeLock acquired")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -376,6 +389,18 @@ class MeshForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        android.util.Log.d("MeshForegroundService", "onDestroy")
+
+        // Release WakeLock
+        try {
+            if (wakeLock?.isHeld == true) {
+                wakeLock?.release()
+                android.util.Log.d("MeshForegroundService", "WakeLock released")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MeshForegroundService", "Error releasing WakeLock", e)
+        }
+
         updateJob?.cancel()
         updateJob = null
         // Cancel the service coroutine scope to prevent leaks

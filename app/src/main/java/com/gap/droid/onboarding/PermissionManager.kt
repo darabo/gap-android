@@ -92,8 +92,11 @@ class PermissionManager(private val context: Context) {
     fun getDeferrablePermissions(): List<String> {
         val permissions = mutableListOf<String>()
 
-        // Storage permissions (for screenshot detection) - requested when enabling the feature
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        // Storage permissions (for screenshot detection and media sharing) - requested when enabling the feature
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            permissions.add(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+            permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
         } else {
             permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -106,19 +109,25 @@ class PermissionManager(private val context: Context) {
      * Check if storage permission is granted (for screenshot detection feature).
      */
     fun isStoragePermissionGranted(): Boolean {
-        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.READ_MEDIA_IMAGES
         } else {
             Manifest.permission.READ_EXTERNAL_STORAGE
         }
-        return isPermissionGranted(permission)
+        
+        return isPermissionGranted(permission) || 
+               (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && isPermissionGranted(Manifest.permission.READ_MEDIA_IMAGES))
     }
 
     /**
      * Get the storage permission string for the current API level.
      */
     fun getStoragePermission(): String {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.READ_MEDIA_IMAGES
         } else {
             Manifest.permission.READ_EXTERNAL_STORAGE
@@ -320,7 +329,9 @@ class PermissionManager(private val context: Context) {
         }
 
         // Storage category (kept in full list for diagnostics)
-        val storagePermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val storagePermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            listOf(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED, Manifest.permission.READ_MEDIA_IMAGES)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             listOf(Manifest.permission.READ_MEDIA_IMAGES)
         } else {
             listOf(Manifest.permission.READ_EXTERNAL_STORAGE)

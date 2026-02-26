@@ -41,6 +41,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
     <!-- Haptic feedback permission -->
@@ -63,9 +64,18 @@
         android:usesPermissionFlags="neverForLocation"
         tools:targetApi="tiramisu" />
 
+    <!-- Network state and Wake lock for long-running stability -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+
     <permission
         android:name="com.gapmesh.droid.permission.FORCE_FINISH"
         android:protectionLevel="signature" />
+
+    <permission
+        android:name="com.gapmesh.droid.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.gapmesh.droid.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
 
     <application
         android:name=".BitchatApplication"
@@ -149,7 +159,8 @@
         <receiver
             android:name=".service.NotificationPermissionChangedReceiver"
             android:enabled="true"
-            android:exported="false">
+            android:exported="false"
+            android:permission="com.gapmesh.droid.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION">
             <intent-filter>
                 <action android:name="com.gapmesh.droid.action.NOTIFICATION_PERMISSION_GRANTED" />
             </intent-filter>
