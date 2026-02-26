@@ -2,6 +2,10 @@ package com.gapmesh.droid.nostr
 
 import android.util.Log
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.concurrent.ConcurrentHashMap
@@ -133,14 +137,14 @@ object RelayInfoFetcher {
      * Returns a map of relay URL → info document (null for failures).
      */
     suspend fun fetchMultiple(relayUrls: List<String>): Map<String, RelayInfoDocument?> {
-        val results = ConcurrentHashMap<String, RelayInfoDocument?>()
-        val jobs = relayUrls.map { url ->
-            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).async {
-                results[url] = fetch(url)
+        return coroutineScope {
+            val deferred = relayUrls.map { url ->
+                async(Dispatchers.IO) {
+                    url to fetch(url)
+                }
             }
+            deferred.awaitAll().toMap()
         }
-        jobs.forEach { it.await() }
-        return results
     }
 
     /**

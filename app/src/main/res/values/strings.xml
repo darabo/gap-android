@@ -121,13 +121,13 @@
   <string name="about_system">system</string>
   <string name="about_light">light</string>
   <string name="about_dark">dark</string>
-  <string name="about_pow">Proof of work</string>
+  <string name="about_pow">Proof of Work</string>
   <string name="about_pow_off">pow off</string>
   <string name="about_pow_on">pow on</string>
-  <string name="about_pow_tip">add proof of work to geohash messages for spam deterrence.</string>
+  <string name="about_pow_tip">add Proof of Work to geohash messages for spam deterrence.</string>
   <string name="about_pow_difficulty">difficulty: %1$d bits (~%2$s)</string>
   <string name="about_pow_difficulty_attempts">difficulty %1$d requires ~%2$s hash attempts</string>
-  <string name="about_pow_desc_none">no proof of work required</string>
+  <string name="about_pow_desc_none">no Proof of Work required</string>
   <string name="about_pow_desc_very_low">very low - minimal spam protection</string>
   <string name="about_pow_desc_low">low - basic spam protection</string>
   <string name="about_pow_desc_medium">medium - good spam protection</string>
@@ -190,7 +190,7 @@
   <string name="cd_teleport">Teleport</string>
   <string name="cd_selected">Selected</string>
   <string name="notification_action_quit_bitchat">Quit Gap Mesh</string>
-  <string name="about_background_title">Run in the background</string>
+  <string name="about_background_title">Run in the Background</string>
   <string name="about_background_desc">keep mesh active when app is closed (foreground service)</string>
   <string name="cd_leave_channel">Leave channel</string>
   <string name="cd_reachable_via_nostr">Reachable via Nostr</string>
