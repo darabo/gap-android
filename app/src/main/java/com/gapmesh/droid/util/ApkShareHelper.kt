@@ -20,17 +20,31 @@ import java.io.File
  */
 object ApkShareHelper {
 
-    private const val APK_FILE_NAME = "gapmesh-light.apk"
+    private const val LIGHT_APK_FILE_NAME = "gapmesh-light.apk"
+    private const val FULL_APK_FILE_NAME  = "gapmesh-full.apk"
 
     /**
-     * Shares the current app's APK via the system share sheet.
+     * Shares the current app's APK as the **light** variant via the system share sheet.
      *
      * @param context  Activity or application context.
      */
     fun shareApk(context: Context) {
+        shareApkAs(context, LIGHT_APK_FILE_NAME, "Share Gap Mesh Light APK")
+    }
+
+    /**
+     * Shares the current app's APK as the **full** variant via the system share sheet.
+     *
+     * @param context  Activity or application context.
+     */
+    fun shareFullApk(context: Context) {
+        shareApkAs(context, FULL_APK_FILE_NAME, "Share Gap Mesh Full APK")
+    }
+
+    private fun shareApkAs(context: Context, fileName: String, chooserTitle: String) {
         val sourceApk = File(context.applicationInfo.sourceDir)
         val cacheDir = File(context.cacheDir, "shared_apk").apply { mkdirs() }
-        val destApk = File(cacheDir, APK_FILE_NAME)
+        val destApk = File(cacheDir, fileName)
 
         // Copy the APK into our cache directory (FileProvider can only serve
         // paths that are declared in file_paths.xml – "cache-path" covers this).
@@ -53,7 +67,7 @@ object ApkShareHelper {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        val chooser = Intent.createChooser(shareIntent, "Share Gap Mesh APK")
+        val chooser = Intent.createChooser(shareIntent, chooserTitle)
         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(chooser)
     }

@@ -30,6 +30,38 @@ import com.gapmesh.droid.ui.media.FullScreenImageViewer
 import android.content.Intent
 import androidx.compose.ui.input.pointer.pointerInput
 
+// ============================================================================
+// ChatScreen.kt — The Main UI Screen (Android)
+// ============================================================================
+//
+// WHAT THIS FILE DOES:
+// This is the main screen users see after onboarding. It uses Jetpack Compose
+// (Android's modern declarative UI toolkit) to render the entire chat interface.
+//
+// ARCHITECTURE:
+// This file follows a "coordinator" pattern. Instead of putting everything in
+// one giant function, it delegates to specialized composable components:
+//   - ChatFloatingHeader  — The app bar at the top (title, back button, panic)
+//   - MessagesList         — The scrollable list of chat messages
+//   - ChatInputSection     — The text field and send button at the bottom
+//   - GapMeshBottomNavigation — Tab bar (Mesh / Location / People / Settings)
+//   - ChatDialogs          — Overlays for passwords, user info, verification
+//
+// STATE FLOW:
+// All UI state comes from ChatViewModel via StateFlow objects. The
+// `collectAsStateWithLifecycle()` calls convert each Flow into Compose State,
+// so the UI automatically re-renders when the data changes.
+//
+// BOTTOM NAVIGATION TABS:
+//   - MESH     → Main chat timeline (public messages + private chats)
+//   - LOCATION → Geohash-based location channels (nearby people)
+//   - PEOPLE   → List of connected mesh peers
+//   - SETTINGS → Nickname, about, debug options
+//
+// PANIC WIPE:
+// Triple-tapping anywhere triggers an emergency data wipe. The pointerInput
+// modifier on the root Box detects three taps within 400ms.
+//
 /**
  * Main ChatScreen - REFACTORED to use component-based architecture
  * This is now a coordinator that orchestrates the following UI components:

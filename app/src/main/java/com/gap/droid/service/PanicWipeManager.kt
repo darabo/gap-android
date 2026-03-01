@@ -5,6 +5,36 @@ import android.util.Log
 import com.gapmesh.droid.core.SecurePrefsFactory
 import java.io.File
 
+// ============================================================================
+// PanicWipeManager.kt — Emergency Self-Destruct (Android)
+// ============================================================================
+//
+// WHAT THIS FILE DOES:
+// Provides an emergency "panic button" that securely erases all app data.
+// This is critical for users in dangerous environments (journalists, activists)
+// who need to quickly destroy evidence of app usage.
+//
+// HOW IT WORKS:
+// 1. User triggers panic (triple-tap or via UI)
+// 2. A "wipe_in_progress" flag is written to DEVICE-PROTECTED storage
+//    (this storage survives app crashes and process kills)
+// 3. Data is erased in numbered steps (1–13):
+//    Step 1: Encrypted preferences
+//    Step 2: Identity/crypto keys
+//    Step 3: Noise sessions
+//    Step 4: Message history
+//    Step 5: Nostr identity
+//    ...and so on
+// 4. After each step, the checkpoint number is saved
+// 5. If the app crashes mid-wipe, on next launch it detects the flag
+//    and RESUMES from the last completed step
+//
+// WHY CRASH-RESILIENT?
+// If someone force-kills the app during a wipe, we MUST continue wiping
+// on next launch. Otherwise, partial data could still be recoverable.
+//
+// Adapted from Noghteha's 13-component wipe strategy.
+//
 /**
  * Crash-resilient emergency wipe manager.
  *
@@ -190,11 +220,10 @@ object PanicWipeManager {
     }
 
     private fun clearCryptographicData(context: Context) {
-        try {
-            val identityManager = com.gapmesh.droid.identity.SecureIdentityStateManager(context)
-            identityManager.clearIdentityData()
-            try { identityManager.clearSecureValues("favorite_relationships", "favorite_peerid_index") } catch (_: Exception) {}
-        } catch (_: Exception) {}
+        // We no longer initialize SecureIdentityStateManager here because calling .apply()
+        // schedules an asynchronous disk write that will recreate the SharedPreferences file
+        // AFTER the panic wipe has deleted it, leaving an undecryptable file on disk causing crashes.
+        // Step 9 (clearAllSharedPreferencesFiles) will permanently delete the file instead.
     }
 
     private fun clearKeystore() {

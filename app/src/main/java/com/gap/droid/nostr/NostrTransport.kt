@@ -8,6 +8,43 @@ import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
+// ============================================================================
+// NostrTransport.kt — Sending Messages Over the Internet via Nostr Relays
+// ============================================================================
+//
+// WHAT THIS FILE DOES:
+// This is the "internet delivery" transport. When a recipient is out of
+// Bluetooth range, messages are sent through Nostr relays instead.
+//
+// WHAT IS NOSTR?
+// Nostr (Notes and Other Stuff Transmitted by Relays) is a decentralized
+// protocol. Instead of sending messages through a single company's server
+// (like WhatsApp → Meta), messages go through independent "relays" that
+// anyone can run. No single relay can censor or read your messages because:
+//   - Messages are end-to-end encrypted (NIP-44 gift wrapping)
+//   - Multiple relays are used simultaneously
+//   - Traffic goes through Tor for anonymity
+//
+// HOW IT WORKS:
+//   1. User sends a private message
+//   2. MessageRouter decides BLE is unavailable, calls NostrTransport
+//   3. NostrTransport looks up the recipient's Nostr pubkey (npub)
+//   4. The message is "gift wrapped" — encrypted so only the recipient
+//      can open it, and the wrapper hides even the sender's identity
+//   5. The wrapped message is sent to multiple Nostr relays
+//   6. The recipient's device connects to those relays and receives it
+//
+// GIFT WRAPPING (NIP-59):
+// Gift wrapping is like putting a letter inside an envelope inside another
+// envelope. The outer "wrap" event has a randomized timestamp and sender,
+// so relay operators can't tell who is messaging whom. Only the recipient
+// can unwrap both layers to read the original message.
+//
+// THROTTLING:
+// Read receipts are rate-limited to avoid getting banned by relays.
+// We send at most ~3 read receipts per second.
+//
+
 /**
  * Minimal Nostr transport for offline sending
  * Direct port from iOS NostrTransport for 100% compatibility

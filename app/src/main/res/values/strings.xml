@@ -140,6 +140,16 @@
   <string name="about_tor_route">route internet over tor for enhanced privacy.</string>
   <string name="about_legacy_compat_title">Legacy Compatibility</string>
   <string name="about_legacy_compat_desc">Allow Bitchat apps to discover you (requires restart). Disabling maximizes privacy.</string>
+
+  <!-- Slipstream (Censorship Bypass) -->
+  <string name="about_slipstream_title">Slipstream (DNS Tunnel) - Coming Soon</string>
+  <string name="about_slipstream_desc">Bypass internet censorship by tunneling traffic through DNS queries (QUIC-over-DNS).</string>
+  <string name="about_slipstream_domain_label">Tunnel Domain</string>
+  <string name="about_slipstream_domain_hint">t.example.com</string>
+  <string name="about_slipstream_resolver_label">DNS Resolver</string>
+  <string name="about_slipstream_resolver_hint">1.1.1.1</string>
+  <string name="about_slipstream_advanced">Advanced Settings</string>
+
   <string name="about_tor_status">tor Status: %1$s, bootstrap %2$d%%</string>
   <string name="tor_status_connected">Connected (%1$d%%)</string>
   <string name="tor_status_disconnected">Disconnected</string>
@@ -154,6 +164,11 @@
   <string name="share_app_desc">Share Gap Mesh with nearby devices via Bluetooth, Nearby Share, or any file transfer method.</string>
   <string name="share_app_button">Share Light APK</string>
   <string name="share_app_size_note">APK size: ~4.5 MB</string>
+  <!-- Share Full App -->
+  <string name="share_full_app_title">Share Full App</string>
+  <string name="share_full_app_desc">Share the full version of Gap Mesh including Tor, Slipstream, and location features.</string>
+  <string name="share_full_app_button">Share Full APK</string>
+  <string name="share_full_app_size_note">APK size: ~25 MB</string>
   <string name="close_plain">Close</string>
   <string name="cd_privacy_protected">Privacy Protected</string>
   <string name="cancel_lower">cancel</string>

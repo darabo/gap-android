@@ -132,6 +132,16 @@
     <string name="about_tor_route">برای حفظ بیشتر حریم خصوصی، ترافیک اینترنت را از طریق Tor مسیریابی کنید.</string>
     <string name="about_legacy_compat_title">سازگاری با نسخه‌های قدیمی</string>
     <string name="about_legacy_compat_desc">به برنامه‌های Bitchat اجازه پیدا کردن شما را بدهید (نیاز به راه‌اندازی مجدد دارد). غیرفعال‌کردن حریم خصوصی را به حداکثر می‌رساند.</string>
+
+    <!-- Slipstream (عبور از سانسور) -->
+    <string name="about_slipstream_title">Slipstream (تونل DNS) - به زودی</string>
+    <string name="about_slipstream_desc">با تونل‌زنی ترافیک از طریق درخواست‌های DNS، سانسور اینترنت را دور بزنید (QUIC-over-DNS).</string>
+    <string name="about_slipstream_domain_label">دامنه تونل</string>
+    <string name="about_slipstream_domain_hint">t.example.com</string>
+    <string name="about_slipstream_resolver_label">سرور DNS</string>
+    <string name="about_slipstream_resolver_hint">1.1.1.1</string>
+    <string name="about_slipstream_advanced">تنظیمات پیشرفته</string>
+
     <string name="about_tor_status">وضعیت Tor: %1$s، بوت‌استرپ %2$d%%</string>
     <string name="tor_status_connected">متصل (%1$d%%)</string>
     <string name="tor_status_disconnected">قطع شد</string>
@@ -145,6 +155,11 @@
     <string name="share_app_desc">گپ مش را با دستگاه‌های نزدیک از طریق بلوتوث، اشتراک‌گذاری نزدیک (Nearby Share) یا هر روش انتقال فایل دیگری به اشتراک بگذارید.</string>
     <string name="share_app_button">اشتراک‌گذاری APK سبک</string>
     <string name="share_app_size_note">اندازه فایل: ~۴.۵ مگابایت</string>
+    <!-- اشتراک‌گذاری نسخه کامل برنامه -->
+    <string name="share_full_app_title">اشتراک‌گذاری نسخه کامل برنامه</string>
+    <string name="share_full_app_desc">نسخه کامل گپ مش شامل تور، اسلیپ‌استریم و قابلیت‌های مکانی را به اشتراک بگذارید.</string>
+    <string name="share_full_app_button">اشتراک‌گذاری APK کامل</string>
+    <string name="share_full_app_size_note">اندازه فایل: ~۲۵ مگابایت</string>
     <string name="close_plain">بستن</string>
     <string name="cancel_lower">لغو</string>
     

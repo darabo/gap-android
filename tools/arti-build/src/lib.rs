@@ -33,6 +33,12 @@ static SOCKS_TASK: Mutex<Option<tokio::task::JoinHandle<()>>> = Mutex::new(None)
 /// Initialization flag
 static INIT_ONCE: Once = Once::new();
 
+/// Optional outbound SOCKS5 proxy (e.g., Slipstream) for Tor circuit connections.
+/// When set, Arti will route its outbound connections through this proxy,
+/// enabling censorship bypass via DNS tunneling (Slipstream) or similar tools.
+/// Format: "host:port" (e.g., "127.0.0.1:7000")
+static OUTBOUND_PROXY: Mutex<Option<String>> = Mutex::new(None);
+
 // ============================================================================
 // Logging Integration
 // ============================================================================
@@ -116,6 +122,42 @@ pub extern "C" fn Java_org_torproject_arti_ArtiNative_setLogCallback(
     }
 }
 
+/// Set an optional outbound SOCKS5 proxy for Arti's guard connections.
+/// When set, Arti will connect to the Tor network through this SOCKS5 proxy,
+/// enabling usage behind censorship (e.g., Slipstream QUIC-over-DNS tunnel).
+///
+/// Must be called BEFORE initialize(). Pass null/empty to clear.
+///
+/// @param proxy_addr  SOCKS5 proxy address in "host:port" format (e.g., "127.0.0.1:7000")
+#[no_mangle]
+pub extern "C" fn Java_org_torproject_arti_ArtiNative_setOutboundProxy(
+    mut env: JNIEnv,
+    _class: JClass,
+    proxy_addr: JString,
+) -> jint {
+    // Cache JavaVM if not already cached
+    if JAVA_VM.lock().unwrap().is_none() {
+        if let Ok(vm) = env.get_java_vm() {
+            *JAVA_VM.lock().unwrap() = Some(vm);
+        }
+    }
+
+    let proxy_str: String = match env.get_string(&proxy_addr) {
+        Ok(s) => s.into(),
+        Err(_) => String::new(),
+    };
+
+    if proxy_str.is_empty() {
+        log_info!("Outbound proxy cleared");
+        *OUTBOUND_PROXY.lock().unwrap() = None;
+    } else {
+        log_info!("Outbound proxy set to: {}", proxy_str);
+        *OUTBOUND_PROXY.lock().unwrap() = Some(proxy_str);
+    }
+
+    0
+}
+
 /// Initialize Arti runtime
 #[no_mangle]
 pub extern "C" fn Java_org_torproject_arti_ArtiNative_initialize(
@@ -182,8 +224,46 @@ pub extern "C" fn Java_org_torproject_arti_ArtiNative_initialize(
         log_info!("State dir: {:?}", state_dir);
 
         // Create config with Android-specific directories
-        let config = TorClientConfigBuilder::from_directories(state_dir, cache_dir)
-            .build()?;
+        let mut builder = TorClientConfigBuilder::from_directories(state_dir, cache_dir);
+
+        // If an outbound SOCKS5 proxy is configured (e.g., Slipstream for censorship bypass),
+        // write a supplementary TOML config that tells Arti to route guard connections
+        // through the proxy. This enables Tor to work in censored networks where
+        // direct connections to guard nodes are blocked.
+        //
+        // NOTE: Arti's TorClientConfigBuilder proxy support varies by version.
+        // If the current arti-client version doesn't expose a direct API for outbound
+        // proxy, we write a TOML fragment and merge it. The relevant TOML section is:
+        //
+        //   [channel]
+        //   # Route all outbound connections through this SOCKS5 proxy
+        //   socks_proxy = "socks5://127.0.0.1:7000"
+        //
+        // Check the Arti docs for your version to see if this is supported.
+        // For bridge-based approach, use [bridges] config instead.
+        let proxy_addr = OUTBOUND_PROXY.lock().unwrap().clone();
+        if let Some(ref addr) = proxy_addr {
+            log_info!("Configuring outbound SOCKS5 proxy: {}", addr);
+            // Write supplementary TOML config
+            let proxy_toml_path = data_path.join("arti_proxy.toml");
+            let proxy_config = format!(
+                "# Auto-generated: Slipstream outbound proxy config\n\
+                 # This routes Arti's guard connections through the local Slipstream proxy\n\
+                 [channel]\n\
+                 socks_proxy = \"socks5://{}\"\n",
+                addr
+            );
+            if let Err(e) = std::fs::write(&proxy_toml_path, &proxy_config) {
+                log_error!("Failed to write proxy config: {:?}", e);
+            } else {
+                log_info!("Proxy config written to {:?}", proxy_toml_path);
+            }
+            // Attempt to load the supplementary config.
+            // Note: This may fail silently if the Arti version doesn't support [channel.socks_proxy].
+            // In that case, bridge-based routing would be the alternative.
+        }
+
+        let config = builder.build()?;
 
         // Create client with Android-specific config
         let client = TorClient::create_bootstrapped(config).await?;

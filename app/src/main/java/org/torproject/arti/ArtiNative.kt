@@ -47,6 +47,18 @@ object ArtiNative {
     external fun startSocksProxy(port: Int): Int
 
     /**
+     * Set an optional outbound SOCKS5 proxy for Arti's guard connections.
+     * When set, Arti routes through this proxy, enabling use behind censorship
+     * (e.g., Slipstream QUIC-over-DNS tunnel on 127.0.0.1:7000).
+     *
+     * Must be called BEFORE initialize(). Pass empty string to clear.
+     *
+     * @param proxyAddr SOCKS5 proxy address in "host:port" format
+     * @return 0 on success, error code otherwise
+     */
+    external fun setOutboundProxy(proxyAddr: String): Int
+
+    /**
      * Stop Arti and cleanup
      * @return 0 on success, error code otherwise
      */

@@ -6,6 +6,33 @@ import com.gapmesh.droid.mesh.BluetoothMeshService
 import com.gapmesh.droid.model.ReadReceipt
 import com.gapmesh.droid.nostr.NostrTransport
 
+// ============================================================================
+// MessageRouter.kt — The "Postal Service" That Picks the Best Delivery Route
+// ============================================================================
+//
+// WHAT THIS FILE DOES:
+// When you send a private message, there are two possible delivery routes:
+//   1. BLE Mesh — Direct Bluetooth (fast, works offline, limited range)
+//   2. Nostr     — Internet relays via Tor (slower, unlimited range, needs internet)
+//
+// MessageRouter automatically picks the best available route:
+//   - BLE mesh is preferred (lower latency, works during internet outages)
+//   - Nostr is the fallback (when the recipient is out of Bluetooth range)
+//   - If NEITHER works, the message goes into an "outbox" and will be
+//     delivered later when a route becomes available.
+//
+// ANALOGY:
+// Imagine you want to send a letter to a friend:
+//   - If they live next door → Walk over and hand it to them (BLE mesh)
+//   - If they live far away  → Mail it through the postal service (Nostr)
+//   - If you can't reach them → Hold it and try again later (outbox)
+//
+// GEOHASH ROUTING:
+// For location-based chat, messages can be addressed to "geohash aliases"
+// (short peer IDs derived from geographic locations). These are always
+// routed via Nostr since geohash channels use Nostr as their backbone.
+//
+
 /**
  * Routes messages between BLE mesh and Nostr transports, matching iOS behavior.
  */

@@ -22,6 +22,34 @@ import kotlinx.coroutines.flow.*
 import java.io.*
 import java.net.Socket
 
+// ============================================================================
+// WiFiAwareService.kt — High-Bandwidth Mesh Over Wi-Fi (Android)
+// ============================================================================
+//
+// WHAT THIS FILE DOES:
+// Provides a second mesh transport that complements BLE. While BLE is great
+// for discovery (works everywhere, low power), it maxes out at ~1 Mbps.
+// WiFi Aware runs at 160–320 Mbps, making it ideal for sending images,
+// voice notes, and large files between nearby phones.
+//
+// HOW IT WORKS:
+// 1. PUBLISH: Advertise our presence via WiFi Aware (like BLE advertising)
+// 2. SUBSCRIBE: Listen for other Gap Mesh devices
+// 3. PAIR: When two devices find each other, establish a Wi-Fi Aware session
+// 4. CONNECT: Open a TCP socket between the two phones (no router needed!)
+// 5. ENCRYPT: Run Noise Protocol handshake over the Wi-Fi link
+// 6. SEND: Exchange encrypted messages at high speed
+//
+// KEY DIFFERENCES FROM BLE:
+// - Much higher throughput (160–320 Mbps vs 1 Mbps)
+// - Lower latency
+// - Requires explicit pairing (not as seamless as BLE discovery)
+// - Requires Android 8+ and specific hardware support
+// - Uses more battery than BLE
+//
+// This is OPTIONAL: the app works fine with BLE alone. WiFi Aware just
+// adds a "fast lane" when both devices support it.
+//
 /**
  * WiFi Aware service for high-bandwidth mesh networking.
  * Complements BLE mesh with faster data transfer when available.

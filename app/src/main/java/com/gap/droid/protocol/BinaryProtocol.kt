@@ -6,20 +6,59 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import android.util.Log
 
+// ============================================================================
+// BinaryProtocol.kt — The Wire Format for All Mesh Communication
+// ============================================================================
+//
+// WHAT THIS FILE DOES:
+// Converts structured data (packets) into raw bytes and back. This is the
+// "language" that Android and iOS devices speak over BLE.
+//
+// WHY BINARY? (instead of JSON)
+// BLE can only transmit ~512 bytes per packet. JSON is wasteful — for example,
+// {"type": "message"} wastes 8 bytes just on the field name. In binary, the
+// same info is just 1 byte (0x02). Every byte matters on Bluetooth!
+//
+// PACKET STRUCTURE:
+// Every message on the mesh is wrapped in a BitchatPacket with this structure:
+//
+//   ┌──────────────────── HEADER ─────────────────────┐
+//   │ Version (1B) │ Type (1B) │ TTL (1B) │ Timestamp (8B)  │
+//   │ Flags (1B)   │ Payload Length (2B or 4B)               │
+//   ├──────────────────── BODY ───────────────────────┤
+//   │ SenderID (8B)                                          │
+//   │ RecipientID (8B, optional)                              │
+//   │ Route (variable, optional)                               │
+//   │ Payload (variable)                                       │
+//   │ Signature (64B, optional)                                │
+//   └─────────────────────────────────────────────────┘
+//
+// KEY FIELDS:
+//   Version: Protocol version (1 or 2). Newer versions support larger payloads.
+//   Type: What kind of packet this is (see MessageType enum below).
+//   TTL: "Time to Live" — how many more hops can this packet take.
+//        Each relay decrements TTL by 1; at 0, the packet stops being forwarded.
+//   Timestamp: When the packet was created (milliseconds since 1970).
+//   SenderID: 8-byte identifier of who sent this packet.
+//   Signature: Ed25519 digital signature proving the sender is authentic.
+//
+
 /**
- * Message types - exact same as iOS version with Noise Protocol support
+ * Message types — each type tells the receiver how to interpret the payload.
+ * These numbers must match EXACTLY between Android and iOS for interoperability.
  */
 enum class MessageType(val value: UByte) {
-    ANNOUNCE(0x01u),
-    MESSAGE(0x02u),  // All user messages (private and broadcast)
-    LEAVE(0x03u),
-    NOISE_HANDSHAKE(0x10u),  // Noise handshake
-    NOISE_ENCRYPTED(0x11u),  // Noise encrypted transport message
-    FRAGMENT(0x20u), // Fragmentation for large packets
-    REQUEST_SYNC(0x21u), // GCS-based sync request
-    FILE_TRANSFER(0x22u); // New: File transfer packet (BLE voice notes, etc.)
+    ANNOUNCE(0x01u),         // "I'm here!" — identity broadcast (nickname, public keys)
+    MESSAGE(0x02u),          // Chat message (both public broadcast and private)
+    LEAVE(0x03u),            // "I'm leaving" — peer is going offline
+    NOISE_HANDSHAKE(0x10u),  // Noise Protocol key exchange (establishing encryption)
+    NOISE_ENCRYPTED(0x11u),  // Encrypted payload (message wrapped in Noise session)
+    FRAGMENT(0x20u),         // Part of a larger message (for images, voice notes)
+    REQUEST_SYNC(0x21u),     // "What messages have you seen?" — gossip synchronization
+    FILE_TRANSFER(0x22u);    // File transfer packet (voice notes, images over BLE)
 
     companion object {
+        /** Look up a MessageType by its byte value. Returns null if unknown. */
         fun fromValue(value: UByte): MessageType? {
             return values().find { it.value == value }
         }
@@ -27,28 +66,39 @@ enum class MessageType(val value: UByte) {
 }
 
 /**
- * Special recipient IDs - exact same as iOS version
+ * Special recipient IDs — magic byte patterns used as addressing shortcuts.
+ * BROADCAST (all 0xFF bytes) means "send this to everyone on the mesh."
  */
 object SpecialRecipients {
-    val BROADCAST = ByteArray(8) { 0xFF.toByte() }  // All 0xFF = broadcast
+    val BROADCAST = ByteArray(8) { 0xFF.toByte() }  // All 0xFF = "everyone"
 }
 
 /**
- * Binary packet format - 100% backward compatible with iOS version
+ * BitchatPacket — A single unit of data that travels across the mesh.
+ *
+ * Think of this as an "envelope" that carries any type of message:
+ * - The "envelope" (header) tells routers where to send it
+ * - The "letter inside" (payload) contains the actual message data
+ * - The "wax seal" (signature) proves it's authentic
+ *
+ * This format is 100% backward compatible with the iOS version —
+ * both platforms can decode each other's packets.
+ *
+ * Binary packet format — supports v1 and v2:
  *
  * Header (13 bytes for v1, 15 bytes for v2):
- * - Version: 1 byte
- * - Type: 1 byte
- * - TTL: 1 byte
- * - Timestamp: 8 bytes (UInt64, big-endian)
+ * - Version: 1 byte — protocol version (1 or 2)
+ * - Type: 1 byte — what's inside (announce, message, handshake, etc.)
+ * - TTL: 1 byte — hop counter (decremented at each relay; 0 = stop forwarding)
+ * - Timestamp: 8 bytes (UInt64, big-endian) — when the packet was created
  * - Flags: 1 byte (bit 0: hasRecipient, bit 1: hasSignature, bit 2: isCompressed)
- * - PayloadLength: 2 bytes (v1) / 4 bytes (v2) (big-endian)
+ * - PayloadLength: 2 bytes (v1) / 4 bytes (v2) — how big the payload is
  *
  * Variable sections:
- * - SenderID: 8 bytes (fixed)
- * - RecipientID: 8 bytes (if hasRecipient flag set)
- * - Payload: Variable length (includes original size if compressed)
- * - Signature: 64 bytes (if hasSignature flag set)
+ * - SenderID: 8 bytes (always present)
+ * - RecipientID: 8 bytes (only if hasRecipient flag is set)
+ * - Payload: Variable length (the actual message data)
+ * - Signature: 64 bytes (Ed25519 signature, only if hasSignature flag is set)
  */
 @Parcelize
 data class BitchatPacket(
