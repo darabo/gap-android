@@ -19,6 +19,14 @@ import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.FlashlightOn
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
@@ -855,6 +863,176 @@ fun AboutSheet(
                                     color = colorScheme.onBackground.copy(alpha = 0.5f),
                                     modifier = Modifier.padding(start = 16.dp, top = 8.dp)
                                 )
+                            }
+                        }
+                    }
+
+                    // App Icon Picker Section
+                    item(key = "app_icon") {
+                        var currentIcon by remember { mutableStateOf(com.gapmesh.droid.service.AppIconManager.getCurrentIcon(context)) }
+                        var expanded by remember { mutableStateOf(false) }
+                        val chevronRotation by animateFloatAsState(
+                            targetValue = if (expanded) 180f else 0f,
+                            label = "iconChevron"
+                        )
+
+                        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            Text(
+                                text = stringResource(R.string.settings_app_icon_title).uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                letterSpacing = 0.5.sp,
+                                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                            )
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = colorScheme.surface,
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Column {
+                                    // Header row (always visible) — tapping expands/collapses the icon list
+                                    Surface(
+                                        onClick = { expanded = !expanded },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        color = Color.Transparent
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Palette,
+                                                contentDescription = null,
+                                                tint = colorScheme.primary,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(14.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = stringResource(R.string.settings_app_icon_title),
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = colorScheme.onSurface
+                                                )
+                                                Text(
+                                                    text = stringResource(R.string.settings_app_icon_desc),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = colorScheme.onSurface.copy(alpha = 0.6f)
+                                                )
+                                            }
+                                            Icon(
+                                                imageVector = Icons.Filled.KeyboardArrowDown,
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .size(20.dp)
+                                                    .rotate(chevronRotation),
+                                                tint = colorScheme.onSurface.copy(alpha = 0.3f)
+                                            )
+                                        }
+                                    }
+
+                                    // Expandable icon list
+                                    if (expanded) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(start = 56.dp),
+                                            color = colorScheme.outline.copy(alpha = 0.12f)
+                                        )
+                                        com.gapmesh.droid.service.AppIconManager.AppIcon.values().forEach { icon ->
+                                            val isSelected = currentIcon == icon
+                                            val displayName = when (icon) {
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.DEFAULT ->
+                                                    stringResource(R.string.settings_app_icon_default)
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.CALCULATOR ->
+                                                    stringResource(R.string.alias_calculator)
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.NOTES ->
+                                                    stringResource(R.string.alias_notes)
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.WEATHER ->
+                                                    stringResource(R.string.alias_weather)
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.CLOCK ->
+                                                    stringResource(R.string.alias_clock)
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.FLASHLIGHT ->
+                                                    stringResource(R.string.alias_flashlight)
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.MUSIC ->
+                                                    stringResource(R.string.alias_music)
+                                            }
+                                            val iconVector = when (icon) {
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.DEFAULT -> Icons.Filled.Apps
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.CALCULATOR -> Icons.Filled.Calculate
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.NOTES -> Icons.Filled.EditNote
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.WEATHER -> Icons.Filled.Cloud
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.CLOCK -> Icons.Filled.Schedule
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.FLASHLIGHT -> Icons.Filled.FlashlightOn
+                                                com.gapmesh.droid.service.AppIconManager.AppIcon.MUSIC -> Icons.Filled.MusicNote
+                                            }
+
+                                            Surface(
+                                                onClick = {
+                                                    com.gapmesh.droid.service.AppIconManager.switchToIcon(context, icon)
+                                                    currentIcon = icon
+                                                },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                color = if (isSelected) colorScheme.primary.copy(alpha = 0.08f) else Color.Transparent
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    // Icon preview
+                                                    Surface(
+                                                        shape = RoundedCornerShape(10.dp),
+                                                        color = if (isSelected) colorScheme.primary.copy(alpha = 0.15f) else colorScheme.surfaceVariant,
+                                                        modifier = Modifier.size(40.dp)
+                                                    ) {
+                                                        Box(contentAlignment = Alignment.Center) {
+                                                            Icon(
+                                                                imageVector = iconVector,
+                                                                contentDescription = displayName,
+                                                                tint = if (isSelected) colorScheme.primary else colorScheme.onSurface.copy(alpha = 0.5f),
+                                                                modifier = Modifier.size(22.dp)
+                                                            )
+                                                        }
+                                                    }
+
+                                                    Spacer(modifier = Modifier.width(14.dp))
+
+                                                    Text(
+                                                        text = displayName,
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                                        color = if (isSelected) colorScheme.primary else colorScheme.onSurface,
+                                                        modifier = Modifier.weight(1f)
+                                                    )
+
+                                                    if (isSelected) {
+                                                        Icon(
+                                                            imageVector = Icons.Filled.CheckCircle,
+                                                            contentDescription = stringResource(R.string.cd_selected),
+                                                            tint = colorScheme.primary,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            if (icon != com.gapmesh.droid.service.AppIconManager.AppIcon.values().last()) {
+                                                HorizontalDivider(
+                                                    modifier = Modifier.padding(start = 70.dp),
+                                                    color = colorScheme.outline.copy(alpha = 0.08f)
+                                                )
+                                            }
+                                        }
+                                        // Note about home screen update
+                                        Text(
+                                            text = stringResource(R.string.settings_app_icon_restart_note),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = colorScheme.onSurface.copy(alpha = 0.4f),
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

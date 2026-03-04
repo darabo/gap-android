@@ -163,7 +163,7 @@
   <string name="share_app_title">Share Light Companion App</string>
   <string name="share_app_desc">Share Gap Mesh with nearby devices via Bluetooth, Nearby Share, or any file transfer method.</string>
   <string name="share_app_button">Share Light APK</string>
-  <string name="share_app_size_note">APK size: ~4.5 MB</string>
+  <string name="share_app_size_note">APK size: ~5.4 MB</string>
   <!-- Share Full App -->
   <string name="share_full_app_title">Share Full App</string>
   <string name="share_full_app_desc">Share the full version of Gap Mesh including Tor, Slipstream, and location features.</string>
@@ -531,6 +531,10 @@
     <string name="onboarding_mesh_title">How the Mesh Works</string>
     <string name="onboarding_mesh_desc">Gap creates an offline network using Bluetooth. Messages hop from phone to phone. All chats are encrypted and never shared with any central server.</string>
     <string name="onboarding_features_title">Features &amp; Status</string>
+    <string name="onboarding_features_subtitle">Here\'s what Gap Mesh can do for you</string>
+    <string name="onboarding_security_section">Security &amp; Privacy</string>
+    <string name="onboarding_feature_icons_title">Alternate App Icons</string>
+    <string name="onboarding_feature_icons_desc">Change the app\'s icon and name on your home screen to look like a calculator, notes, or weather app. Go to Settings to pick one.</string>
     <string name="onboarding_feature_geo_title">Geohashes (Location Chat)</string>
     <string name="onboarding_feature_geo_desc">Connect with people in your precise area. Requires Tor connection (needs internet) to sync with the global location grid.</string>
     <string name="onboarding_feature_notes_title">Location Notes</string>
@@ -581,5 +585,38 @@
     <string name="enable_location_action">Enable Location</string>
     <string name="action_edit">Edit</string>
     <string name="action_save">Save</string>
+    <!-- App Icon Aliases -->
+    <string name="alias_calculator">Calculator</string>
+    <string name="alias_notes">Notes</string>
+    <string name="alias_weather">Weather</string>
+    <string name="alias_clock">Clock</string>
+    <string name="alias_flashlight">Flashlight</string>
+    <string name="alias_music">Music</string>
+
+    <!-- Icon Picker Settings -->
+    <string name="settings_app_icon_title">App Icon</string>
+    <string name="settings_app_icon_desc">Change how the app appears on your home screen</string>
+    <string name="settings_app_icon_current">Current icon: %1$s</string>
+    <string name="settings_app_icon_default">Gap Mesh (Default)</string>
+    <string name="settings_app_icon_restart_note">The home screen may take a moment to update</string>
+
+    <!-- Peer-Reported Relays -->
+    <string name="peer_relays_title">Peer-Reported Relays</string>
+    <string name="peer_relays_desc">Nearby mesh peers share their known-good relays for decentralized discovery</string>
+    <string name="peer_relays_count">%1$d relays discovered from peers</string>
+
+    <!-- Improved Onboarding -->
+    <string name="onboarding_feature_offline_title">Offline Messaging</string>
+    <string name="onboarding_feature_offline_desc">Chat without internet or cell service using Bluetooth mesh networking. Your messages hop between nearby phones to reach people further away.</string>
+    <string name="onboarding_feature_privacy_title">Privacy &amp; Encryption</string>
+    <string name="onboarding_feature_privacy_desc">No phone number, no account, no tracking. All private messages are end-to-end encrypted using military-grade cryptography.</string>
+    <string name="onboarding_feature_mesh_title">Mesh Relay Network</string>
+    <string name="onboarding_feature_mesh_desc">Every phone acts as a relay, extending the network\'s reach. Your messages can travel through multiple devices to reach their destination.</string>
+    <string name="onboarding_feature_decoy_title">Decoy Mode</string>
+    <string name="onboarding_feature_decoy_desc">Triple-tap anywhere to instantly wipe all data and transform the app into a working calculator. Enter your secret PIN to restore.</string>
+    <string name="onboarding_feature_panic_title">Emergency Wipe</string>
+    <string name="onboarding_feature_panic_desc">All messages, keys, and settings are permanently destroyed in an instant. The wipe is crash-resilient — it completes even if the app is force-closed.</string>
+    <string name="onboarding_feature_location_title">Location Channels</string>
+    <string name="onboarding_feature_location_desc">Join public chat rooms based on your geographic area. Connect with people nearby using geohash-based channels over the internet.</string>
 
 </resources>

@@ -8,7 +8,7 @@ import java.io.File
 /**
  * Helper to share the app's installed APK with other devices.
  *
- * On the **light** build this shares the ~4.5 MB light APK itself.
+ * On the **light** build this shares the ~5.4 MB light APK itself.
  * On the **full** build it shares the full APK (larger but still functional).
  *
  * Flow:

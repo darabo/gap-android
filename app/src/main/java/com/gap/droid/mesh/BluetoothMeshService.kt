@@ -15,6 +15,7 @@ import com.gapmesh.droid.protocol.SpecialRecipients
 import com.gapmesh.droid.model.RequestSyncPacket
 import com.gapmesh.droid.sync.GossipSyncManager
 import com.gapmesh.droid.util.toHexString
+import com.gapmesh.droid.nostr.PeerRelayStore
 import com.gapmesh.droid.services.VerificationService
 import kotlinx.coroutines.*
 import java.util.*
@@ -1079,7 +1080,12 @@ class BluetoothMeshService(private val context: Context) {
             }
             
             // Create iOS-compatible IdentityAnnouncement with TLV encoding
-            val announcement = IdentityAnnouncement(nickname, staticKey, signingKey)
+            val announcement = IdentityAnnouncement(
+                nickname = nickname,
+                noisePublicKey = staticKey,
+                signingPublicKey = signingKey,
+                knownRelays = PeerRelayStore.getTopRelays(5)
+            )
             var tlvPayload = announcement.encode()
             if (tlvPayload == null) {
                 Log.e(TAG, "Failed to encode announcement as TLV")
@@ -1143,7 +1149,12 @@ class BluetoothMeshService(private val context: Context) {
         }
         
         // Create iOS-compatible IdentityAnnouncement with TLV encoding
-        val announcement = IdentityAnnouncement(nickname, staticKey, signingKey)
+        val announcement = IdentityAnnouncement(
+            nickname = nickname,
+            noisePublicKey = staticKey,
+            signingPublicKey = signingKey,
+            knownRelays = PeerRelayStore.getTopRelays(5)
+        )
         var tlvPayload = announcement.encode()
         if (tlvPayload == null) {
             Log.e(TAG, "Failed to encode peer announcement as TLV")

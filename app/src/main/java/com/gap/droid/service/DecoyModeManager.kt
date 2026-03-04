@@ -24,6 +24,8 @@ object DecoyModeManager {
     private const val KEY_DECOY_ACTIVE = "d_active"
     private const val KEY_DECOY_PIN = "d_pin"
 
+    // @Volatile ensures that changes to this variable are immediately visible to all threads.
+    // This is important because multiple background threads might try to read/write preferences.
     @Volatile
     private var prefs: SharedPreferences? = null
 
@@ -34,6 +36,8 @@ object DecoyModeManager {
     }
 
     private fun createPrefs(context: Context): SharedPreferences {
+        // EncryptedSharedPreferences works like a regular SharedPreferences dictionary, 
+        // but it automatically encrypts both the keys and the values before saving them to disk.
         return try {
             val masterKey = try {
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
@@ -77,6 +81,8 @@ object DecoyModeManager {
     /** Activate decoy mode. Called AFTER panicClearAllData() completes. */
     fun activateDecoy(context: Context) {
         getPrefs(context).edit().putBoolean(KEY_DECOY_ACTIVE, true).apply()
+        // Auto-switch app icon to calculator for plausible deniability
+        AppIconManager.switchToDecoyIcon(context)
         Log.w(TAG, "Decoy mode ACTIVATED")
     }
 
