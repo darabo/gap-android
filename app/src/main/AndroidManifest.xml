@@ -140,6 +140,97 @@
                 <data android:scheme="nostr" />
             </intent-filter>
         </activity>
+
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <!-- Decoy App Icon Aliases                                       -->
+        <!-- Each alias has its own icon + label so the home screen shows  -->
+        <!-- a different app identity. Only ONE alias (or MainActivity)    -->
+        <!-- should be enabled at a time.                                  -->
+        <!-- ══════════════════════════════════════════════════════════════ -->
+
+        <activity-alias
+            android:name=".AliasCalculator"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_calculator"
+            android:roundIcon="@mipmap/ic_calculator"
+            android:label="@string/alias_calculator">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasNotes"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_notes"
+            android:roundIcon="@mipmap/ic_notes"
+            android:label="@string/alias_notes">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasWeather"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_weather"
+            android:roundIcon="@mipmap/ic_weather"
+            android:label="@string/alias_weather">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasClock"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_clock"
+            android:roundIcon="@mipmap/ic_clock"
+            android:label="@string/alias_clock">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasFlashlight"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_flashlight"
+            android:roundIcon="@mipmap/ic_flashlight"
+            android:label="@string/alias_flashlight">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".AliasMusic"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_music"
+            android:roundIcon="@mipmap/ic_music"
+            android:label="@string/alias_music">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
         <!-- Decoy calculator activity (not a launcher, routed from MainActivity) -->
         <activity
             android:name=".ui.CalculatorActivity"

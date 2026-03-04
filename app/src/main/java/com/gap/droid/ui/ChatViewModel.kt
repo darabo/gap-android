@@ -101,27 +101,34 @@ import com.gapmesh.droid.ui.ScreenshotDetector
     }
 
     // MARK: - State management
+    // ChatState is the single source of truth for ALL UI state.
+    // It wraps MutableStateFlow objects so the UI auto-updates when data changes.
     private val state = ChatState(
         scope = viewModelScope,
     )
 
-    // Transfer progress tracking
+    // Transfer progress tracking (maps between message IDs and transfer IDs)
     private val transferMessageMap = mutableMapOf<String, String>()
     private val messageTransferMap = mutableMapOf<String, String>()
 
-    // Specialized managers
-    private val dataManager = DataManager(application.applicationContext)
-    private val identityManager by lazy { SecureIdentityStateManager(getApplication()) }
-    private val messageManager = MessageManager(state)
-    private val channelManager = ChannelManager(state, messageManager, dataManager, viewModelScope)
+    // --- Specialized Managers ---
+    // The ViewModel delegates work to these focused manager classes
+    // instead of putting everything in one giant file.
+    private val dataManager = DataManager(application.applicationContext)        // Persists messages to disk
+    private val identityManager by lazy { SecureIdentityStateManager(getApplication()) }  // Manages cryptographic keys
+    private val messageManager = MessageManager(state)                           // Adds/removes messages in state
+    private val channelManager = ChannelManager(state, messageManager, dataManager, viewModelScope)  // Topic channels
 
-    // Create Noise session delegate for clean dependency injection
+    // Create Noise session delegate for clean dependency injection.
+    // This interface adapter lets PrivateChatManager trigger encryption
+    // handshakes without depending directly on BluetoothMeshService.
     private val noiseSessionDelegate = object : NoiseSessionDelegate {
         override fun hasEstablishedSession(peerID: String): Boolean = meshService.hasEstablishedSession(peerID)
         override fun initiateHandshake(peerID: String) = meshService.initiateNoiseHandshake(peerID)
         override fun getMyPeerID(): String = meshService.myPeerID
     }
 
+    // Manages private (encrypted) chats: message history, read receipts, outbox
     val privateChatManager = PrivateChatManager(state, messageManager, dataManager, noiseSessionDelegate)
     private val commandProcessor = CommandProcessor(state, messageManager, channelManager, privateChatManager)
     private val notificationManager = NotificationManager(
@@ -144,7 +151,9 @@ import com.gapmesh.droid.ui.ScreenshotDetector
     // Media file sending manager
     private val mediaSendingManager = MediaSendingManager(state, messageManager, channelManager, meshService, viewModelScope)
     
-    // WiFi Aware high-bandwidth mesh (optional - runs alongside BLE when available)
+    // WiFi Aware mesh (optional) — runs alongside BLE for higher bandwidth.
+    // "by lazy" means this is only created if something actually accesses it.
+    // WiFi Aware requires Android 8+ and specific hardware support.
     private val wifiAwareService: com.gapmesh.droid.wifiaware.WiFiAwareService? by lazy {
         if (com.gapmesh.droid.wifiaware.WiFiAwareAvailability.isSupported(getApplication())) {
             com.gapmesh.droid.wifiaware.WiFiAwareService(
@@ -172,7 +181,9 @@ import com.gapmesh.droid.ui.ScreenshotDetector
         getMeshService = { meshService }
     )
     
-    // New Geohash architecture ViewModel (replaces God object service usage in UI path)
+    // Geohash ViewModel — handles location-based channels.
+    // "Geohash" encodes GPS coordinates into short strings (like "u33dc") so
+    // nearby users are automatically placed in the same chat channel.
     val geohashViewModel = GeohashViewModel(
         application = application,
         state = state,
@@ -223,14 +234,17 @@ import com.gapmesh.droid.ui.ScreenshotDetector
     val teleportedGeo: StateFlow<Set<String>> = state.teleportedGeo
     val geohashParticipantCounts: StateFlow<Map<String, Int>> = state.geohashParticipantCounts
 
-    // Decoy mode activation event — UI collects this to launch CalculatorActivity
+    // Decoy mode: when activated, the app switches to a fake calculator screen.
+    // SharedFlow emits a one-time event that the UI collects to trigger the switch.
     private val _decoyActivated = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val decoyActivated: kotlinx.coroutines.flow.SharedFlow<Unit> = _decoyActivated
 
     init {
         // Note: Mesh service delegate is now set by MainActivity
         loadAndInitialize()
-        // Hydrate UI state from process-wide AppStateStore to survive Activity recreation
+        // Hydrate UI state from AppStateStore — a process-wide singleton that survives
+        // Activity recreation (e.g. screen rotation, memory pressure). Without this,
+        // the user would lose their message history every time Android recreates the Activity.
         viewModelScope.launch {
             try { com.gapmesh.droid.services.AppStateStore.peers.collect { peers ->
                 state.setConnectedPeers(peers)

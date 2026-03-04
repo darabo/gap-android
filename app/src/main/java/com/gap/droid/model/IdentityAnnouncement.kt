@@ -12,7 +12,9 @@ import com.gapmesh.droid.util.*
 data class IdentityAnnouncement(
     val nickname: String,
     val noisePublicKey: ByteArray,    // Noise static public key (Curve25519.KeyAgreement)
-    val signingPublicKey: ByteArray   // Ed25519 public key for signing
+    val signingPublicKey: ByteArray,  // Ed25519 public key for signing
+    val directNeighbors: List<ByteArray>? = null, // 8-byte peer IDs (matching iOS)
+    val knownRelays: List<String>? = null          // Peer-reported relay URLs
 ) : Parcelable {
 
     /**
@@ -21,7 +23,9 @@ data class IdentityAnnouncement(
     private enum class TLVType(val value: UByte) {
         NICKNAME(0x01u),
         NOISE_PUBLIC_KEY(0x02u),
-        SIGNING_PUBLIC_KEY(0x03u);  // NEW: Ed25519 signing public key
+        SIGNING_PUBLIC_KEY(0x03u),
+        DIRECT_NEIGHBORS(0x04u),    // 8-byte peer IDs (matching iOS)
+        KNOWN_RELAYS(0x05u);        // Newline-separated relay URLs
         
         companion object {
             fun fromValue(value: UByte): TLVType? {
@@ -57,6 +61,26 @@ data class IdentityAnnouncement(
         result.add(TLVType.SIGNING_PUBLIC_KEY.value.toByte())
         result.add(signingPublicKey.size.toByte())
         result.addAll(signingPublicKey.toList())
+
+        // TLV for direct neighbors (optional, 8-byte peer IDs)
+        if (!directNeighbors.isNullOrEmpty()) {
+            val neighborsData = directNeighbors.take(10).fold(byteArrayOf()) { acc, id -> acc + id }
+            if (neighborsData.isNotEmpty() && neighborsData.size % 8 == 0 && neighborsData.size <= 255) {
+                result.add(TLVType.DIRECT_NEIGHBORS.value.toByte())
+                result.add(neighborsData.size.toByte())
+                result.addAll(neighborsData.toList())
+            }
+        }
+
+        // TLV for known relays (optional, newline-separated URLs)
+        if (!knownRelays.isNullOrEmpty()) {
+            val relaysPayload = knownRelays.take(5).joinToString("\n").toByteArray(Charsets.UTF_8)
+            if (relaysPayload.size <= 255) {
+                result.add(TLVType.KNOWN_RELAYS.value.toByte())
+                result.add(relaysPayload.size.toByte())
+                result.addAll(relaysPayload.toList())
+            }
+        }
         
         return result.toByteArray()
     }
@@ -73,6 +97,8 @@ data class IdentityAnnouncement(
             var nickname: String? = null
             var noisePublicKey: ByteArray? = null
             var signingPublicKey: ByteArray? = null
+            var directNeighbors: List<ByteArray>? = null
+            var knownRelays: List<String>? = null
             
             while (offset + 2 <= dataCopy.size) {
                 // Read TLV type
@@ -102,6 +128,20 @@ data class IdentityAnnouncement(
                     TLVType.SIGNING_PUBLIC_KEY -> {
                         signingPublicKey = value
                     }
+                    TLVType.DIRECT_NEIGHBORS -> {
+                        if (length > 0 && length % 8 == 0) {
+                            val neighbors = mutableListOf<ByteArray>()
+                            val count = length / 8
+                            for (i in 0 until count) {
+                                neighbors.add(value.sliceArray(i * 8 until (i + 1) * 8))
+                            }
+                            directNeighbors = neighbors
+                        }
+                    }
+                    TLVType.KNOWN_RELAYS -> {
+                        val relaysStr = String(value, Charsets.UTF_8)
+                        knownRelays = relaysStr.split("\n").filter { it.isNotBlank() }
+                    }
                     null -> {
                         // Unknown TLV; skip (tolerant decoder for forward compatibility)
                         continue
@@ -111,7 +151,7 @@ data class IdentityAnnouncement(
             
             // All three fields are required
             return if (nickname != null && noisePublicKey != null && signingPublicKey != null) {
-                IdentityAnnouncement(nickname, noisePublicKey, signingPublicKey)
+                IdentityAnnouncement(nickname, noisePublicKey, signingPublicKey, directNeighbors, knownRelays)
             } else {
                 null
             }
@@ -128,6 +168,7 @@ data class IdentityAnnouncement(
         if (nickname != other.nickname) return false
         if (!noisePublicKey.contentEquals(other.noisePublicKey)) return false
         if (!signingPublicKey.contentEquals(other.signingPublicKey)) return false
+        if (knownRelays != other.knownRelays) return false
         
         return true
     }
@@ -136,6 +177,7 @@ data class IdentityAnnouncement(
         var result = nickname.hashCode()
         result = 31 * result + noisePublicKey.contentHashCode()
         result = 31 * result + signingPublicKey.contentHashCode()
+        result = 31 * result + (knownRelays?.hashCode() ?: 0)
         return result
     }
     

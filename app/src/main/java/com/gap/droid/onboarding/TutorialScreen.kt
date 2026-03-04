@@ -10,7 +10,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.Hub
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -291,47 +299,145 @@ private fun EducationStep() {
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
-        Spacer(Modifier.height(24.dp))
-        
+        Spacer(Modifier.height(8.dp))
+        Text(
+            stringResource(R.string.onboarding_features_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        )
+        Spacer(Modifier.height(20.dp))
+
+        // Core capabilities
+        FeatureCard(
+            icon = Icons.Filled.WifiOff,
+            iconTint = Color(0xFF4CAF50),
+            title = stringResource(R.string.onboarding_feature_offline_title),
+            desc = stringResource(R.string.onboarding_feature_offline_desc)
+        )
+
+        FeatureCard(
+            icon = Icons.Filled.Lock,
+            iconTint = Color(0xFF2196F3),
+            title = stringResource(R.string.onboarding_feature_privacy_title),
+            desc = stringResource(R.string.onboarding_feature_privacy_desc)
+        )
+
+        FeatureCard(
+            icon = Icons.Filled.Hub,
+            iconTint = Color(0xFF00BCD4),
+            title = stringResource(R.string.onboarding_feature_mesh_title),
+            desc = stringResource(R.string.onboarding_feature_mesh_desc)
+        )
+
         if (com.gapmesh.droid.BuildConfig.HAS_GEOHASH) {
-            FeatureItem(
-                title = stringResource(R.string.onboarding_feature_geo_title),
-                desc = stringResource(R.string.onboarding_feature_geo_desc)
+            FeatureCard(
+                icon = Icons.Filled.LocationOn,
+                iconTint = Color(0xFFF44336),
+                title = stringResource(R.string.onboarding_feature_location_title),
+                desc = stringResource(R.string.onboarding_feature_location_desc)
             )
         }
-        
-        FeatureItem(
+
+        FeatureCard(
+            icon = Icons.Filled.EditNote,
+            iconTint = Color(0xFFFFC107),
             title = stringResource(R.string.onboarding_feature_notes_title),
             desc = stringResource(R.string.onboarding_feature_notes_desc)
         )
 
-        FeatureItem(
-            title = stringResource(R.string.onboarding_emergency_title),
-            desc = stringResource(R.string.onboarding_emergency_desc)
+        // Security features
+        HorizontalDivider(Modifier.padding(vertical = 12.dp))
+
+        Text(
+            stringResource(R.string.onboarding_security_section),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
         )
-        
-        HorizontalDivider(Modifier.padding(vertical = 16.dp))
-        
+        Spacer(Modifier.height(12.dp))
+
+        FeatureCard(
+            icon = Icons.Filled.VisibilityOff,
+            iconTint = Color(0xFF9C27B0),
+            title = stringResource(R.string.onboarding_feature_decoy_title),
+            desc = stringResource(R.string.onboarding_feature_decoy_desc)
+        )
+
+        FeatureCard(
+            icon = Icons.Filled.DeleteForever,
+            iconTint = Color(0xFFF44336),
+            title = stringResource(R.string.onboarding_feature_panic_title),
+            desc = stringResource(R.string.onboarding_feature_panic_desc)
+        )
+
+        FeatureCard(
+            icon = Icons.Filled.Palette,
+            iconTint = Color(0xFF00BCD4),
+            title = stringResource(R.string.onboarding_feature_icons_title),
+            desc = stringResource(R.string.onboarding_feature_icons_desc)
+        )
+
+        // Connection status guide
+        HorizontalDivider(Modifier.padding(vertical = 12.dp))
+
         Text(stringResource(R.string.onboarding_status_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(12.dp))
-        
+
         StatusItem(Color(0xFF00C851), stringResource(R.string.onboarding_status_green), stringResource(R.string.onboarding_status_green_desc))
         StatusItem(Color(0xFFFF9500), stringResource(R.string.onboarding_status_orange), stringResource(R.string.onboarding_status_orange_desc))
         StatusItem(Color.Red, stringResource(R.string.onboarding_status_red), stringResource(R.string.onboarding_status_red_desc))
-        
-        Spacer(Modifier.height(16.dp))
+
+        Spacer(Modifier.height(12.dp))
         Text(
             stringResource(R.string.onboarding_status_desc),
-            style = MaterialTheme.typography.bodySmall
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
     }
 }
 
 @Composable
-private fun FeatureItem(title: String, desc: String) {
-    Column(Modifier.padding(bottom = 16.dp)) {
-        Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Text(desc, style = MaterialTheme.typography.bodyMedium)
+private fun FeatureCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconTint: Color,
+    title: String,
+    desc: String
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 10.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(28.dp)
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    desc,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+        }
     }
 }
 

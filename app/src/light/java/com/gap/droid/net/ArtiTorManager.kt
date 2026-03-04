@@ -1,6 +1,7 @@
 package com.gapmesh.droid.net
 
 import android.app.Application
+import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,6 +47,10 @@ class ArtiTorManager private constructor() {
     }
 
     fun currentSocksAddress(): InetSocketAddress? = null
+
+    fun onSlipstreamToggled(context: Context, enabled: Boolean) {
+        // No-op: Tor is not available in the light build
+    }
 
     suspend fun applyMode(application: Application, mode: TorMode) {
         // No-op: Tor is not available in the light build

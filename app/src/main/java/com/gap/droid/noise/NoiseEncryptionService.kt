@@ -9,6 +9,46 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
 
+// ============================================================================
+// NoiseEncryptionService.kt — End-to-End Encryption Using the Noise Protocol
+// ============================================================================
+//
+// WHAT THIS FILE DOES:
+// Manages ALL the encryption in Gap Mesh. Every private message is encrypted
+// so that ONLY the intended recipient can read it — not relay nodes, not
+// Nostr servers, not even us.
+//
+// WHAT IS THE NOISE PROTOCOL?
+// Noise is a framework for building secure communication channels, similar
+// to what Signal (the messaging app) uses internally. It provides:
+//   - Forward secrecy: Even if your keys are stolen later, past messages
+//     remain secure.
+//   - Authentication: Proves the sender is who they claim to be.
+//   - Key agreement: Two strangers can establish a shared secret without
+//     anyone eavesdropping being able to compute it.
+//
+// HOW IT WORKS (SIMPLIFIED):
+//   1. Each device generates a permanent "identity key" (stored in Keychain)
+//   2. When two devices first meet, they do a "handshake" — a dance of
+//      exchanging public keys to compute a shared secret (Diffie-Hellman).
+//   3. Once the handshake is complete, they have a "session" — a shared
+//      secret that encrypts all subsequent messages.
+//   4. Sessions are "rekeyed" periodically (every hour or 1000 messages)
+//      to maintain forward secrecy.
+//
+// KEY TERMINOLOGY:
+//   - Static Key: Your permanent identity key (lives in secure storage)
+//   - Session: An established encrypted channel between two peers
+//   - Handshake: The initial key exchange process
+//   - Fingerprint: A readable hash of a public key (for visual verification)
+//   - Ed25519: A digital signature algorithm used to sign packets
+//   - Rekey: Generating fresh encryption keys within an existing session
+//
+// THE TWO KEY TYPES:
+//   1. Curve25519 (static identity)  — For key agreement (Diffie-Hellman)
+//   2. Ed25519 (signing key)         — For signing packets to prove authenticity
+//
+
 /**
  * Main Noise encryption service - 100% compatible with iOS implementation
  * 
@@ -23,29 +63,40 @@ class NoiseEncryptionService(private val context: Context) {
     companion object {
         private const val TAG = "NoiseEncryptionService"
         
-        // Session limits for performance and security
-        private const val REKEY_TIME_LIMIT = com.gapmesh.droid.util.AppConstants.Noise.REKEY_TIME_LIMIT_MS // 1 hour (same as iOS)
-        private const val REKEY_MESSAGE_LIMIT = com.gapmesh.droid.util.AppConstants.Noise.REKEY_MESSAGE_LIMIT_ENCRYPTION // 1k messages (matches iOS) (same as iOS)
+        // Session limits for performance and security.
+        // "Rekeying" means generating fresh encryption keys within an existing session.
+        // This provides "forward secrecy": if current keys are compromised,
+        // messages sent before the last rekey remain undecipherable.
+        private const val REKEY_TIME_LIMIT = com.gapmesh.droid.util.AppConstants.Noise.REKEY_TIME_LIMIT_MS // 1 hour
+        private const val REKEY_MESSAGE_LIMIT = com.gapmesh.droid.util.AppConstants.Noise.REKEY_MESSAGE_LIMIT_ENCRYPTION // 1000 messages
     }
     
-    // Static identity key (persistent across app restarts) - loaded from secure storage
-    private val staticIdentityPrivateKey: ByteArray
-    private val staticIdentityPublicKey: ByteArray
+    // ── Identity Keys ─────────────────────────────────────────────────
+    // These are your "digital identity" — like a passport that proves who you are.
+    // They're generated once and stored securely (encrypted SharedPreferences).
+    // If these are lost, your identity changes and peers won't recognize you.
     
-    // Ed25519 signing key (persistent across app restarts) - loaded from secure storage
-    private val signingPrivateKey: ByteArray
-    private val signingPublicKey: ByteArray
+    // Curve25519 key pair: Used for Diffie-Hellman key agreement
+    // (two peers compute a shared secret without revealing their private keys)
+    private val staticIdentityPrivateKey: ByteArray  // NEVER shared! Stays on this device only.
+    private val staticIdentityPublicKey: ByteArray   // Shared with peers during handshake.
     
-    // Session management
+    // Ed25519 key pair: Used for signing packets to prove authenticity
+    // (peers verify the signature to ensure the packet wasn't tampered with)
+    private val signingPrivateKey: ByteArray  // NEVER shared!
+    private val signingPublicKey: ByteArray   // Included in announce packets.
+    
+    // ── Session & Peer Management ───────────────────────────────────
+    // NoiseSessionManager: Tracks all active encryption sessions (one per peer)
     private val sessionManager: NoiseSessionManager
     
-    // Channel encryption for password-protected channels
+    // Channel encryption for password-protected channels (not per-peer)
     private val channelEncryption = NoiseChannelEncryption()
     
     // Identity management for peer ID rotation support
     private val identityStateManager: SecureIdentityStateManager
     
-    // Centralized fingerprint management - NO LOCAL STORAGE
+    // Centralized fingerprint management — maps peer IDs to their fingerprints
     private val fingerprintManager = PeerFingerprintManager.getInstance()
     
     // Callbacks

@@ -28,7 +28,8 @@ class ArtiProxy private constructor(
     private val application: Application,
     private val socksPort: Int,
     private val dnsPort: Int,
-    private val logListener: ArtiLogListener?
+    private val logListener: ArtiLogListener?,
+    private val outboundProxy: String?
 ) {
     companion object {
         private const val TAG = "ArtiProxy"
@@ -57,6 +58,20 @@ class ArtiProxy private constructor(
             logListener?.let { listener ->
                 Log.d(TAG, "Registering log callback")
                 ArtiNative.setLogCallback(listener)
+            }
+
+            // Configure outbound SOCKS5 proxy (e.g., Slipstream) before initialization.
+            // Guarded with try-catch because the native library must be recompiled
+            // with Slipstream support; stock builds don't have this JNI symbol.
+            if (!outboundProxy.isNullOrBlank()) {
+                try {
+                    Log.i(TAG, "Setting outbound proxy: $outboundProxy")
+                    ArtiNative.setOutboundProxy(outboundProxy)
+                } catch (e: UnsatisfiedLinkError) {
+                    Log.w(TAG, "Native setOutboundProxy not available — " +
+                            "rebuild the Arti native library with Slipstream support. " +
+                            "Continuing without outbound proxy.", e)
+                }
             }
 
             val dataDir = getDataDirectory()
@@ -144,6 +159,7 @@ class ArtiProxy private constructor(
         private var socksPort: Int = 9050
         private var dnsPort: Int = 9051
         private var logListener: ArtiLogListener? = null
+        private var outboundProxy: String? = null
 
         /**
          * Set SOCKS proxy port.
@@ -173,11 +189,21 @@ class ArtiProxy private constructor(
         }
 
         /**
+         * Set an outbound SOCKS5 proxy for Arti's guard connections.
+         * Use this to route Tor through a censorship-bypass tunnel (e.g., Slipstream).
+         * @param proxyAddr "host:port" format, or null to disable
+         * @return this Builder for chaining
+         */
+        fun setOutboundProxy(proxyAddr: String?) = apply {
+            this.outboundProxy = proxyAddr
+        }
+
+        /**
          * Build and return the configured ArtiProxy instance.
          * @return Configured ArtiProxy (not yet started)
          */
         fun build(): ArtiProxy {
-            return ArtiProxy(application, socksPort, dnsPort, logListener)
+            return ArtiProxy(application, socksPort, dnsPort, logListener, outboundProxy)
         }
     }
 }

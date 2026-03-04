@@ -13,8 +13,8 @@ android {
         applicationId = "com.gapmesh.droid"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 19
-        versionName = "1.29"
+        versionCode = 23
+        versionName = "1.32"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -32,7 +32,7 @@ android {
         }
         create("light") {
             dimension = "variant"
-            applicationIdSuffix = ".light"
+            applicationId = "com.gapmeshlight.droid"
             versionNameSuffix = "-light"
             buildConfigField("boolean", "HAS_TOR", "false")
             buildConfigField("boolean", "HAS_GEOHASH", "false")
@@ -103,9 +103,14 @@ android {
         buildConfig = true
     }
     packaging {
+        jniLibs.useLegacyPackaging = false
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+        
+        // Temporarily exclude heavy native libraries to reduce APK size while Slipstream is disabled.
+        jniLibs.excludes += "**/libslipstream_client.so"
+        // jniLibs.excludes += "**/libarti_android.so" // Tor needs this to run
     }
     lint {
         baseline = file("lint-baseline.xml")

@@ -132,6 +132,16 @@
     <string name="about_tor_route">برای حفظ بیشتر حریم خصوصی، ترافیک اینترنت را از طریق Tor مسیریابی کنید.</string>
     <string name="about_legacy_compat_title">سازگاری با نسخه‌های قدیمی</string>
     <string name="about_legacy_compat_desc">به برنامه‌های Bitchat اجازه پیدا کردن شما را بدهید (نیاز به راه‌اندازی مجدد دارد). غیرفعال‌کردن حریم خصوصی را به حداکثر می‌رساند.</string>
+
+    <!-- Slipstream (عبور از سانسور) -->
+    <string name="about_slipstream_title">Slipstream (تونل DNS) - به زودی</string>
+    <string name="about_slipstream_desc">با تونل‌زنی ترافیک از طریق درخواست‌های DNS، سانسور اینترنت را دور بزنید (QUIC-over-DNS).</string>
+    <string name="about_slipstream_domain_label">دامنه تونل</string>
+    <string name="about_slipstream_domain_hint">t.example.com</string>
+    <string name="about_slipstream_resolver_label">سرور DNS</string>
+    <string name="about_slipstream_resolver_hint">1.1.1.1</string>
+    <string name="about_slipstream_advanced">تنظیمات پیشرفته</string>
+
     <string name="about_tor_status">وضعیت Tor: %1$s، بوت‌استرپ %2$d%%</string>
     <string name="tor_status_connected">متصل (%1$d%%)</string>
     <string name="tor_status_disconnected">قطع شد</string>
@@ -144,7 +154,12 @@
     <string name="share_app_title">اشتراک‌گذاری نسخه سبک برنامه</string>
     <string name="share_app_desc">گپ مش را با دستگاه‌های نزدیک از طریق بلوتوث، اشتراک‌گذاری نزدیک (Nearby Share) یا هر روش انتقال فایل دیگری به اشتراک بگذارید.</string>
     <string name="share_app_button">اشتراک‌گذاری APK سبک</string>
-    <string name="share_app_size_note">اندازه فایل: ~۴.۵ مگابایت</string>
+    <string name="share_app_size_note">اندازه فایل: ~۵.۴ مگابایت</string>
+    <!-- اشتراک‌گذاری نسخه کامل برنامه -->
+    <string name="share_full_app_title">اشتراک‌گذاری نسخه کامل برنامه</string>
+    <string name="share_full_app_desc">نسخه کامل گپ مش شامل تور، اسلیپ‌استریم و قابلیت‌های مکانی را به اشتراک بگذارید.</string>
+    <string name="share_full_app_button">اشتراک‌گذاری APK کامل</string>
+    <string name="share_full_app_size_note">اندازه فایل: ~۲۵ مگابایت</string>
     <string name="close_plain">بستن</string>
     <string name="cancel_lower">لغو</string>
     
@@ -570,4 +585,43 @@
     <string name="action_edit">ویرایش</string>
     <string name="action_save">ذخیره</string>
 
+    <!-- نام‌های جایگزین آیکون -->
+    <string name="alias_calculator">ماشین‌حساب</string>
+    <string name="alias_notes">یادداشت‌ها</string>
+    <string name="alias_weather">آب و هوا</string>
+    <string name="alias_clock">ساعت</string>
+    <string name="alias_flashlight">چراغ‌قوه</string>
+    <string name="alias_music">موسیقی</string>
+
+    <!-- انتخابگر آیکون در تنظیمات -->
+    <string name="settings_app_icon_title">آیکون برنامه</string>
+    <string name="settings_app_icon_desc">تغییر ظاهر برنامه در صفحهٔ اصلی</string>
+    <string name="settings_app_icon_current">آیکون فعلی: %1$s</string>
+    <string name="settings_app_icon_default">گپ مش (پیش‌فرض)</string>
+    <string name="settings_app_icon_restart_note">ممکن است صفحهٔ اصلی لحظاتی برای به‌روزرسانی نیاز داشته باشد</string>
+
+    <!-- رله‌های گزارش‌شده توسط همتایان -->
+    <string name="peer_relays_title">رله‌های گزارش‌شده توسط همتایان</string>
+    <string name="peer_relays_desc">همتایان نزدیک مِش رله‌های مطمئن خود را برای کشف غیرمتمرکز به اشتراک می‌گذارند</string>
+    <string name="peer_relays_count">%1$d رله از همتایان کشف شد</string>
+
+    <!-- آنبوردینگ بهبودیافته -->
+    <string name="onboarding_features_subtitle">امکاناتی که Gap Mesh برای شما فراهم می‌کند</string>
+    <string name="onboarding_security_section">امنیت و حریم خصوصی</string>
+    <string name="onboarding_feature_icons_title">آیکون‌های جایگزین اپلیکیشن</string>
+    <string name="onboarding_feature_icons_desc">آیکون و نام برنامه را در صفحه اصلی تغییر دهید تا شبیه ماشین‌حساب، یادداشت یا آب‌وهوا به نظر برسد. از تنظیمات یکی را انتخاب کنید.</string>
+    <string name="onboarding_feature_offline_title">پیام‌رسانی آفلاین</string>
+    <string name="onboarding_feature_offline_desc">بدون اینترنت یا سرویس سلولی از طریق شبکهٔ مِش بلوتوث چت کنید. پیام‌های شما بین گوشی‌های نزدیک جابه‌جا می‌شوند تا به افراد دورتر برسند.</string>
+    <string name="onboarding_feature_privacy_title">حریم خصوصی و رمزگذاری</string>
+    <string name="onboarding_feature_privacy_desc">بدون شمارهٔ تلفن، بدون حساب کاربری، بدون پیگیری. تمام پیام‌های خصوصی با رمزنگاری نظامی سرتاسری محافظت می‌شوند.</string>
+    <string name="onboarding_feature_mesh_title">شبکهٔ رلهٔ مِش</string>
+    <string name="onboarding_feature_mesh_desc">هر گوشی به عنوان رله عمل می‌کند و دسترسی شبکه را گسترش می‌دهد. پیام‌های شما می‌توانند از چندین دستگاه عبور کنند تا به مقصد برسند.</string>
+    <string name="onboarding_feature_decoy_title">حالت فریب</string>
+    <string name="onboarding_feature_decoy_desc">سه بار هرجای صفحه ضربه بزنید تا همهٔ داده‌ها فوراً پاک شود و برنامه به یک ماشین‌حساب واقعی تبدیل شود. پین مخفی خود را وارد کنید تا بازیابی شود.</string>
+    <string name="onboarding_feature_panic_title">پاکسازی اضطراری</string>
+    <string name="onboarding_feature_panic_desc">همهٔ پیام‌ها، کلیدها و تنظیمات در یک لحظه برای همیشه نابود می‌شوند. پاکسازی مقاوم در برابر خرابی است — حتی اگر برنامه بسته شود کامل انجام می‌شود.</string>
+    <string name="onboarding_feature_location_title">کانال‌های مکانی</string>
+    <string name="onboarding_feature_location_desc">به اتاق‌های چت عمومی بر اساس منطقهٔ جغرافیایی بپیوندید. از طریق کانال‌های مبتنی بر geohash با افراد نزدیک ارتباط برقرار کنید.</string>
+
+    <string name="notification_and_more">و %1$d مورد دیگر</string>
 </resources>

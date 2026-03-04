@@ -1,6 +1,7 @@
 package com.gapmesh.droid.net
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import com.gapmesh.droid.util.AppConstants
 import info.guardianproject.arti.ArtiLogListener
@@ -99,6 +100,15 @@ class ArtiTorManager private constructor() {
     @Volatile
     private var lifecycleState: LifecycleState = LifecycleState.STOPPED
 
+    /** Shared log listener reused across ArtiProxy rebuilds. */
+    private val artiLogListener = ArtiLogListener { logLine ->
+        val text = logLine ?: return@ArtiLogListener
+        Log.i(TAG, "arti: $text")
+        lastLogTime.set(System.currentTimeMillis())
+        _statusFlow.update { it.copy(lastLogLine = text) }
+        handleArtiLogLine(text)
+    }
+
     private val _statusFlow = MutableStateFlow(
         TorStatus(
             mode = TorMode.OFF,
@@ -126,21 +136,9 @@ class ArtiTorManager private constructor() {
             initialized = true
             currentApplication = application
             TorPreferenceManager.init(application)
+            SlipstreamPreferenceManager.init(application)
 
-            val logListener = ArtiLogListener { logLine ->
-                val text = logLine ?: return@ArtiLogListener
-                val s = text
-                Log.i(TAG, "arti: $s")
-                lastLogTime.set(System.currentTimeMillis())
-                _statusFlow.update { it.copy(lastLogLine = s) }
-                handleArtiLogLine(s)
-            }
-
-            artiProxy = ArtiProxy.Builder(application)
-                .setSocksPort(currentSocksPort)
-                .setDnsPort(currentSocksPort + 1)
-                .setLogListener(logListener)
-                .build()
+            rebuildArtiProxy(application)
 
             val savedMode = TorPreferenceManager.get(application)
             if (savedMode == TorMode.ON) {
@@ -167,6 +165,71 @@ class ArtiTorManager private constructor() {
     }
 
     fun currentSocksAddress(): InetSocketAddress? = socksAddr
+
+    /**
+     * Rebuild the ArtiProxy instance, picking up the current Slipstream proxy state.
+     * Called during init() and whenever Slipstream is toggled.
+     */
+    private fun rebuildArtiProxy(application: Application) {
+        val slipstreamProxy = if (SlipstreamPreferenceManager.isConfiguredAndEnabled(application)) {
+            val port = SlipstreamManager.getInstance().statusFlow.value.localPort
+            "127.0.0.1:$port"
+        } else null
+
+        Log.i(TAG, "Building ArtiProxy (outboundProxy=$slipstreamProxy, socksPort=$currentSocksPort)")
+        artiProxy = ArtiProxy.Builder(application)
+            .setSocksPort(currentSocksPort)
+            .setDnsPort(currentSocksPort + 1)
+            .setLogListener(artiLogListener)
+            .setOutboundProxy(slipstreamProxy)
+            .build()
+    }
+
+    /**
+     * Called when the user toggles Slipstream on or off.
+     * Starts/stops Slipstream, rebuilds ArtiProxy with updated outbound proxy,
+     * and restarts Arti if it was running so traffic routes correctly.
+     */
+    fun onSlipstreamToggled(context: Context, enabled: Boolean) {
+        val application = currentApplication ?: return
+        appScope.launch {
+            if (enabled) {
+                // Start Slipstream and wait for it to be ready
+                val slipstream = SlipstreamManager.getInstance()
+                if (!slipstream.isProxyReady()) {
+                    val domain = SlipstreamPreferenceManager.getDomain(context)
+                    val resolver = SlipstreamPreferenceManager.getResolver(context)
+                    Log.i(TAG, "onSlipstreamToggled: starting Slipstream (domain=$domain)")
+                    slipstream.start(context, domain, resolver)
+                    var waitMs = 0L
+                    while (!slipstream.isProxyReady() && waitMs < 15_000L) {
+                        delay(500)
+                        waitMs += 500
+                    }
+                    if (slipstream.isProxyReady()) {
+                        Log.i(TAG, "onSlipstreamToggled: Slipstream ready")
+                    } else {
+                        Log.w(TAG, "onSlipstreamToggled: Slipstream not ready after ${waitMs}ms")
+                    }
+                }
+            } else {
+                Log.i(TAG, "onSlipstreamToggled: stopping Slipstream")
+                SlipstreamManager.getInstance().stop()
+                delay(300)
+            }
+
+            // Rebuild ArtiProxy with updated outbound proxy setting
+            rebuildArtiProxy(application)
+
+            // Restart Arti if it was running so the new proxy config takes effect.
+            // Use restartArti() instead of applyMode(OFF→ON) because applyMode(OFF)
+            // would also stop Slipstream, undoing the work above.
+            if (desiredMode == TorMode.ON && lifecycleState != LifecycleState.STOPPED) {
+                Log.i(TAG, "onSlipstreamToggled: restarting Arti with updated proxy config")
+                restartArti(application)
+            }
+        }
+    }
 
     suspend fun applyMode(application: Application, mode: TorMode) {
         applyMutex.withLock {
@@ -205,6 +268,14 @@ class ArtiTorManager private constructor() {
                         currentSocksPort = DEFAULT_SOCKS_PORT
                         bindRetryAttempts = 0
                         lifecycleState = LifecycleState.STOPPED
+                        // Stop Slipstream if it was running as Tor's upstream
+                        try {
+                            val slipstream = SlipstreamManager.getInstance()
+                            if (slipstream.isProxyReady()) {
+                                Log.i(TAG, "Stopping Slipstream upstream proxy")
+                                slipstream.stop()
+                            }
+                        } catch (_: Exception) {}
                         resetNetworkConnections()
                     }
 
@@ -221,6 +292,29 @@ class ArtiTorManager private constructor() {
                             bootstrapPercent = 0,
                             state = TorState.STARTING
                         )
+
+                        // Start Slipstream upstream proxy first if enabled
+                        if (SlipstreamPreferenceManager.isConfiguredAndEnabled(application)) {
+                            val slipstream = SlipstreamManager.getInstance()
+                            if (!slipstream.isProxyReady()) {
+                                val domain = SlipstreamPreferenceManager.getDomain(application)
+                                val resolver = SlipstreamPreferenceManager.getResolver(application)
+                                Log.i(TAG, "Starting Slipstream upstream proxy (domain=$domain)")
+                                slipstream.start(application, domain, resolver)
+                                // Wait briefly for Slipstream to come up
+                                var waitMs = 0L
+                                while (!slipstream.isProxyReady() && waitMs < 10_000L) {
+                                    delay(500)
+                                    waitMs += 500
+                                }
+                                if (slipstream.isProxyReady()) {
+                                    Log.i(TAG, "Slipstream proxy ready, proceeding with Arti start")
+                                } else {
+                                    Log.w(TAG, "Slipstream not ready after ${waitMs}ms, starting Arti without proxy")
+                                }
+                            }
+                        }
+
                         socksAddr = InetSocketAddress("127.0.0.1", currentSocksPort)
                         // Only reset OkHttp clients so they pick up the SOCKS proxy.
                         // Do NOT reconnect relays yet — Arti isn't listening.

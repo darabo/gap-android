@@ -7,16 +7,56 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
 
+// ============================================================================
+// BitchatMessage.kt — The Core Chat Message Data Model
+// ============================================================================
+//
+// WHAT THIS FILE DOES:
+// Defines the structure of every chat message in Gap Mesh. Whether you send
+// "Hello!" over Bluetooth or receive a private message via Nostr, it becomes
+// a BitchatMessage object.
+//
+// KEY CONCEPTS:
+// - This class is 100% compatible with the iOS version. Both platforms encode
+//   messages into the same binary format, so an Android phone and an iPhone
+//   can talk to each other seamlessly.
+// - @Parcelize: Lets Android pass this object between Activities/Fragments
+//   (like handing a letter between rooms in the OS).
+// - Binary Payload: Messages are converted to compact byte arrays for BLE
+//   transmission, where every byte counts (BLE packets are tiny: ~512 bytes).
+//
+// MESSAGE TYPES:
+// - Message: Normal text chat
+// - Audio: Voice notes
+// - Image: Photos
+// - File: Generic file transfer
+//
+// DELIVERY STATUS LIFECYCLE:
+//   Sending → Sent → Delivered → Read
+//   (If something goes wrong: Failed)
+//
+
+/** The type of content carried by this message. */
 @Parcelize
 enum class BitchatMessageType : Parcelable {
-    Message,
-    Audio,
-    Image,
-    File
+    Message,  // Regular text message
+    Audio,    // Voice note (recorded audio)
+    Image,    // Photo or image
+    File      // Generic file attachment
 }
 
 /**
- * Delivery status for messages - exact same as iOS version
+ * Delivery status for messages — tracks the lifecycle of a sent message.
+ *
+ * Think of this like a package tracking system:
+ *   Sending   → "Package picked up" (message created, not yet transmitted)
+ *   Sent      → "In transit" (transmitted over BLE/Nostr to at least one relay)
+ *   Delivered → "Package at doorstep" (the recipient's device received it)
+ *   Read      → "Package opened" (the recipient actually read the message)
+ *   Failed    → "Package lost" (couldn't be delivered)
+ *
+ * "sealed class" in Kotlin means these are the ONLY possible statuses.
+ * You can't create a new status outside this list.
  */
 sealed class DeliveryStatus : Parcelable {
     @Parcelize
@@ -50,7 +90,33 @@ sealed class DeliveryStatus : Parcelable {
 }
 
 /**
- * BitchatMessage - 100% compatible with iOS version
+ * BitchatMessage — The main data class representing a single chat message.
+ *
+ * This is the heart of the messaging system. Every message you see in the
+ * chat screen is one of these objects.
+ *
+ * IMPORTANT: This format is 100% compatible with iOS. Both platforms use
+ * identical binary encoding, so Android and iOS devices can exchange messages
+ * directly over BLE mesh or Nostr relays.
+ *
+ * FIELDS EXPLAINED:
+ * @param id             Unique message identifier (UUID). Used for deduplication.
+ * @param sender         Human-readable name of who sent the message (e.g., "Alice").
+ * @param content        The actual message text (e.g., "Hello!").
+ * @param type           Message type: text, audio, image, or file.
+ * @param timestamp      When the message was created.
+ * @param isRelay        true if this message was relayed through another peer
+ *                       (not received directly from the sender).
+ * @param originalSender If relayed, the original sender's name before relaying.
+ * @param isPrivate      true if this is an end-to-end encrypted private message.
+ * @param recipientNickname The intended recipient's name (for private messages).
+ * @param senderPeerID   The cryptographic peer ID of the sender.
+ * @param mentions       List of nicknames mentioned in this message (for @mentions).
+ * @param channel        Geohash channel this message belongs to (for location chat).
+ * @param encryptedContent The raw encrypted bytes (if message is encrypted).
+ * @param isEncrypted    true if content is encrypted and needs decryption.
+ * @param deliveryStatus Current delivery state (Sending/Sent/Delivered/Read/Failed).
+ * @param powDifficulty  Proof-of-Work difficulty (anti-spam measure for Nostr).
  */
 @Parcelize
 data class BitchatMessage(
@@ -73,7 +139,29 @@ data class BitchatMessage(
 ) : Parcelable {
 
     /**
-     * Convert message to binary payload format - exactly same as iOS version
+     * Convert this message into a compact byte array for BLE transmission.
+     *
+     * WHY BINARY?
+     * BLE (Bluetooth Low Energy) can only send very small packets at a time
+     * (~512 bytes). JSON would waste too much space with field names and
+     * formatting. This binary format packs the same data into far fewer bytes.
+     *
+     * BINARY FORMAT (reading left to right):
+     * ┌───────────┬───────────┬──────────┬──────────┬──────────────┐
+     * │ Flags (1B)│Timestamp  │ ID (var) │ Sender   │ Content      │
+     * │           │ (8 bytes) │          │ (var)    │ (var)        │
+     * └───────────┴───────────┴──────────┴──────────┴──────────────┘
+     * Followed by optional fields based on which flags are set.
+     *
+     * FLAGS BYTE (each bit enables an optional field):
+     *   bit 0 (0x01): isRelay         — message was relayed by another peer
+     *   bit 1 (0x02): isPrivate       — this is an encrypted private message
+     *   bit 2 (0x04): hasOriginalSender — includes the original sender name
+     *   bit 3 (0x08): hasRecipient     — includes the recipient's nickname
+     *   bit 4 (0x10): hasSenderPeerID  — includes the cryptographic peer ID
+     *   bit 5 (0x20): hasMentions      — includes @mention list
+     *   bit 6 (0x40): hasChannel       — includes geohash channel tag
+     *   bit 7 (0x80): isEncrypted      — content bytes are ciphertext
      */
     fun toBinaryPayload(): ByteArray? {
         try {

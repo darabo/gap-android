@@ -65,6 +65,14 @@ object OkHttpProvider {
         if (socks != null) {
             val proxy = Proxy(Proxy.Type.SOCKS, socks)
             builder.proxy(proxy)
+        } else {
+            // If Tor is not active, check if Slipstream is running standalone.
+            // This provides censorship bypass even without the Tor anonymity layer.
+            val slipstreamProxy = SlipstreamManager.getInstance().currentProxyAddress()
+            if (slipstreamProxy != null) {
+                val proxy = Proxy(Proxy.Type.SOCKS, slipstreamProxy)
+                builder.proxy(proxy)
+            }
         }
         return builder
     }

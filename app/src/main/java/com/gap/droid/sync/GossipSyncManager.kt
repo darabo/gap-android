@@ -9,6 +9,31 @@ import com.gapmesh.droid.protocol.SpecialRecipients
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 
+// ============================================================================
+// GossipSyncManager.kt — "Gossip Protocol" for Catching Up on Missed Messages
+// ============================================================================
+//
+// WHAT THIS FILE DOES:
+// When a phone joins the mesh late (or was asleep), it needs to catch up on
+// messages it missed. This manager implements a "gossip protocol":
+//
+//   1. Every 30 seconds, ask a neighbor: "Here's what I've already seen" (GCS filter)
+//   2. The neighbor checks: "Ah, you're missing packets X, Y, Z" and sends them
+//   3. Now we're synced!
+//
+// GCS (Golomb-Coded Set) is a compact data structure (like a Bloom filter)
+// that summarizes all the packet IDs we've seen. It's tiny enough to send
+// over BLE without wasting bandwidth.
+//
+// WITHOUT GOSSIP SYNC:
+// If Alice sends a message while Bob is out of range, and then comes in range
+// later, Bob would never receive Alice's message. Gossip sync fixes this.
+//
+// WHAT GETS SYNCED:
+// - ANNOUNCE packets (peer presence)
+// - Broadcast MESSAGE packets (public chat messages)
+// - NOT private messages (those use Nostr for async delivery)
+//
 /**
  * Gossip-based synchronization manager using on-demand GCS filters.
  * Tracks seen public packets (ANNOUNCE, broadcast MESSAGE) and periodically requests sync

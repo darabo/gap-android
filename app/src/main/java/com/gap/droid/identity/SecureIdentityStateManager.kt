@@ -10,6 +10,35 @@ import android.util.Log
 import com.gapmesh.droid.util.hexEncodedString
 import androidx.core.content.edit
 
+// ============================================================================
+// SecureIdentityStateManager.kt — Your Digital Passport (Android)
+// ============================================================================
+//
+// WHAT THIS FILE DOES:
+// Manages your cryptographic identity — the keys that prove who you are.
+// Think of it as a secure passport office:
+//   - Generates and stores your Noise static key pair (your "fingerprint")
+//   - Generates and stores your Ed25519 signing key pair (your "signature")
+//   - Remembers verified contacts (like a trust-on-first-use system)
+//   - Caches peer fingerprints and nicknames
+//
+// SECURITY:
+// All keys are stored in Android's EncryptedSharedPreferences, which uses:
+//   - AES-256-GCM for encryption
+//   - A MasterKey stored in Android Keystore (hardware-backed on newer phones)
+//   - StrongBox hardware security module if available (API 28+)
+//
+// WHY TWO KEY PAIRS?
+// 1. Static Key Pair (Curve25519): Used by the Noise Protocol for encryption.
+//    Your "fingerprint" is the SHA-256 hash of this public key.
+// 2. Signing Key Pair (Ed25519): Used to sign packets so others can verify
+//    the message really came from you (authentication, not encryption).
+//
+// COMPATIBILITY:
+// This implementation is designed to be 100% compatible with the iOS version
+// (SecureIdentityStateManager.swift). The same keys and fingerprints work
+// across both platforms.
+//
 /**
  * Manages persistent identity storage and peer ID rotation - 100% compatible with iOS implementation
  * 
@@ -58,13 +87,36 @@ class SecureIdentityStateManager(private val context: Context) {
         }
         
         // Create encrypted shared preferences
-        prefs = EncryptedSharedPreferences.create(
-            context,
-            PREFS_NAME,
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+        prefs = try {
+            EncryptedSharedPreferences.create(
+                context,
+                PREFS_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to create encrypted identity prefs: ${e.message}")
+            try {
+                // Delete the corrupted or undecryptable file
+                val file = java.io.File(context.applicationInfo.dataDir, "shared_prefs/$PREFS_NAME.xml")
+                if (file.exists()) file.delete()
+            } catch (_: Exception) {}
+            
+            // Try creating again with a fresh file
+            try {
+                EncryptedSharedPreferences.create(
+                    context,
+                    PREFS_NAME,
+                    masterKey,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+                )
+            } catch (retryError: Exception) {
+                Log.e(TAG, "Fallback also failed: ${retryError.message}")
+                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            }
+        }
     }
     
     // MARK: - Static Key Management

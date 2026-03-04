@@ -15,12 +15,46 @@ import com.gapmesh.droid.protocol.SpecialRecipients
 import com.gapmesh.droid.model.RequestSyncPacket
 import com.gapmesh.droid.sync.GossipSyncManager
 import com.gapmesh.droid.util.toHexString
+import com.gapmesh.droid.nostr.PeerRelayStore
 import com.gapmesh.droid.services.VerificationService
 import kotlinx.coroutines.*
 import java.util.*
 import kotlin.math.sign
 import kotlin.random.Random
 
+// ============================================================================
+// BluetoothMeshService.kt — The Heart of the BLE Mesh Network
+// ============================================================================
+//
+// WHAT THIS FILE DOES:
+// This is the "boss" that coordinates ALL Bluetooth mesh communication.
+// It doesn't do everything itself — instead, it delegates work to specialized
+// "manager" objects (like a CEO delegating to department heads).
+//
+// ANALOGY — A Post Office:
+//   BluetoothMeshService  = The Post Office Manager
+//   ConnectionManager     = The Mail Trucks (handles physical BLE connections)
+//   PeerManager           = The Address Book (keeps track of known contacts)
+//   MessageHandler        = The Mail Sorter (decides what to do with each packet)
+//   SecurityManager       = The Encryption Machine (encrypts/decrypts messages)
+//   FragmentManager       = The Puzzle Maker (splits big messages into tiny BLE packets)
+//   StoreForwardManager   = The "Held Mail" Shelf (caches messages for offline peers)
+//   GossipSyncManager     = The "What's New?" Desk (syncs missed messages between peers)
+//
+// HOW MESSAGES FLOW:
+//   1. User types "Hello!" → ChatViewModel calls sendMessage()
+//   2. The message is wrapped in a BitchatPacket (binary envelope)
+//   3. If needed, the packet is split into fragments (for large messages)
+//   4. SecurityManager encrypts private messages with Noise Protocol
+//   5. ConnectionManager broadcasts the packet over all BLE connections
+//   6. When a reply arrives, MessageHandler processes it and notifies ChatViewModel
+//
+// BLE MESH BASICS:
+//   - Each phone acts as BOTH a client (scanning) and a server (advertising)
+//   - Any phone can relay packets for other phones, extending range
+//   - TTL (Time To Live) prevents packets from bouncing forever
+//   - Packets are signed with Ed25519 to prevent forgery
+//
 /**
  * Bluetooth mesh service - REFACTORED to use component-based architecture
  * 100% compatible with iOS version and maintains exact same UUIDs, packet format, and protocol logic
@@ -31,7 +65,7 @@ import kotlin.random.Random
  * 
  * - **ConnectionManager:** Handles the raw Bluetooth GAP/GATT connections (The "Phone Call").
  * - **PeerManager:** Keeps a list of who is online (The "Address Book").
- * - **MessageHandler:**Decides what to do with incoming data (The "Mail Sorter").
+ * - **MessageHandler:** Decides what to do with incoming data (The "Mail Sorter").
  * - **SecurityManager:** Encrypts/Decrypts messages so only the right person reads them (The "Lock").
  * - **FragmentManager:** Breaks large messages (images) into tiny packets and reassembles them (The "Puzzle Solver").
  */
@@ -40,21 +74,44 @@ class BluetoothMeshService(private val context: Context) {
     
     companion object {
         private const val TAG = "BluetoothMeshService"
+        // MAX_TTL: Maximum number of "hops" a packet can take through the mesh.
+        // Each time a device relays a packet, it decrements TTL by 1.
+        // When TTL reaches 0, the packet is no longer forwarded.
+        // This prevents messages from bouncing around forever.
         private val MAX_TTL: UByte = com.gapmesh.droid.util.AppConstants.MESSAGE_TTL_HOPS
     }
     
-    // Core components - each handling specific responsibilities
+    // ── Core Components ─────────────────────────────────────────────────
+    // Each component handles one specific responsibility:
+
+    // EncryptionService: Manages Noise Protocol keys and cryptographic operations.
+    // "Noise Protocol" is a framework for building secure communication channels,
+    // similar to what Signal uses. It provides end-to-end encryption.
     private val encryptionService = EncryptionService(context)
     fun getEncryptionService(): EncryptionService = encryptionService
 
-    // My peer identification - derived from persisted Noise identity fingerprint (first 16 hex chars)
+    // myPeerID: Our unique identity on the mesh. Derived from our Noise Protocol
+    // fingerprint (the first 16 hex characters of our public key's SHA-256 hash).
+    // Example: "a1b2c3d4e5f6a7b8"
     val myPeerID: String = encryptionService.getIdentityFingerprint().take(16)
+
+    // PeerManager: Maintains the list of all known/connected peers (the "address book")
     private val peerManager = PeerManager()
+    // FragmentManager: Handles splitting large messages into BLE-sized chunks
+    // and reassembling them on the receiving end
     private val fragmentManager = FragmentManager()
+    // SecurityManager: Handles Noise Protocol handshakes and encryption
     private val securityManager = SecurityManager(encryptionService, myPeerID)
+    // StoreForwardManager: Holds messages for offline peers and delivers them
+    // when the peer comes back online (like a "mailbox")
     private val storeForwardManager = StoreForwardManager()
+    // MessageHandler: The main packet dispatcher — routes incoming data to the
+    // correct handler based on packet type
     private val messageHandler = MessageHandler(myPeerID, context.applicationContext)
-    internal val connectionManager = BluetoothConnectionManager(context, myPeerID, fragmentManager) // Made internal for access
+    // ConnectionManager: Manages low-level Bluetooth GATT connections, scanning,
+    // advertising, and raw data transfer
+    internal val connectionManager = BluetoothConnectionManager(context, myPeerID, fragmentManager)
+    // PacketProcessor: Deduplicates packets and applies TTL-based relay decisions
     private val packetProcessor = PacketProcessor(myPeerID)
     private lateinit var gossipSyncManager: GossipSyncManager
     // Service-level notification manager for background (no-UI) DMs
@@ -1023,7 +1080,12 @@ class BluetoothMeshService(private val context: Context) {
             }
             
             // Create iOS-compatible IdentityAnnouncement with TLV encoding
-            val announcement = IdentityAnnouncement(nickname, staticKey, signingKey)
+            val announcement = IdentityAnnouncement(
+                nickname = nickname,
+                noisePublicKey = staticKey,
+                signingPublicKey = signingKey,
+                knownRelays = PeerRelayStore.getTopRelays(5)
+            )
             var tlvPayload = announcement.encode()
             if (tlvPayload == null) {
                 Log.e(TAG, "Failed to encode announcement as TLV")
@@ -1087,7 +1149,12 @@ class BluetoothMeshService(private val context: Context) {
         }
         
         // Create iOS-compatible IdentityAnnouncement with TLV encoding
-        val announcement = IdentityAnnouncement(nickname, staticKey, signingKey)
+        val announcement = IdentityAnnouncement(
+            nickname = nickname,
+            noisePublicKey = staticKey,
+            signingPublicKey = signingKey,
+            knownRelays = PeerRelayStore.getTopRelays(5)
+        )
         var tlvPayload = announcement.encode()
         if (tlvPayload == null) {
             Log.e(TAG, "Failed to encode peer announcement as TLV")
