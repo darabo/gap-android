@@ -1,20 +1,22 @@
-# Bitchat Bluetooth File Transfer: Images, Audio, and Generic Files (with Interactive Features)
+# Gap Mesh Bluetooth File Transfer: Images, Audio, and Generic Files (with Interactive Features)
 
-This document is the exhaustive implementation guide for Bitchat’s Bluetooth file transfer protocol for voice notes (audio) and images, including interactive features like waveform seeking. It describes the on‑wire packet format (both v1 and v2), fragmentation/progress/cancellation, sender/receiver behaviors, and the complete UX we implemented in the Android client so that other implementers can interoperate and match the user experience precisely.
+This document is the exhaustive implementation guide for Gap Mesh's Bluetooth file transfer protocol for voice notes (audio) and images, including interactive features like waveform seeking. It describes the on‑wire packet format (both v1 and v2), fragmentation/progress/cancellation, sender/receiver behaviors, and the complete UX we implemented in the Android client so that other implementers can interoperate and match the user experience precisely.
 
 **Protocol Versions:**
+
 - **v1**: Original protocol with 2‑byte payload length (≤ 64 KiB files)
 - **v2**: Extended protocol with 4-byte payload length (≤ 4 GiB files) - use for all file transfers
 - File transfer packets use v2 format by default for optimal compatibility
 
 **Interactive Features:**
+
 - **Waveform Seeking**: Tap anywhere on audio waveforms to jump to that playback position
 - **Large File Support**: v2 protocol enables multi-GiB file transfers through fragmentation
 - **Unified Experience**: Identical UX between platforms with enhanced user control
 
 The guide is organized into:
 
-- Protocol overview (BitchatPacket + File Transfer payload)
+- Protocol overview (Gap MeshPacket + File Transfer payload)
 - Fragmentation, progress reporting, and cancellation
 - Receive path, validation, and persistence
 - Sender path (audio + images)
@@ -22,14 +24,13 @@ The guide is organized into:
 - UI/UX behavior (recording, sending, playback, image rendering)
 - File inventory (source files and their roles)
 
-
 ---
 
 ## 1) Protocol Overview
 
-Bitchat BLE transport carries application messages inside the common `BitchatPacket` envelope. File transfer reuses the same envelope as public and private messages, with a distinct `type` and a TLV‑encoded payload.
+Gap Mesh BLE transport carries application messages inside the common `Gap MeshPacket` envelope. File transfer reuses the same envelope as public and private messages, with a distinct `type` and a TLV‑encoded payload.
 
-### 1.1 BitchatPacket envelope
+### 1.1 Gap MeshPacket envelope
 
 Fields (subset relevant to file transfer):
 
@@ -44,9 +45,9 @@ Fields (subset relevant to file transfer):
 
 Envelope creation and broadcast paths are implemented in:
 
-- `app/src/main/java/com/bitchat/android/mesh/BluetoothMeshService.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/mesh/BluetoothMeshService.kt)
-- `app/src/main/java/com/bitchat/android/mesh/BluetoothConnectionManager.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/mesh/BluetoothConnectionManager.kt)
-- `app/src/main/java/com/bitchat/android/mesh/PacketProcessor.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/mesh/PacketProcessor.kt)
+- `app/src/main/java/com/Gap Mesh/android/mesh/BluetoothMeshService.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/mesh/BluetoothMeshService.kt)
+- `app/src/main/java/com/Gap Mesh/android/mesh/BluetoothConnectionManager.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/mesh/BluetoothConnectionManager.kt)
+- `app/src/main/java/com/Gap Mesh/android/mesh/PacketProcessor.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/mesh/PacketProcessor.kt)
 
 Private sends are additionally encrypted at the higher layer (Noise) for text messages, but file transfers use the `FILE_TRANSFER` message type in the clear at the envelope level with content carried inside a TLV. See code for any deployment‑specific enforcement.
 
@@ -55,6 +56,7 @@ Private sends are additionally encrypted at the higher layer (Noise) for text me
 #### v2 Header Format Changes
 
 **v1 Format (original):**
+
 ```
 Header (13 bytes):
 Version: 1 byte
@@ -66,6 +68,7 @@ PayloadLength: 2 bytes (big-endian, max 64 KiB)
 ```
 
 **v2 Format (extended):**
+
 ```
 Header (15 bytes):
 Version: 1 byte (set to 2 for v2 packets)
@@ -82,20 +85,22 @@ PayloadLength: 4 bytes (big-endian, max ~4 GiB)
 - **Implementation**: See `BinaryProtocol.kt` with `getHeaderSize(version)` logic.
 
 #### Use Cases for v2
+
 - **Large Audio Files**: Professional recordings, podcasts, or music samples.
 - **High-Resolution Images**: Full-resolution photos from modern smartphones.
 - **Future File Types**: PDFs, documents, archives, or other large media.
 
 #### Interoperability Requirements
+
 - Clients receiving v2 packets must decode 4-byte `PayloadLength` fields.
 - Clients sending file transfers should preferentially use v2 format.
 - Fragmentation still applies: large files are split into fragments that fit within BLE MTU constraints (~128 KiB per fragment).
 
-### 1.3 File Transfer TLV payload (BitchatFilePacket)
+### 1.3 File Transfer TLV payload (Gap MeshFilePacket)
 
 The file payload is a TLV structure with mixed length field sizes to support large contents efficiently.
 
-- Defined in `app/src/main/java/com/bitchat/android/model/BitchatFilePacket.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/model/BitchatFilePacket.kt)
+- Defined in `app/src/main/java/com/Gap Mesh/android/model/Gap MeshFilePacket.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/model/Gap MeshFilePacket.kt)
 
 Canonical TLVs (v2 spec):
 
@@ -129,7 +134,6 @@ Legacy Compatibility (optional, for mixed‑version meshes):
 
 - FILE_SIZE (0x02): Some legacy senders used 8‑byte UInt64. Decoders MAY accept `len=8` and clamp to 32‑bit if needed.
 - CONTENT (0x04): Legacy payloads might have used a 2‑byte TLV length with multiple CONTENT chunks. Decoders MAY support concatenating multiple CONTENT TLVs with 2‑byte lengths if encountered.
-
 
 ---
 
@@ -170,11 +174,10 @@ Transfers are cancellable mid‑flight:
 
 Implementation files:
 
-- `app/src/main/java/com/bitchat/android/mesh/BluetoothPacketBroadcaster.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/mesh/BluetoothPacketBroadcaster.kt)
-- `app/src/main/java/com/bitchat/android/mesh/BluetoothConnectionManager.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/mesh/BluetoothConnectionManager.kt)
-- `app/src/main/java/com/bitchat/android/mesh/BluetoothMeshService.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/mesh/BluetoothMeshService.kt)
-- `app/src/main/java/com/bitchat/android/ui/ChatViewModel.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/ChatViewModel.kt)
-
+- `app/src/main/java/com/Gap Mesh/android/mesh/BluetoothPacketBroadcaster.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/mesh/BluetoothPacketBroadcaster.kt)
+- `app/src/main/java/com/Gap Mesh/android/mesh/BluetoothConnectionManager.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/mesh/BluetoothConnectionManager.kt)
+- `app/src/main/java/com/Gap Mesh/android/mesh/BluetoothMeshService.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/mesh/BluetoothMeshService.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/ChatViewModel.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/ChatViewModel.kt)
 
 ---
 
@@ -182,7 +185,7 @@ Implementation files:
 
 Receiver dispatch is in `MessageHandler`:
 
-- For both broadcast and private paths we try `BitchatFilePacket.decode(payload)`. If it decodes:
+- For both broadcast and private paths we try `Gap MeshFilePacket.decode(payload)`. If it decodes:
   - The file is persisted under app files with type‑specific subfolders:
     - Audio: `files/voicenotes/incoming/`
     - Image: `files/images/incoming/`
@@ -200,8 +203,7 @@ Receiver dispatch is in `MessageHandler`:
 
 Files:
 
-- `app/src/main/java/com/bitchat/android/mesh/MessageHandler.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/mesh/MessageHandler.kt)
-
+- `app/src/main/java/com/Gap Mesh/android/mesh/MessageHandler.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/mesh/MessageHandler.kt)
 
 ---
 
@@ -209,18 +211,18 @@ Files:
 
 ### 4.1 Audio (Voice Notes)
 
-1) Capture
+1. Capture
    - Hold‑to‑record mic button starts `MediaRecorder` with AAC in MP4 (`audio/mp4`).
    - Sample rate: 44100 Hz, channels: mono, bitrate: ~32 kbps (to reduce payload size for BLE).
    - On release, we pad 500 ms before stopping to avoid clipping endings.
    - Files saved under `files/voicenotes/outgoing/voice_YYYYMMDD_HHMMSS.m4a`.
 
-2) Local echo
-   - We create a `BitchatMessage` with content `"[voice] <path>"` and add to the appropriate timeline (public/channel/private).
+2. Local echo
+   - We create a `Gap MeshMessage` with content `"[voice] <path>"` and add to the appropriate timeline (public/channel/private).
    - For private: `messageManager.addPrivateMessage(peerID, message)`. For public/channel: `messageManager.addMessage(message)` or add to channel.
 
-3) Packet creation
-   - Build a `BitchatFilePacket`:
+3. Packet creation
+   - Build a `Gap MeshFilePacket`:
      - `fileName`: basename (e.g., `voice_… .m4a`)
      - `fileSize`: file length
      - `mimeType`: `audio/mp4`
@@ -228,45 +230,44 @@ Files:
    - Encode TLV; compute `transferId = sha256Hex(payload)`.
    - Map `transferId → messageId` for UI progress.
 
-4) Send
+4. Send
    - Public: `BluetoothMeshService.sendFileBroadcast(filePacket)`.
    - Private: `BluetoothMeshService.sendFilePrivate(peerID, filePacket)`.
    - Broadcaster handles fragmentation and progress emission.
 
-5) Waveform
+5. Waveform
    - We extract a 120‑bin waveform from the recorded file (the same extractor used for the receiver) and cache by file path, so sender and receiver waveforms are identical.
 
 Core files:
 
-- `app/src/main/java/com/bitchat/android/ui/ChatViewModel.kt` (sendVoiceNote) (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/ChatViewModel.kt)
-- `app/src/main/java/com/bitchat/android/model/BitchatFilePacket.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/model/BitchatFilePacket.kt)
-- `app/src/main/java/com/bitchat/android/mesh/BluetoothMeshService.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/mesh/BluetoothMeshService.kt)
-- `app/src/main/java/com/bitchat/android/features/voice/VoiceRecorder.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/features/voice/VoiceRecorder.kt)
-- `app/src/main/java/com/bitchat/android/features/voice/Waveform.kt` (cache + extractor) (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/features/voice/Waveform.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/ChatViewModel.kt` (sendVoiceNote) (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/ChatViewModel.kt)
+- `app/src/main/java/com/Gap Mesh/android/model/Gap MeshFilePacket.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/model/Gap MeshFilePacket.kt)
+- `app/src/main/java/com/Gap Mesh/android/mesh/BluetoothMeshService.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/mesh/BluetoothMeshService.kt)
+- `app/src/main/java/com/Gap Mesh/android/features/voice/VoiceRecorder.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/features/voice/VoiceRecorder.kt)
+- `app/src/main/java/com/Gap Mesh/android/features/voice/Waveform.kt` (cache + extractor) (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/features/voice/Waveform.kt)
 
 ### 4.2 Images
 
-1) Selection and processing
+1. Selection and processing
    - System picker (Storage Access Framework) with `GetContent()` (`image/*`). No storage permission required.
    - Selected image is downscaled so longest edge is 512 px; saved as JPEG (85% quality) under `files/images/outgoing/img_<timestamp>.jpg`.
    - Helper: `ImageUtils.downscaleAndSaveToAppFiles(context, uri, maxDim=512)`.
 
-2) Local echo
+2. Local echo
    - Insert a message with `"[image] <path>"` in the current context (public/channel/private).
 
-3) Packet creation
-   - Build `BitchatFilePacket` with mime `image/jpeg` and file content.
+3. Packet creation
+   - Build `Gap MeshFilePacket` with mime `image/jpeg` and file content.
    - Encode TLV + compute `transferId` and map to `messageId`.
 
-4) Send
+4. Send
    - Same paths as audio (broadcast/private), including fragmentation and progress emission.
 
 Core files:
 
-- `app/src/main/java/com/bitchat/android/features/media/ImageUtils.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/features/media/ImageUtils.kt)
-- `app/src/main/java/com/bitchat/android/ui/ChatViewModel.kt` (sendImageNote) (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/ChatViewModel.kt)
-- `app/src/main/java/com/bitchat/android/mesh/BluetoothMeshService.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/mesh/BluetoothMeshService.kt)
-
+- `app/src/main/java/com/Gap Mesh/android/features/media/ImageUtils.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/features/media/ImageUtils.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/ChatViewModel.kt` (sendImageNote) (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/ChatViewModel.kt)
+- `app/src/main/java/com/Gap Mesh/android/mesh/BluetoothMeshService.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/mesh/BluetoothMeshService.kt)
 
 ---
 
@@ -282,13 +283,13 @@ This section specifies exactly what users see and how inputs behave, so alternat
 
 Files:
 
-- `app/src/main/java/com/bitchat/android/ui/InputComponents.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/InputComponents.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/InputComponents.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/InputComponents.kt)
 
 ### 5.2 Recording UX
 
 - Hold the mic button to start recording. Recording runs until release, then we pad 500 ms and stop.
 - While recording, a dense, real‑time scrolling waveform overlays the input showing live audio; a timer is shown to the right.
-  - Component: `RealtimeScrollingWaveform` (dense bars, ~240 columns, ~20 FPS) in `app/src/main/java/com/bitchat/android/ui/media/RealtimeScrollingWaveform.kt`.
+  - Component: `RealtimeScrollingWaveform` (dense bars, ~240 columns, ~20 FPS) in `app/src/main/java/com/Gap Mesh/android/ui/media/RealtimeScrollingWaveform.kt`.
   - The keyboard stays visible; the caret is hidden.
 - On release, we immediately show a local echo message for the voice note and start sending.
 
@@ -306,9 +307,9 @@ Files:
 
 Files:
 
-- `app/src/main/java/com/bitchat/android/ui/MessageComponents.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/MessageComponents.kt)
-- `app/src/main/java/com/bitchat/android/ui/media/WaveformViews.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/media/WaveformViews.kt)
-- `app/src/main/java/com/bitchat/android/features/voice/Waveform.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/features/voice/Waveform.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/MessageComponents.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/MessageComponents.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/media/WaveformViews.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/media/WaveformViews.kt)
+- `app/src/main/java/com/Gap Mesh/android/features/voice/Waveform.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/features/voice/Waveform.kt)
 
 ### 5.4 Image sending UX
 
@@ -321,10 +322,10 @@ Files:
 
 Files:
 
-- `app/src/main/java/com/bitchat/android/ui/media/ImagePickerButton.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/media/ImagePickerButton.kt)
-- `app/src/main/java/com/bitchat/android/features/media/ImageUtils.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/features/media/ImageUtils.kt)
-- `app/src/main/java/com/bitchat/android/ui/media/BlockRevealImage.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/media/BlockRevealImage.kt)
-- `app/src/main/java/com/bitchat/android/ui/MessageComponents.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/MessageComponents.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/media/ImagePickerButton.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/media/ImagePickerButton.kt)
+- `app/src/main/java/com/Gap Mesh/android/features/media/ImageUtils.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/features/media/ImageUtils.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/media/BlockRevealImage.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/media/BlockRevealImage.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/MessageComponents.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/MessageComponents.kt)
 
 ### 5.5 Image receiving UX
 
@@ -333,8 +334,7 @@ Files:
 
 Files:
 
-- `app/src/main/java/com/bitchat/android/ui/media/FullScreenImageViewer.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/media/FullScreenImageViewer.kt)
-
+- `app/src/main/java/com/Gap Mesh/android/ui/media/FullScreenImageViewer.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/media/FullScreenImageViewer.kt)
 
 ---
 
@@ -350,6 +350,7 @@ Files:
 - No haptic feedback or visual indicator; the progress bar update serves as immediate feedback.
 
 Waveform Canvas Implementation:
+
 - `WaveformCanvas` uses `pointerInput` with `detectTapGestures` to capture tap events.
 - Tap position is converted to a fraction: `position.x / size.width.toFloat()`.
 - Clamped to 0.0-1.0 range for safety.
@@ -357,13 +358,15 @@ Waveform Canvas Implementation:
 - Only enabled when `onSeek` is provided (disabled for sending in progress).
 
 VoiceNotePlayer Seeking:
+
 - Accepts position fraction (0.0-1.0) and converts to milliseconds: `seekMs = (position * durationMs).toInt()`.
 - Calls `MediaPlayer.seekTo(seekMs)` to jump to the exact position.
 - Updates progress state immediately for UI responsiveness even before playback reaches the new position.
 
 Files:
-- `app/src/main/java/com/bitchat/android/ui/MessageComponents.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/MessageComponents.kt) — VoiceNotePlayer with seekTo function
-- `app/src/main/java/com/bitchat/android/ui/media/WaveformViews.kt` (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/media/WaveformViews.kt) — Interactive WaveformCanvas with tap handling
+
+- `app/src/main/java/com/Gap Mesh/android/ui/MessageComponents.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/MessageComponents.kt) — VoiceNotePlayer with seekTo function
+- `app/src/main/java/com/Gap Mesh/android/ui/media/WaveformViews.kt` (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/media/WaveformViews.kt) — Interactive WaveformCanvas with tap handling
 
 ---
 
@@ -376,57 +379,55 @@ Files:
 - Private vs public: both use the same file TLV; only the envelope `recipientID` differs. Private may have signatures; code shows a signing step consistent with iOS behavior prior to broadcast to ensure integrity.
 - BLE timing: there is a 200 ms inter‑fragment delay for stability. Adjust as needed for your radio stack while maintaining compatibility.
 
-
 ---
 
 ## 7) File Inventory (Added/Changed)
 
 Core protocol and transport:
 
-- `app/src/main/java/com/bitchat/android/model/BitchatFilePacket.kt` — TLV payload model + encode/decode. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/model/BitchatFilePacket.kt)
-- `app/src/main/java/com/bitchat/android/mesh/BluetoothMeshService.kt` — packet creation and broadcast for file messages. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/mesh/BluetoothMeshService.kt)
-- `app/src/main/java/com/bitchat/android/mesh/BluetoothPacketBroadcaster.kt` — fragmentation, progress, cancellation via transfer jobs. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/mesh/BluetoothPacketBroadcaster.kt)
-- `app/src/main/java/com/bitchat/android/mesh/TransferProgressManager.kt` — progress events bus. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/mesh/TransferProgressManager.kt)
-- `app/src/main/java/com/bitchat/android/mesh/MessageHandler.kt` — receive path: decode, persist to files, create chat messages. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/mesh/MessageHandler.kt)
+- `app/src/main/java/com/Gap Mesh/android/model/Gap MeshFilePacket.kt` — TLV payload model + encode/decode. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/model/Gap MeshFilePacket.kt)
+- `app/src/main/java/com/Gap Mesh/android/mesh/BluetoothMeshService.kt` — packet creation and broadcast for file messages. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/mesh/BluetoothMeshService.kt)
+- `app/src/main/java/com/Gap Mesh/android/mesh/BluetoothPacketBroadcaster.kt` — fragmentation, progress, cancellation via transfer jobs. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/mesh/BluetoothPacketBroadcaster.kt)
+- `app/src/main/java/com/Gap Mesh/android/mesh/TransferProgressManager.kt` — progress events bus. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/mesh/TransferProgressManager.kt)
+- `app/src/main/java/com/Gap Mesh/android/mesh/MessageHandler.kt` — receive path: decode, persist to files, create chat messages. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/mesh/MessageHandler.kt)
 
 Audio capture and waveform:
 
-- `app/src/main/java/com/bitchat/android/features/voice/VoiceRecorder.kt` — MediaRecorder wrapper. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/features/voice/VoiceRecorder.kt)
-- `app/src/main/java/com/bitchat/android/features/voice/Waveform.kt` — cache + extractor + resampler. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/features/voice/Waveform.kt)
-- `app/src/main/java/com/bitchat/android/ui/media/WaveformViews.kt` — Compose waveform preview components. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/media/WaveformViews.kt)
+- `app/src/main/java/com/Gap Mesh/android/features/voice/VoiceRecorder.kt` — MediaRecorder wrapper. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/features/voice/VoiceRecorder.kt)
+- `app/src/main/java/com/Gap Mesh/android/features/voice/Waveform.kt` — cache + extractor + resampler. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/features/voice/Waveform.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/media/WaveformViews.kt` — Compose waveform preview components. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/media/WaveformViews.kt)
 
 Image pipeline:
 
-- `app/src/main/java/com/bitchat/android/features/media/ImageUtils.kt` — downscale and save to app files. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/features/media/ImageUtils.kt)
-- `app/src/main/java/com/bitchat/android/ui/media/ImagePickerButton.kt` — SAF picker button. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/media/ImagePickerButton.kt)
-- `app/src/main/java/com/bitchat/android/ui/media/BlockRevealImage.kt` — block‑reveal progress renderer (no gaps, dense grid). (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/media/BlockRevealImage.kt)
+- `app/src/main/java/com/Gap Mesh/android/features/media/ImageUtils.kt` — downscale and save to app files. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/features/media/ImageUtils.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/media/ImagePickerButton.kt` — SAF picker button. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/media/ImagePickerButton.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/media/BlockRevealImage.kt` — block‑reveal progress renderer (no gaps, dense grid). (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/media/BlockRevealImage.kt)
 
 Recording overlay:
 
-- `app/src/main/java/com/bitchat/android/ui/media/RealtimeScrollingWaveform.kt` — dense, real‑time scrolling waveform during recording. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/media/RealtimeScrollingWaveform.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/media/RealtimeScrollingWaveform.kt` — dense, real‑time scrolling waveform during recording. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/media/RealtimeScrollingWaveform.kt)
 
 UI composition and view model coordination:
 
-- `app/src/main/java/com/bitchat/android/ui/InputComponents.kt` — input field, overlays (recording), picker button, mic. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/InputComponents.kt)
-- `app/src/main/java/com/bitchat/android/ui/MessageComponents.kt` — message rendering for text/audio/images including progress UIs and cancel overlays. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/MessageComponents.kt)
-- `app/src/main/java/com/bitchat/android/ui/ChatViewModel.kt` — sendVoiceNote/sendImageNote, progress mapping, cancelMediaSend. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/ChatViewModel.kt)
-- `app/src/main/java/com/bitchat/android/ui/MessageManager.kt` — add/remove/update messages across main, private, and channels. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/MessageManager.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/InputComponents.kt` — input field, overlays (recording), picker button, mic. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/InputComponents.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/MessageComponents.kt` — message rendering for text/audio/images including progress UIs and cancel overlays. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/MessageComponents.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/ChatViewModel.kt` — sendVoiceNote/sendImageNote, progress mapping, cancelMediaSend. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/ChatViewModel.kt)
+- `app/src/main/java/com/Gap Mesh/android/ui/MessageManager.kt` — add/remove/update messages across main, private, and channels. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/MessageManager.kt)
 
 Fullscreen image:
 
-- `app/src/main/java/com/bitchat/android/ui/media/FullScreenImageViewer.kt` — fullscreen viewer + save to Downloads. (/Users/cc/git/bitchat-android/app/src/main/java/com/bitchat/android/ui/media/FullScreenImageViewer.kt)
-
+- `app/src/main/java/com/Gap Mesh/android/ui/media/FullScreenImageViewer.kt` — fullscreen viewer + save to Downloads. (/Users/cc/git/Gap Mesh-android/app/src/main/java/com/Gap Mesh/android/ui/media/FullScreenImageViewer.kt)
 
 ---
 
 ## 8) Implementation Checklist for Other Clients
 
 1. **Implement v2 protocol support**: Support both v1 (2-byte payload length) and v2 (4-byte payload length) packet decoding. Use v2 format for file transfer packets to enable large file transfers.
-2. Implement `BitchatFilePacket` TLV exactly as specified:
+2. Implement `Gap MeshFilePacket` TLV exactly as specified:
    - FILE_NAME and MIME_TYPE: `type(1) + len(2) + value`
    - FILE_SIZE: `type(1) + len(2=4) + value(4, UInt32 BE)`
    - CONTENT: `type(1) + len(4) + value`
-3. Embed the TLV into a `BitchatPacket` envelope with `type = FILE_TRANSFER (0x22)` and the correct `recipientID` (broadcast vs private).
+3. Embed the TLV into a `Gap MeshPacket` envelope with `type = FILE_TRANSFER (0x22)` and the correct `recipientID` (broadcast vs private).
 4. Fragment, send, and report progress using a transfer ID derived from `sha256(payload)` so the UI can map progress to a message.
 5. Support cancellation at the fragment sender: stop sending remaining fragments and propagate a cancel to the UI (we remove the message).
 6. On receive, decode TLV, persist to an app directory (separate audio/images/other), and create a chat message with content marker `"[voice] path"`, `"[image] path"`, or `"[file] path"` for local rendering.
