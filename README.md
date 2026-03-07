@@ -1,19 +1,16 @@
 ![qr code](https://raw.githubusercontent.com/darabo/gap-android/refs/heads/main/IMG_6338.jpeg)
 
-## Gap Mesh
+# Gap Mesh
 
-A fork of Bitchat for the needs of Iranians. Includes optimizations and other enhancements. 
+A fork of Bitchat for the needs of Iranians. Includes optimizations and other enhancements.
 
-# bitchat for Android
-
-A secure, decentralized, peer-to-peer messaging app that works over Bluetooth mesh networks. No internet required for mesh chats, no servers, no phone numbers - just pure encrypted communication. Bitchat also supports geohash channels, which use an internet connection to connect you with others in your geographic area.
+Bitchat is a secure, decentralized, peer-to-peer messaging app that works over Bluetooth mesh networks. No internet required for mesh chats, no servers, no phone numbers - just pure encrypted communication. Bitchat also supports geohash channels, which use an internet connection to connect you with others in your geographic area.
 
 This is the **Android port** of the original [Gap Mesh iOS app](https://github.com/darabo/gapmesh-ios), maintaining 100% protocol compatibility for cross-platform communication.
 
 ## Install Gap Mesh
 
-You can download the latest version of Gap Mesh for Android from the [GitHub Releases page (Google Play Store soon)](https://github.com/darabo/gap-android/releases).
-
+You can download the latest version of Gap Mesh for Android from the [GitHub Releases page (Google Play Store soon, iOS Version on App Store)](https://apps.apple.com/us/app/gap-mesh/id6757211522).
 
 **Instructions:**
 
@@ -36,13 +33,13 @@ New to Gap Mesh? Start here:
 
 - **✅ Cross-Platform Compatible**: Full protocol compatibility with iOS bitchat
 - **✅ Decentralized Mesh Network**: Automatic peer discovery and multi-hop message relay over Bluetooth LE
-- **✅ End-to-End Encryption**: X25519 key exchange + AES-256-GCM for private messages
+- **✅ Private Message End-to-End Encryption**: [Noise Protocol](https://noiseprotocol.org) for mesh, NIP-17 for Nostr
 - **✅ Channel-Based Chats**: Topic-based group messaging with optional password protection
 - **✅ Store & Forward**: Messages cached for offline peers and delivered when they reconnect
 - **✅ Privacy First**: No accounts, no phone numbers, no persistent identifiers
 - **✅ IRC-Style Commands**: Familiar `/join`, `/msg`, `/who` style interface
 - **✅ Message Retention**: Optional channel-wide message saving controlled by channel owners
-- **✅ Emergency Wipe**: Triple-tap logo to instantly clear all data
+- **✅ Emergency Wipe**: Crash-resilient triple-tap wipe using StrongBox hardware security
 - **✅ Modern Android UI**: Jetpack Compose with Material Design 3
 - **✅ Dark/Light Themes**: Terminal-inspired aesthetic matching iOS version
 - **✅ Battery Optimization**: Adaptive scanning and power management
@@ -61,8 +58,8 @@ New to Gap Mesh? Start here:
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/permissionlesstech/bitchat-android.git
-   cd bitchat-android
+   git clone https://github.com/darabo/gap-android-main.git
+   cd gap-android-main
    ```
 
 2. **Open in Android Studio:**
@@ -163,7 +160,7 @@ The app requires the following permissions (automatically requested):
 
 ### Encryption
 
-- **Private Messages**: X25519 key exchange + AES-256-GCM encryption
+- **Private Messages**: Noise Protocol for mesh, NIP-17 for Nostr
 - **Channel Messages**: Argon2id password derivation + AES-256-GCM
 - **Digital Signatures**: Ed25519 for message authenticity
 - **Forward Secrecy**: New key pairs generated each session
@@ -324,3 +321,22 @@ Contributions are welcome! Key areas for enhancement:
 - **iOS Compatibility**: Cross-reference with [original iOS repo](https://github.com/jackjackbits/bitchat)
 
 For iOS-specific issues, please refer to the [original iOS bitchat repository](https://github.com/jackjackbits/bitchat).
+
+---
+
+## راهنمای فارسی (Farsi Translation)
+
+گپ مش یک شبکه پیام‌رسان غیرمتمرکز، همتابه‌همتا با معماری دوگانه برای ارتباط امن و بدون اینترنت از طریق بلوتوث و ارتباط جهانی از طریق اینترنت است.
+
+لینک نصب نسخه اندروید در [این صفحه](https://github.com/darabo/gap-android/releases) و لینک نسخه iOS در [اپ استور](https://apps.apple.com/us/app/gap-mesh/id6757211522) قرار دارد.
+
+### ویژگی‌ها
+
+- **ارتباط بدون نیاز به اینترنت**: استفاده از بلوتوث برای ایجاد شبکه مش محلی
+- **کانال‌های موقعیت مکانی**: اتاق‌های گفتگوی جغرافیایی در سراسر جهان
+- **حریم خصوصی اول**: بدون نیاز به حساب کاربری یا شماره تلفن
+- **رمزگذاری سرتاسر**: استفاده از پروتکل Noise برای ارتباط امن
+- **پاکسازی اضطراری**: با سه بار ضربه روی عنوان برنامه، تمام داده‌ها با استفاده از امنیت سخت‌افزاری StrongBox در اندروید فوراً پاک می‌شوند.
+- **تغییر آیکون برنامه**: برای امنیت بیشتر آیکون برنامه را مخفی کنید.
+
+برای جزئیات بیشتر به [راهنمای فارسی](docs/USER_GUIDE_FA.md) مراجعه کنید.
