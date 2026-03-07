@@ -1383,7 +1383,7 @@ fun AboutSheet(
                     item(key = "about_links") {
                         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                             Text(
-                                text = "ABOUT", // Fallback string
+                                text = stringResource(R.string.about_section_title),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = colorScheme.onBackground.copy(alpha = 0.5f),
                                 letterSpacing = 0.5.sp,
@@ -1418,7 +1418,7 @@ fun AboutSheet(
                                             )
                                             Spacer(modifier = Modifier.width(14.dp))
                                             Text(
-                                                text = "Privacy Policy",
+                                                text = stringResource(R.string.about_privacy_policy),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Medium,
                                                 color = colorScheme.onSurface,
@@ -1453,7 +1453,7 @@ fun AboutSheet(
                                         )
                                         Spacer(modifier = Modifier.width(14.dp))
                                         Text(
-                                            text = "Created by",
+                                            text = stringResource(R.string.about_created_by),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Medium,
                                             color = colorScheme.onSurface,
