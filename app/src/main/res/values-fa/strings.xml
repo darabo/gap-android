@@ -162,6 +162,8 @@
     <string name="share_full_app_size_note">اندازه فایل: ~۲۵ مگابایت</string>
     <string name="about_section_title">درباره</string>
     <string name="about_privacy_policy">سیاست حفظ حریم خصوصی</string>
+    <string name="about_contact">پشتیبانی</string>
+
     <string name="about_created_by">ساخته شده توسط</string>
     <string name="close_plain">بستن</string>
     <string name="cancel_lower">لغو</string>
