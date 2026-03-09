@@ -58,6 +58,7 @@ import com.gapmesh.droid.net.ArtiTorManager
 import com.gapmesh.droid.onboarding.LanguagePreferenceManager
 import com.gapmesh.droid.util.ApkShareHelper
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Email
 
 /**
  * Feature row for displaying app capabilities
@@ -1395,10 +1396,57 @@ fun AboutSheet(
                                 shape = RoundedCornerShape(16.dp)
                             ) {
                                 Column {
+                                    // Contact Support
+                                    Surface(
+                                        onClick = { 
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO).apply {
+                                                data = android.net.Uri.parse("mailto:support@gapmesh.com")
+                                                putExtra(android.content.Intent.EXTRA_SUBJECT, "Support - Gap Mesh Android")
+                                            }
+                                            context.startActivity(android.content.Intent.createChooser(intent, context.getString(R.string.about_contact)))
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        color = Color.Transparent
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Email,
+                                                contentDescription = null,
+                                                tint = colorScheme.primary,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(14.dp))
+                                            Text(
+                                                text = stringResource(R.string.about_contact),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Medium,
+                                                color = colorScheme.onSurface,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                contentDescription = null,
+                                                tint = colorScheme.onSurface.copy(alpha = 0.3f),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                    
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 56.dp),
+                                        color = colorScheme.outline.copy(alpha = 0.12f)
+                                    )
+
                                     // Privacy Policy
                                     Surface(
                                         onClick = { 
-                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/darabo/gap-android-main/blob/main/PRIVACY_POLICY.md"))
+                                            val lang = if (com.gapmesh.droid.onboarding.LanguagePreferenceManager.getLanguage(context) == com.gapmesh.droid.onboarding.LanguagePreferenceManager.AppLanguage.FARSI) "?lang=fa" else ""
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://gapmesh.com/privacy$lang"))
                                             context.startActivity(intent)
                                         },
                                         modifier = Modifier.fillMaxWidth(),

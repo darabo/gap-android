@@ -171,6 +171,8 @@
   <string name="share_full_app_size_note">APK size: ~25 MB</string>
   <string name="about_section_title">ABOUT</string>
   <string name="about_privacy_policy">Privacy Policy</string>
+    <string name="about_contact">Contact Support</string>
+
   <string name="about_created_by">Created by</string>
   <string name="close_plain">Close</string>
   <string name="cd_privacy_protected">Privacy Protected</string>
