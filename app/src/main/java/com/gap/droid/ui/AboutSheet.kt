@@ -58,6 +58,7 @@ import com.gapmesh.droid.net.ArtiTorManager
 import com.gapmesh.droid.onboarding.LanguagePreferenceManager
 import com.gapmesh.droid.util.ApkShareHelper
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Email
 
 /**
  * Feature row for displaying app capabilities
