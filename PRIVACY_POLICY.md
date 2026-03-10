@@ -97,15 +97,72 @@ You have complete control:
 - **No Account**: Nothing to delete from servers because there are none
 - **Portability**: Your data never leaves your device unless you export it
 
-## Bluetooth & Location Permissions
+## Permissions We Request
 
-Gap Mesh requires Bluetooth permission to function:
+Gap Mesh requests several Android permissions to provide its features. Here's exactly what each permission is used for:
 
-- Used only for peer-to-peer communication
-- No location data is accessed or stored
-- Bluetooth is not used for tracking
-- The location permission is to join geohash channels in your area and region
-- You can revoke this permission at any time in system settings
+### Bluetooth Permissions
+- **Purpose**: Required for peer-to-peer offline mesh networking
+- **What we access**: Nearby Bluetooth devices running Gap Mesh
+- **What we DON'T do**: Track your location, collect device identifiers, or share this data with anyone
+- **Can you revoke it?**: Yes, but the offline mesh features won't work
+
+### Location Permissions
+- **Purpose**: Required by Android for Bluetooth scanning, and to enable geohash location-based chat rooms
+- **What we access**: Your approximate location (only when using geohash features)
+- **What we DON'T do**: Send your location to servers, track your movements, or create location histories
+- **Background location**: Only used to maintain mesh connections when the app is closed
+- **Can you revoke it?**: Yes, but Bluetooth discovery and geohash features won't work
+
+### Internet & Network State
+- **Purpose**: Connect to Nostr relays for geohash chat (routed through Tor for privacy)
+- **What we access**: Internet connection status
+- **What we DON'T do**: Track your browsing, collect IP addresses (Tor hides them), or monitor your activity
+- **Can you revoke it?**: No (system permission), but geohash features simply won't work offline
+
+### Notifications
+- **Purpose**: Alert you when you receive messages
+- **What we access**: Ability to show notifications
+- **What we DON'T do**: Send marketing notifications or track notification interactions
+- **Can you revoke it?**: Yes, but you won't receive message alerts
+
+### Camera
+- **Purpose**: Scan QR codes for security verification
+- **What we access**: Camera only when you explicitly use the QR scanner
+- **What we DON'T do**: Take photos without permission, record video, or access your photo library
+- **Can you revoke it?**: Yes, but QR verification won't work
+
+### Microphone
+- **Purpose**: Record voice notes to send in chats
+- **What we access**: Microphone only when you press and hold the voice note button
+- **What we DON'T do**: Record in the background, store unencrypted audio, or listen without your explicit action
+- **Can you revoke it?**: Yes, but voice note features won't work
+
+### Storage/Media Access
+- **Purpose**: Share photos, videos, and files in chats; detect screenshots for privacy warnings
+- **What we access**: Only media files you explicitly select to share
+- **What we DON'T do**: Scan your files, upload without permission, or access files you don't select
+- **Can you revoke it?**: Yes, but you can't share media files
+
+### WiFi Aware (Optional)
+- **Purpose**: Enable high-bandwidth mesh networking over WiFi when available
+- **What we access**: WiFi Aware capability (not your WiFi networks or passwords)
+- **What we DON'T do**: Connect to WiFi networks, access WiFi passwords, or track WiFi locations
+- **Can you revoke it?**: Yes, the app works fine without it (falls back to Bluetooth)
+
+### Battery Optimization Exception
+- **Purpose**: Keep the mesh service running reliably in the background
+- **What we access**: Ability to run without aggressive battery restrictions
+- **What we DON'T do**: Drain battery unnecessarily (service is optimized for efficiency)
+- **Can you revoke it?**: Yes, but background connectivity may be unreliable
+
+### Foreground Service
+- **Purpose**: Maintain mesh connections and sync messages while you use other apps
+- **What we access**: Ability to run a persistent background service
+- **What we DON'T do**: Run hidden services or use this for tracking
+- **Can you revoke it?**: No (system permission), but you can stop the service by closing the app
+
+**Important Privacy Note**: Location permission is technically required by Android for Bluetooth LE scanning (a system requirement we cannot bypass), but Gap Mesh never accesses, stores, or transmits your actual location data unless you explicitly use the geohash location-based chat feature. When you do use geohash features, your location is processed locally and never sent to servers—only the geohash identifier (a general area code) is used.
 
 ## Children's Privacy
 
@@ -259,14 +316,72 @@ _آخرین به روز رسانی: مارس 2026_
 - **بدون حساب کاربری**: چیزی برای پاک کردن از سرورها وجود ندارد چون اصلاً سروری وجود ندارد.
 - **قابلیت انتقال**: داده‌های شما هرگز از دستگاهتان خارج نمی‌شوند مگر اینکه آنها را خروجی (Export) بگیرید.
 
-## بلوتوث و مجوزها
+## مجوزهایی که درخواست می‌کنیم
 
-برنامه Gap Mesh برای کارکرد نیازمند مجوز بلوتوث است:
+برنامه Gap Mesh چندین مجوز اندروید را برای ارائه امکانات خود درخواست می‌کند. در اینجا دقیقاً توضیح می‌دهیم که هر مجوز برای چه استفاده می‌شود:
 
-- فقط برای ارتباط نظیر به نظیر استفاده می‌شود.
-- هیچ داده مکانی مورد دسترسی یا ذخیره قرار نمی‌گیرد.
-- از بلوتوث برای ردیابی استفاده نمی‌شود.
-- می‌توانید در هر زمان این مجوز را از تنظیمات سیستم لغو کنید.
+### مجوزهای بلوتوث
+- **هدف**: برای شبکه مش آفلاین نظیر به نظیر لازم است
+- **چه چیزی دسترسی داریم**: دستگاه‌های بلوتوث نزدیک که Gap Mesh را اجرا می‌کنند
+- **چه کاری انجام نمی‌دهیم**: مکان شما را ردیابی نمی‌کنیم، شناسه دستگاه جمع‌آوری نمی‌کنیم، یا این داده‌ها را با کسی به اشتراک نمی‌گذاریم
+- **آیا می‌توانید آن را لغو کنید؟**: بله، اما امکانات مش آفلاین کار نمی‌کنند
+
+### مجوزهای مکان
+- **هدف**: برای اسکن بلوتوث توسط اندروید لازم است، و برای فعال کردن اتاق‌های چت مبتنی بر مکان geohash
+- **چه چیزی دسترسی داریم**: مکان تقریبی شما (فقط هنگام استفاده از امکانات geohash)
+- **چه کاری انجام نمی‌دهیم**: مکان شما را به سرورها ارسال نمی‌کنیم، حرکات شما را ردیابی نمی‌کنیم، یا تاریخچه مکان ایجاد نمی‌کنیم
+- **مکان در پس‌زمینه**: فقط برای حفظ اتصالات مش هنگام بسته شدن برنامه استفاده می‌شود
+- **آیا می‌توانید آن را لغو کنید؟**: بله، اما شناسایی بلوتوث و امکانات geohash کار نمی‌کنند
+
+### اینترنت و وضعیت شبکه
+- **هدف**: اتصال به رله‌های Nostr برای چت geohash (از طریق Tor برای حریم خصوصی)
+- **چه چیزی دسترسی داریم**: وضعیت اتصال اینترنت
+- **چه کاری انجام نمی‌دهیم**: مرور شما را ردیابی نمی‌کنیم، آدرس‌های IP جمع‌آوری نمی‌کنیم (Tor آنها را پنهان می‌کند)، یا فعالیت شما را رصد نمی‌کنیم
+- **آیا می‌توانید آن را لغو کنید؟**: خیر (مجوز سیستمی)، اما امکانات geohash در حالت آفلاین کار نمی‌کنند
+
+### اعلان‌ها
+- **هدف**: هنگام دریافت پیام به شما هشدار می‌دهد
+- **چه چیزی دسترسی داریم**: توانایی نمایش اعلان‌ها
+- **چه کاری انجام نمی‌دهیم**: اعلان‌های بازاریابی ارسال نمی‌کنیم یا تعاملات اعلان را ردیابی نمی‌کنیم
+- **آیا می‌توانید آن را لغو کنید؟**: بله، اما هشدارهای پیام دریافت نمی‌کنید
+
+### دوربین
+- **هدف**: اسکن کدهای QR برای تأیید امنیتی
+- **چه چیزی دسترسی داریم**: دوربین فقط زمانی که شما صریحاً از اسکنر QR استفاده می‌کنید
+- **چه کاری انجام نمی‌دهیم**: بدون اجازه عکس نمی‌گیریم، ویدیو ضبط نمی‌کنیم، یا به کتابخانه عکس شما دسترسی نداریم
+- **آیا می‌توانید آن را لغو کنید؟**: بله، اما تأیید QR کار نمی‌کند
+
+### میکروفون
+- **هدف**: ضبط پیام‌های صوتی برای ارسال در چت‌ها
+- **چه چیزی دسترسی داریم**: میکروفون فقط زمانی که دکمه پیام صوتی را نگه می‌دارید
+- **چه کاری انجام نمی‌دهیم**: در پس‌زمینه ضبط نمی‌کنیم، صدای رمزگذاری نشده ذخیره نمی‌کنیم، یا بدون اقدام صریح شما گوش نمی‌دهیم
+- **آیا می‌توانید آن را لغو کنید؟**: بله، اما امکانات پیام صوتی کار نمی‌کنند
+
+### دسترسی به فضای ذخیره‌سازی/رسانه
+- **هدف**: به اشتراک‌گذاری عکس‌ها، ویدیوها و فایل‌ها در چت‌ها؛ تشخیص اسکرین‌شات برای هشدارهای حریم خصوصی
+- **چه چیزی دسترسی داریم**: فقط فایل‌های رسانه‌ای که صریحاً برای اشتراک‌گذاری انتخاب می‌کنید
+- **چه کاری انجام نمی‌دهیم**: فایل‌های شما را اسکن نمی‌کنیم، بدون اجازه آپلود نمی‌کنیم، یا به فایل‌هایی که انتخاب نمی‌کنید دسترسی نداریم
+- **آیا می‌توانید آن را لغو کنید؟**: بله، اما نمی‌توانید فایل‌های رسانه‌ای را به اشتراک بگذارید
+
+### WiFi Aware (اختیاری)
+- **هدف**: فعال کردن شبکه مش با پهنای باند بالا از طریق WiFi در صورت وجود
+- **چه چیزی دسترسی داریم**: قابلیت WiFi Aware (نه شبکه‌های WiFi یا رمزهای عبور شما)
+- **چه کاری انجام نمی‌دهیم**: به شبکه‌های WiFi متصل نمی‌شویم، رمزهای عبور WiFi را دسترسی نداریم، یا مکان‌های WiFi را ردیابی نمی‌کنیم
+- **آیا می‌توانید آن را لغو کنید؟**: بله، برنامه بدون آن به خوبی کار می‌کند (به بلوتوث بازمی‌گردد)
+
+### استثنای بهینه‌سازی باتری
+- **هدف**: سرویس مش را به طور قابل اعتماد در پس‌زمینه نگه می‌دارد
+- **چه چیزی دسترسی داریم**: توانایی اجرا بدون محدودیت‌های تهاجمی باتری
+- **چه کاری انجام نمی‌دهیم**: باتری را بی‌دلیل تخلیه نمی‌کنیم (سرویس برای کارایی بهینه شده است)
+- **آیا می‌توانید آن را لغو کنید؟**: بله، اما اتصال در پس‌زمینه ممکن است غیرقابل اعتماد باشد
+
+### سرویس پیش‌زمینه
+- **هدف**: حفظ اتصالات مش و همگام‌سازی پیام‌ها در حین استفاده از برنامه‌های دیگر
+- **چه چیزی دسترسی داریم**: توانایی اجرای یک سرویس پس‌زمینه پایدار
+- **چه کاری انجام نمی‌دهیم**: سرویس‌های پنهان اجرا نمی‌کنیم یا از این برای ردیابی استفاده نمی‌کنیم
+- **آیا می‌توانید آن را لغو کنید؟**: خیر (مجوز سیستمی)، اما می‌توانید سرویس را با بستن برنامه متوقف کنید
+
+**نکته مهم حریم خصوصی**: مجوز مکان از نظر فنی توسط اندروید برای اسکن Bluetooth LE لازم است (یک نیاز سیستمی که نمی‌توانیم از آن عبور کنیم)، اما Gap Mesh هرگز داده‌های واقعی مکان شما را دسترسی، ذخیره یا منتقل نمی‌کند مگر اینکه صریحاً از امکان چت مبتنی بر مکان geohash استفاده کنید. هنگامی که از امکانات geohash استفاده می‌کنید، مکان شما به صورت محلی پردازش می‌شود و هرگز به سرورها ارسال نمی‌شود—فقط شناسه geohash (یک کد منطقه عمومی) استفاده می‌شود.
 
 ## حریم خصوصی کودکان
 
