@@ -104,7 +104,7 @@ Gap Mesh requires Bluetooth permission to function:
 - Used only for peer-to-peer communication
 - No location data is accessed or stored
 - Bluetooth is not used for tracking
-- The location permission is to join geohash channels in your area and region.
+- The location permission is to join geohash channels in your area and region
 - You can revoke this permission at any time in system settings
 
 ## Children's Privacy
