@@ -8,7 +8,7 @@ Gap Mesh is designed with privacy as its foundation. We believe private communic
 
 ## Summary
 
-- **No personal data collection** - We don't collect names, emails, or phone numbers
+- **No personal data collection** - We don't collect names, emails, location, metadata, or phone numbers
 - **Hybrid Functionality** - Gap Mesh offers two modes of communication:
   - **Bluetooth Mesh Chat**: This mode is completely offline, using peer-to-peer Bluetooth connections. It does not use any servers or internet connection.
   - **Geohash Chat**: This mode uses an internet connection to communicate with others in a specific geographic area. It relies on Nostr relays for message transport. Connections to these relays are routed through the Tor network (via Arti) to anonymize your connection metadata and protect your privacy.
