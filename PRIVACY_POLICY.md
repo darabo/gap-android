@@ -97,13 +97,14 @@ You have complete control:
 - **No Account**: Nothing to delete from servers because there are none
 - **Portability**: Your data never leaves your device unless you export it
 
-## Bluetooth & Permissions
+## Bluetooth & Location Permissions
 
 Gap Mesh requires Bluetooth permission to function:
 
 - Used only for peer-to-peer communication
 - No location data is accessed or stored
 - Bluetooth is not used for tracking
+- The location permission is to join geohash channels in your area and region.
 - You can revoke this permission at any time in system settings
 
 ## Children's Privacy
