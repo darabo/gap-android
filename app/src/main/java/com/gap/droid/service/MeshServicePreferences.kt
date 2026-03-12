@@ -39,4 +39,12 @@ object MeshServicePreferences {
     fun setLegacyCompatibilityEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_LEGACY_COMPATIBILITY, enabled).apply()
     }
+
+    fun getGeorelaysLastFetch(): Long {
+        return prefs.getLong("geo_relays_last_fetch", 0L)
+    }
+
+    fun setGeorelaysLastFetch(timestamp: Long) {
+        prefs.edit().putLong("geo_relays_last_fetch", timestamp).apply()
+    }
 }

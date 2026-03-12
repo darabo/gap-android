@@ -132,6 +132,10 @@ object RelayDirectory {
         return now - last >= ONE_DAY_MS
     }
 
+    fun getLastFetchTime(application: Application): Long {
+        return getPrefs(application).getLong(KEY_LAST_UPDATE_MS, 0L)
+    }
+
     /**
      * Public entry point for the WorkManager relay-update worker.
      * Returns true if the relay list was actually refreshed.
@@ -211,7 +215,7 @@ object RelayDirectory {
         return try {
             val list = parseCsv(FileInputStream(file))
             if (list.isEmpty()) {
-                Log.w(TAG, "${sourceLabel} relay CSV has 0 entries; ignoring")
+                Log.w(TAG, "$sourceLabel relay CSV has 0 entries; ignoring")
                 false
             } else {
                 synchronized(relaysLock) {
@@ -219,12 +223,70 @@ object RelayDirectory {
                     relays.addAll(list)
                 }
                 val hash = fileSha256Hex(file)
-                Log.i(TAG, "📄 Loaded ${list.size} relay entries from ${sourceLabel} file (${file.absolutePath}), sha256=$hash")
+                Log.i(TAG, "📄 Loaded ${list.size} relay entries from $sourceLabel file (${file.absolutePath}), sha256=$hash")
                 true
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Failed loading ${sourceLabel} relay file: ${e.message}")
+            Log.w(TAG, "Failed loading $sourceLabel relay file: ${e.message}")
             false
+        }
+    }
+
+    // ===== Local Sharing =====
+
+    fun exportSharedCSVData(application: Application): Pair<ByteArray, Long>? {
+        val prefs = getPrefs(application)
+        val timestampMs = prefs.getLong(KEY_LAST_UPDATE_MS, 0L)
+        val downloaded = getDownloadedFile(application)
+
+        if (timestampMs > 0L && downloaded.exists() && downloaded.canRead()) {
+            // Convert to seconds for cross-platform iOS compatibility
+            val timestampSec = timestampMs / 1000L
+            return try {
+                val data = downloaded.readBytes()
+                Pair(data, timestampSec)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to read downloaded relays for export: ${e.message}")
+                null
+            }
+        } else {
+            // Fallback to bundled assets if no downloaded file exists yet.
+            // We use a baseline timestamp of 1L so that it can be shared, but
+            // will immediately be overwritten by any peer with a downloaded list.
+            return try {
+                val data = application.assets.open(ASSET_FILE).use { it.readBytes() }
+                Pair(data, 1L)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to read asset relays for export fallback: ${e.message}")
+                null
+            }
+        }
+    }
+
+    fun importSharedCSV(application: Application, data: ByteArray, timestampSec: Long) {
+        try {
+            val parsed = parseCsv(data.inputStream())
+            if (parsed.isEmpty()) {
+                Log.w(TAG, "Failed to parse imported CSV data")
+                return
+            }
+
+            val dest = getDownloadedFile(application)
+            FileOutputStream(dest, false).use { output ->
+                output.write(data)
+            }
+
+            synchronized(relaysLock) {
+                relays.clear()
+                relays.addAll(parsed)
+            }
+
+            // Convert back to milliseconds for local preferences
+            val timestampMs = timestampSec * 1000L
+            getPrefs(application).edit().putLong(KEY_LAST_UPDATE_MS, timestampMs).apply()
+            Log.i(TAG, "Imported ${parsed.size} relays from local peer (timestampSec: $timestampSec)")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to import shared CSV data: ${e.message}")
         }
     }
 

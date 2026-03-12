@@ -50,6 +50,7 @@ import com.gapmesh.droid.services.VerificationService
 import com.gapmesh.droid.service.MeshServicePreferences
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.gapmesh.droid.BuildConfig
 
 class MainActivity : OrientationAwareActivity() {
 
@@ -64,9 +65,7 @@ class MainActivity : OrientationAwareActivity() {
      * 3. **Bluetooth Check:** Ensure Bluetooth adapter is ON.
      * 4. **Location Check:** Ensure Location services are ON (required for BLE scanning on Android).
      * 5. **Battery Optimization:** Request to disable it (so app runs in background).
-     * 6. **Tutorial:** Show how to use the app.
-     * 7. **Complete:** Ready to chat!
-     */
+     * 6. **Tutorial:** Show how to use the app.\n     * 7. **Complete:** Ready to chat!\n     */
     private lateinit var permissionManager: PermissionManager
     private lateinit var onboardingCoordinator: OnboardingCoordinator
     private lateinit var bluetoothStatusManager: BluetoothStatusManager
@@ -433,10 +432,7 @@ class MainActivity : OrientationAwareActivity() {
      * **Novice Note:**
      * On Android, we need TWO things for Bluetooth to work:
      * 1. **Permission:** The user saying "Yes, I allow this app to use Bluetooth" (Manifest permission).
-     * 2. **Adapter State:** The actual Bluetooth radio being turned ON in system settings.
-     * 
-     * This function checks the *Adapter State* (is it ON?).
-     */
+     * 2. **Adapter State:** The actual Bluetooth radio being turned ON in system settings.\n     * \n     * This function checks the *Adapter State* (is it ON?).\n     */
     private fun checkBluetoothAndProceed() {
         // Log.d("MainActivity", "Checking Bluetooth status")
         
@@ -740,9 +736,7 @@ class MainActivity : OrientationAwareActivity() {
             try {
                 // Initialize the app with a proper delay to ensure Bluetooth stack is ready
                 // This solves the issue where app needs restart to work on first install
-                delay(1000) // Give the system time to process permission grants
-                
-                Log.d("MainActivity", "Permissions verified, initializing chat system")
+                delay(1000) // Give the system time to process permission grants\n                \n                Log.d("MainActivity", "Permissions verified, initializing chat system")
                 
                 // Initialize PoW preferences early in the initialization process
                 PoWPreferenceManager.init(this@MainActivity)
@@ -862,8 +856,7 @@ class MainActivity : OrientationAwareActivity() {
     }
     
     /**
-     * Handle intents from notification clicks - open specific private chat or geohash chat
-     */
+     * Handle intents from notification clicks - open specific private chat or geohash chat\n     */
     private fun handleNotificationIntent(intent: Intent) {
         val shouldOpenPrivateChat = intent.getBooleanExtra(
             com.gapmesh.droid.ui.NotificationManager.EXTRA_OPEN_PRIVATE_CHAT, 
@@ -874,8 +867,24 @@ class MainActivity : OrientationAwareActivity() {
             com.gapmesh.droid.ui.NotificationManager.EXTRA_OPEN_GEOHASH_CHAT,
             false
         )
+
+        val shouldShareGeorelaysBack = intent.getBooleanExtra(
+            "share_georelays_back",
+            false
+        )
         
         when {
+            shouldShareGeorelaysBack && BuildConfig.HAS_GEOHASH -> {
+                val peerID = intent.getStringExtra(com.gapmesh.droid.ui.NotificationManager.EXTRA_PEER_ID)
+                if (peerID != null) {
+                    Log.d("MainActivity", "Sharing georelays back to (peerID: $peerID) from notification")
+                    // Since it's a broadcast that ignores sender locally, a simple broadcast works 
+                    // and targets nearby users, including the sender.
+                    chatViewModel.shareGeorelaysLocally()
+                    android.widget.Toast.makeText(this, getString(R.string.share_relays_success), android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+            
             shouldOpenPrivateChat -> {
                 val peerID = intent.getStringExtra(com.gapmesh.droid.ui.NotificationManager.EXTRA_PEER_ID)
                 val senderNickname = intent.getStringExtra(com.gapmesh.droid.ui.NotificationManager.EXTRA_SENDER_NICKNAME)
@@ -891,7 +900,7 @@ class MainActivity : OrientationAwareActivity() {
                 }
             }
             
-            shouldOpenGeohashChat -> {
+            shouldOpenGeohashChat && BuildConfig.HAS_GEOHASH -> {
                 val geohash = intent.getStringExtra(com.gapmesh.droid.ui.NotificationManager.EXTRA_GEOHASH)
                 
                 if (geohash != null) {
@@ -967,7 +976,7 @@ class MainActivity : OrientationAwareActivity() {
             // ---- gapmesh://geohash_chat/{geohash} ----
             scheme == "gapmesh" && host == "geohash_chat" -> {
                 val geohash = uri.pathSegments?.firstOrNull()
-                if (!geohash.isNullOrBlank()) {
+                if (!geohash.isNullOrBlank() && BuildConfig.HAS_GEOHASH) {
                     Log.d("MainActivity", "Deep link: geohash_chat #$geohash")
                     val level = when (geohash.length) {
                         7 -> com.gapmesh.droid.geohash.GeohashChannelLevel.BLOCK

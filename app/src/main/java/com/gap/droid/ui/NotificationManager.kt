@@ -14,6 +14,7 @@ import com.gapmesh.droid.MainActivity
 import com.gapmesh.droid.R
 import com.gapmesh.droid.util.NotificationIntervalManager
 import java.util.concurrent.ConcurrentHashMap
+import com.gapmesh.droid.BuildConfig
 
 /**
  * Enhanced notification manager for direct messages and geohash chats with production-ready features:
@@ -849,5 +850,47 @@ class NotificationManager(
                 appendLine("  #$geohash: ${notifications.size} messages ($mentions mentions, $firstMessages first messages)")
             }
         }
+    }
+    /**
+     * Show a prompt to share georelays back to a user with an older list.
+     */
+    fun showGeorelaySharePrompt(senderNickname: String, senderPeerID: String) {
+        if (!BuildConfig.HAS_GEOHASH) return
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("share_georelays_back", true)
+            putExtra(EXTRA_PEER_ID, senderPeerID)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            (System.currentTimeMillis() and 0x7FFFFFFF).toInt(),
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setColor(NOTIFICATION_ACCENT_COLOR)
+            .setContentTitle(context.getString(R.string.share_relays_prompt_title))
+            .setContentText(context.getString(R.string.share_relays_prompt_desc, senderNickname))
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_SYSTEM)
+            .setShowWhen(true)
+            .setWhen(System.currentTimeMillis())
+
+        // Add Share action button
+        builder.addAction(
+            R.drawable.ic_notification,
+            context.getString(R.string.share_relays_prompt_share),
+            pendingIntent
+        )
+
+        val notificationId = 5000 + senderPeerID.hashCode()
+        notificationManager.notify(notificationId, builder.build())
+        Log.d(TAG, "Displayed georelay share prompt for $senderNickname")
     }
 }

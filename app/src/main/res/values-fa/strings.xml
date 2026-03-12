@@ -628,5 +628,14 @@
     <string name="onboarding_feature_location_title">کانال‌های مکانی</string>
     <string name="onboarding_feature_location_desc">به اتاق‌های چت عمومی بر اساس منطقهٔ جغرافیایی بپیوندید. از طریق کانال‌های مبتنی بر geohash با افراد نزدیک ارتباط برقرار کنید.</string>
 
+    <string name="share_relays_title">اشتراک‌گذاری محلی رله‌ها</string>
+    <string name="share_relays_desc">رله‌های به‌روز شدهٔ خود را به‌صورت محلی برای کاربران نزدیک پخش کنید.</string>
+    <string name="share_relays_button">پخش رله‌ها</string>
+    <string name="share_relays_success">رله‌ها با موفقیت پخش شدند</string>
+    <string name="share_relays_error">خطا در آماده‌سازی رله‌ها برای اشتراک‌گذاری</string>
+    <string name="share_relays_prompt_title">رله‌های قدیمی پیدا شد</string>
+    <string name="share_relays_prompt_desc">%s رله‌های قدیمی‌تری دارد. فهرست به‌روز شدهٔ خود را با او به اشتراک می‌گذارید؟</string>
+    <string name="share_relays_prompt_share">اشتراک‌گذاری</string>
+
     <string name="notification_and_more">و %1$d مورد دیگر</string>
 </resources>

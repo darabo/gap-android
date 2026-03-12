@@ -624,4 +624,13 @@
     <string name="onboarding_feature_location_title">Location Channels</string>
     <string name="onboarding_feature_location_desc">Join public chat rooms based on your geographic area. Connect with people nearby using geohash-based channels over the internet.</string>
 
+    <string name="share_relays_title">Share Relays Locally</string>
+    <string name="share_relays_desc">Broadcast your updated georelays to nearby users over the mesh.</string>
+    <string name="share_relays_button">Broadcast Relays</string>
+    <string name="share_relays_success">Successfully broadcasted georelays</string>
+    <string name="share_relays_error">Failed to export georelays for sharing</string>
+    <string name="share_relays_prompt_title">Older Relays Detected</string>
+    <string name="share_relays_prompt_desc">%s has an older relay list. Share your updated list with them?</string>
+    <string name="share_relays_prompt_share">Share</string>
+
 </resources>

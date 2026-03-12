@@ -86,6 +86,31 @@ import com.gapmesh.droid.ui.ScreenshotDetector
         mediaSendingManager.sendImageNote(toPeerIDOrNull, channelOrNull, filePath)
     }
 
+    fun shareGeorelaysLocally() {
+        viewModelScope.launch {
+            try {
+                val relaysData = com.gapmesh.droid.nostr.RelayDirectory.exportSharedCSVData(getApplication())
+                if (relaysData != null) {
+                    val (data, timestamp) = relaysData
+                    val filename = "gapmesh_georelays_${timestamp}.csv"
+                    val filePacket = com.gapmesh.droid.model.BitchatFilePacket(
+                        fileName = filename,
+                        fileSize = data.size.toLong(),
+                        mimeType = "text/csv",
+                        content = data
+                    )
+                    val payload = filePacket.encode()
+                    if (payload != null) {
+                        meshService.sendFileBroadcast(payload)
+                        Log.i(TAG, "📤 Broadcasted georelays locally.")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to share georelays locally: ${e.message}")
+            }
+        }
+    }
+
     fun getCurrentNpub(): String? {
         return try {
             NostrIdentityBridge

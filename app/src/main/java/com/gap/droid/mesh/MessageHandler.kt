@@ -11,6 +11,7 @@ import com.gapmesh.droid.util.toHexString
 import kotlinx.coroutines.*
 import java.util.*
 import kotlin.random.Random
+import com.gapmesh.droid.BuildConfig
 
 /**
  * Handles processing of different message types
@@ -402,10 +403,15 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
         }
         
         try {
-            // Try file packet first (voice, image, etc.) and log outcome for FILE_TRANSFER
             val isFileTransfer = com.gapmesh.droid.protocol.MessageType.fromValue(packet.type) == com.gapmesh.droid.protocol.MessageType.FILE_TRANSFER
             val file = com.gapmesh.droid.model.BitchatFilePacket.decode(packet.payload)
             if (file != null) {
+                if (file.fileName.startsWith("gapmesh_georelays_")) {
+                    if (BuildConfig.HAS_GEOHASH) {
+                        handleGeorelayFile(file, peerID)
+                    }
+                    return
+                }
                 if (isFileTransfer) {
                     Log.d(TAG, "📥 FILE_TRANSFER decode success (broadcast): name='${file.fileName}', size=${file.fileSize}, mime='${file.mimeType}', from=${peerID.take(8)}")
                 }
@@ -449,10 +455,15 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                 return
             }
 
-            // Try file packet first (voice, image, etc.) and log outcome for FILE_TRANSFER
             val isFileTransfer = com.gapmesh.droid.protocol.MessageType.fromValue(packet.type) == com.gapmesh.droid.protocol.MessageType.FILE_TRANSFER
             val file = com.gapmesh.droid.model.BitchatFilePacket.decode(packet.payload)
             if (file != null) {
+                if (file.fileName.startsWith("gapmesh_georelays_")) {
+                    if (BuildConfig.HAS_GEOHASH) {
+                        handleGeorelayFile(file, peerID)
+                    }
+                    return
+                }
                 if (isFileTransfer) {
                     Log.d(TAG, "📥 FILE_TRANSFER decode success (private): name='${file.fileName}', size=${file.fileSize}, mime='${file.mimeType}', from=${peerID.take(8)}")
                 }
@@ -593,6 +604,41 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             }
         } catch (_: Exception) {
             // Best-effort; ignore errors
+        }
+    }
+
+    private fun handleGeorelayFile(file: com.gapmesh.droid.model.BitchatFilePacket, senderPeerID: String) {
+        val fileName = file.fileName
+        val incomingTimestampSec = fileName.replace("gapmesh_georelays_", "").replace(".csv", "").toLongOrNull() ?: return
+        
+        val localTimestampMs = com.gapmesh.droid.nostr.RelayDirectory.getLastFetchTime(appContext as android.app.Application)
+        val localTimestampSec = localTimestampMs / 1000L
+        val senderNickname = delegate?.getPeerNickname(senderPeerID) ?: "Unknown"
+
+        if (incomingTimestampSec > localTimestampSec) {
+            Log.i(TAG, "📥 Received newer georelays list from $senderNickname. Updating local cache.")
+            com.gapmesh.droid.nostr.RelayDirectory.importSharedCSV(appContext as android.app.Application, file.content, incomingTimestampSec)
+            
+            // Notify user of successful update
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                android.widget.Toast.makeText(
+                    appContext, 
+                    "Successfully updated to newer relay list from $senderNickname", 
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+            }
+        } else if (incomingTimestampSec < localTimestampSec) {
+            Log.i(TAG, "📥 $senderNickname is using an older georelays list. Prompting to share.")
+            // Avoid circular storm: only prompt if it's been more than X minutes, handled loosely, 
+            // but for now trigger the local notification directly
+            val notificationManager = com.gapmesh.droid.ui.NotificationManager(
+                appContext,
+                androidx.core.app.NotificationManagerCompat.from(appContext),
+                com.gapmesh.droid.util.NotificationIntervalManager()
+            )
+            notificationManager.showGeorelaySharePrompt(senderNickname, senderPeerID)
+        } else {
+            Log.d(TAG, "📥 Received georelays list from $senderNickname has same timestamp. Ignoring.")
         }
     }
 }
