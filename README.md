@@ -11,7 +11,9 @@ This is the **Android port** of the original [Gap Mesh iOS app](https://github.c
 
 [You can download the app on the Google Play Store.](https://play.google.com/store/apps/details?id=com.gapmesh.droid)
 
-You can also download the latest version of Gap Mesh for Android from the [GitHub Releases page (iOS Version on App Store)](https://apps.apple.com/us/app/gap-mesh/id6757211522).
+You can also download the latest version of Gap Mesh for Android from the [GitHub Releases page.](https://github.com/darabo/gap-android/releases)
+
+[iOS version on the App Store](https://apps.apple.com/us/app/gap-mesh/id6757211522).
 
 **Instructions:**
 
