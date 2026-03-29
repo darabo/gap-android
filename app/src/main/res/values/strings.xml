@@ -644,6 +644,12 @@
     <string name="update_relays_tor_connecting">Tor is still connecting. Please wait...</string>
     <string name="update_relays_tor_disconnected">Tor is not connected. Please enable Tor to update relays.</string>
 
+    <!-- URLs -->
+    <string name="url_privacy_policy" translatable="false">https://gapmesh.com/privacy</string>
+    <string name="url_source_code_android" translatable="false">https://github.com/darabo/gap-android</string>
+    <string name="url_download_play_store" translatable="false">https://play.google.com/store/apps/details?id=com.gapmesh.droid</string>
+    <string name="url_download_github" translatable="false">https://github.com/darabo/gap-android/releases</string>
+
     <!-- Source Code -->
     <string name="about_source_code">Source Code</string>
     <string name="about_source_code_desc">View the source code on GitHub</string>

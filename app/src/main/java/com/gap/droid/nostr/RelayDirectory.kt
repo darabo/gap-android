@@ -325,17 +325,16 @@ object RelayDirectory {
      * was actually updated or was already identical.
      */
     suspend fun manualUpdate(application: Application): ManualUpdateResult {
+        var tmpFile: File? = null
         return try {
-            val tmpFile = File.createTempFile("relays_manual_", ".csv", application.cacheDir)
+            tmpFile = File.createTempFile("relays_manual_", ".csv", application.cacheDir)
             val ok = downloadToFile(ASSET_FILE_URL, tmpFile)
             if (!ok) {
-                tmpFile.delete()
                 return ManualUpdateResult.Failed("Failed to download relay list")
             }
 
             val parsed = parseCsv(FileInputStream(tmpFile))
             if (parsed.isEmpty()) {
-                tmpFile.delete()
                 return ManualUpdateResult.Failed("No relays found in downloaded data")
             }
 
@@ -349,18 +348,19 @@ object RelayDirectory {
             }
 
             if (remoteHash == localHash) {
-                tmpFile.delete()
                 return ManualUpdateResult.AlreadyUpToDate
             }
 
             // Content changed — persist and reload
             val dest = getDownloadedFile(application)
-            tmpFile.inputStream().use { input ->
-                FileOutputStream(dest, false).use { output ->
-                    input.copyTo(output)
+            // Rename for atomic replacement across same filesystem, fallback to copy
+            if (!tmpFile.renameTo(dest)) {
+                tmpFile.inputStream().use { input ->
+                    FileOutputStream(dest, false).use { output ->
+                        input.copyTo(output)
+                    }
                 }
             }
-            tmpFile.delete()
 
             synchronized(relaysLock) {
                 relays.clear()
@@ -373,6 +373,8 @@ object RelayDirectory {
         } catch (e: Exception) {
             Log.e(TAG, "Manual update failed: ${e.message}")
             ManualUpdateResult.Failed(e.message ?: "Unknown error")
+        } finally {
+            tmpFile?.delete()
         }
     }
 

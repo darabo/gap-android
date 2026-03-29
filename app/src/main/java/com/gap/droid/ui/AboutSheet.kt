@@ -1646,7 +1646,8 @@ fun AboutSheet(
                                     Surface(
                                         onClick = { 
                                             val lang = if (com.gapmesh.droid.onboarding.LanguagePreferenceManager.getLanguage(context) == com.gapmesh.droid.onboarding.LanguagePreferenceManager.AppLanguage.FARSI) "?lang=fa" else ""
-                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://gapmesh.com/privacy$lang"))
+                                            val baseUrl = context.getString(R.string.url_privacy_policy)
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("$baseUrl$lang"))
                                             context.startActivity(intent)
                                         },
                                         modifier = Modifier.fillMaxWidth(),
@@ -1722,7 +1723,8 @@ fun AboutSheet(
                                     // Source Code (GitHub)
                                     Surface(
                                         onClick = {
-                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/darabo/gap-android"))
+                                            val url = context.getString(R.string.url_source_code_android)
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
                                             context.startActivity(intent)
                                         },
                                         modifier = Modifier.fillMaxWidth(),
@@ -1806,7 +1808,8 @@ fun AboutSheet(
                                         // Google Play Store
                                         Surface(
                                             onClick = {
-                                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://play.google.com/store/apps/details?id=com.gapmesh.droid"))
+                                                val url = context.getString(R.string.url_download_play_store)
+                                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
                                                 context.startActivity(intent)
                                             },
                                             modifier = Modifier.fillMaxWidth(),
@@ -1847,7 +1850,8 @@ fun AboutSheet(
                                         // GitHub Releases
                                         Surface(
                                             onClick = {
-                                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/darabo/gap-android/releases"))
+                                                val url = context.getString(R.string.url_download_github)
+                                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
                                                 context.startActivity(intent)
                                             },
                                             modifier = Modifier.fillMaxWidth(),
