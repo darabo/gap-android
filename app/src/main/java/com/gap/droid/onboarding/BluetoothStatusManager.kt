@@ -250,7 +250,18 @@ class BluetoothStatusManager(
 
         //Register the receiver
         val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
-        ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        try {
+            ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        } catch (e: Exception) {
+            // Fallback for older Android versions where DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+            // may not be auto-granted. Register without the flag to avoid crashing on startup.
+            Log.w(TAG, "RECEIVER_NOT_EXPORTED registration failed, using fallback: ${e.message}")
+            try {
+                context.registerReceiver(receiver, filter)
+            } catch (e2: Exception) {
+                Log.e(TAG, "Bluetooth state monitor registration failed entirely: ${e2.message}")
+            }
+        }
 
         //Check initial Bluetooth state
         val initialStatus = bluetoothStatusManager.checkBluetoothStatus()

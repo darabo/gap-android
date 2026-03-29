@@ -124,7 +124,7 @@
   <string name="about_pow">Proof of Work</string>
   <string name="about_pow_off">pow off</string>
   <string name="about_pow_on">pow on</string>
-  <string name="about_pow_tip">add Proof of Work to geohash messages for spam deterrence.</string>
+  <string name="about_pow_tip">Add Proof of Work to geohash messages for spam deterrence.</string>
   <string name="about_pow_difficulty">difficulty: %1$d bits (~%2$s)</string>
   <string name="about_pow_difficulty_attempts">difficulty %1$d requires ~%2$s hash attempts</string>
   <string name="about_pow_desc_none">no Proof of Work required</string>
@@ -137,7 +137,7 @@
   <string name="about_network">network</string>
   <string name="about_tor_off">tor off</string>
   <string name="about_tor_on">tor on</string>
-  <string name="about_tor_route">route internet over tor for enhanced privacy.</string>
+  <string name="about_tor_route">Route internet over tor for enhanced privacy.</string>
   <string name="about_legacy_compat_title">Legacy Compatibility</string>
   <string name="about_legacy_compat_desc">Allow Bitchat apps to discover you (requires restart). Disabling maximizes privacy.</string>
 
@@ -211,7 +211,7 @@
   <string name="cd_selected">Selected</string>
   <string name="notification_action_quit_bitchat">Quit Gap Mesh</string>
   <string name="about_background_title">Run in the Background</string>
-  <string name="about_background_desc">keep mesh active when app is closed (foreground service)</string>
+  <string name="about_background_desc">Keep mesh active when app is closed (foreground service)</string>
   <string name="cd_leave_channel">Leave channel</string>
   <string name="cd_reachable_via_nostr">Reachable via Nostr</string>
   <string name="cd_offline_favorite">Offline favorite</string>
@@ -632,5 +632,32 @@
     <string name="share_relays_prompt_title">Older Relays Detected</string>
     <string name="share_relays_prompt_desc">%s has an older relay list. Share your updated list with them?</string>
     <string name="share_relays_prompt_share">Share</string>
+
+    <!-- Update Georelay List -->
+    <string name="update_relays_title">Update Georelay List</string>
+    <string name="update_relays_desc">Pull the latest relay list from the internet.</string>
+    <string name="update_relays_button">Check for Updates</string>
+    <string name="update_relays_success">Updated to %1$d relays</string>
+    <string name="update_relays_uptodate">You already have the latest georelay list</string>
+    <string name="update_relays_error">Failed to update relay list</string>
+    <string name="update_relays_updating">Updating relays…</string>
+    <string name="update_relays_tor_connecting">Tor is still connecting. Please wait...</string>
+    <string name="update_relays_tor_disconnected">Tor is not connected. Please enable Tor to update relays.</string>
+
+    <!-- URLs -->
+    <string name="url_privacy_policy" translatable="false">https://gapmesh.com/privacy</string>
+    <string name="url_source_code_android" translatable="false">https://github.com/darabo/gap-android</string>
+    <string name="url_download_play_store" translatable="false">https://play.google.com/store/apps/details?id=com.gapmesh.droid</string>
+    <string name="url_download_github" translatable="false">https://github.com/darabo/gap-android/releases</string>
+
+    <!-- Source Code -->
+    <string name="about_source_code">Source Code</string>
+    <string name="about_source_code_desc">View the source code on GitHub</string>
+
+    <!-- Download Full Version (light build only) -->
+    <string name="download_full_title">Download Full Version</string>
+    <string name="download_full_desc">The full version includes Tor connectivity and geolocation features for enhanced privacy and censorship resistance.</string>
+    <string name="download_full_play_store">Google Play Store</string>
+    <string name="download_full_github">GitHub Releases</string>
 
 </resources>

@@ -122,7 +122,7 @@
     <string name="about_network">netwerk</string>
     <string name="about_tor_off">Tor uit</string>
     <string name="about_tor_on">Tor aan</string>
-    <string name="about_tor_route">route internet via Tor voor verbeterde privacy.</string>
+    <string name="about_tor_route">Route internet via Tor voor verbeterde privacy.</string>
     <string name="about_tor_status">Tor-status: %1$s, bootstrap %2$d%%</string>
     <string name="about_last">Laatste: %1$s</string>
     <string name="about_emergency_title">Noodgegevensverwijdering</string>

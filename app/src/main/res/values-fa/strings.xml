@@ -637,5 +637,26 @@
     <string name="share_relays_prompt_desc">%s رله‌های قدیمی‌تری دارد. فهرست به‌روز شدهٔ خود را با او به اشتراک می‌گذارید؟</string>
     <string name="share_relays_prompt_share">اشتراک‌گذاری</string>
 
+    <!-- به‌روزرسانی فهرست رله‌ها -->
+    <string name="update_relays_title">به‌روزرسانی فهرست رله‌ها</string>
+    <string name="update_relays_desc">دریافت آخرین فهرست رله‌ها از اینترنت.</string>
+    <string name="update_relays_button">بررسی به‌روزرسانی</string>
+    <string name="update_relays_success">فهرست رله‌ها به %1$d رله به‌روز شد</string>
+    <string name="update_relays_uptodate">شما آخرین نسخه فهرست رله‌ها را دارید</string>
+    <string name="update_relays_error">خطا در به‌روزرسانی فهرست رله‌ها</string>
+    <string name="update_relays_updating">در حال به‌روزرسانی رله‌ها…</string>
+    <string name="update_relays_tor_connecting">Tor هنوز در حال اتصال است. لطفاً صبر کنید...</string>
+    <string name="update_relays_tor_disconnected">Tor مجزا است. لطفاً Tor را برای به‌روزرسانی شبکه‌ها فعال کنید.</string>
+
+    <!-- کد منبع -->
+    <string name="about_source_code">کد منبع</string>
+    <string name="about_source_code_desc">مشاهده کد منبع در گیت‌هاب</string>
+
+    <!-- دانلود نسخه کامل (فقط نسخه سبک) -->
+    <string name="download_full_title">دانلود نسخه کامل</string>
+    <string name="download_full_desc">نسخه کامل شامل اتصال Tor و ویژگی‌های موقعیت مکانی برای حریم خصوصی و مقاومت در برابر سانسور بیشتر است.</string>
+    <string name="download_full_play_store">گوگل پلی استور</string>
+    <string name="download_full_github">نسخه‌های گیت‌هاب</string>
+
     <string name="notification_and_more">و %1$d مورد دیگر</string>
 </resources>

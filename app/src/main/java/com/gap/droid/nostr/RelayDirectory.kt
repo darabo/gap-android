@@ -312,6 +312,72 @@ object RelayDirectory {
         Log.i(TAG, "📦 Loaded ${list.size} relay entries from assets/$ASSET_FILE, sha256=$hash")
     }
 
+    // ===== Manual Update =====
+
+    sealed class ManualUpdateResult {
+        data class Updated(val count: Int) : ManualUpdateResult()
+        object AlreadyUpToDate : ManualUpdateResult()
+        data class Failed(val message: String) : ManualUpdateResult()
+    }
+
+    /**
+     * Manually fetch the latest relay list from GitHub and report whether the list
+     * was actually updated or was already identical.
+     */
+    suspend fun manualUpdate(application: Application): ManualUpdateResult {
+        var tmpFile: File? = null
+        return try {
+            tmpFile = File.createTempFile("relays_manual_", ".csv", application.cacheDir)
+            val ok = downloadToFile(ASSET_FILE_URL, tmpFile)
+            if (!ok) {
+                return ManualUpdateResult.Failed("Failed to download relay list")
+            }
+
+            val parsed = parseCsv(FileInputStream(tmpFile))
+            if (parsed.isEmpty()) {
+                return ManualUpdateResult.Failed("No relays found in downloaded data")
+            }
+
+            // Compare SHA-256 hashes to detect actual change
+            val remoteHash = fileSha256Hex(tmpFile)
+            val localFile = getDownloadedFile(application)
+            val localHash = if (localFile.exists() && localFile.canRead()) {
+                fileSha256Hex(localFile)
+            } else {
+                ""
+            }
+
+            if (remoteHash == localHash) {
+                return ManualUpdateResult.AlreadyUpToDate
+            }
+
+            // Content changed — persist and reload
+            val dest = getDownloadedFile(application)
+            // Rename for atomic replacement across same filesystem, fallback to copy
+            if (!tmpFile.renameTo(dest)) {
+                tmpFile.inputStream().use { input ->
+                    FileOutputStream(dest, false).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            }
+
+            synchronized(relaysLock) {
+                relays.clear()
+                relays.addAll(parsed)
+            }
+
+            getPrefs(application).edit().putLong(KEY_LAST_UPDATE_MS, System.currentTimeMillis()).apply()
+            Log.i(TAG, "✅ Manual update: refreshed ${parsed.size} relays, sha256=$remoteHash")
+            ManualUpdateResult.Updated(parsed.size)
+        } catch (e: Exception) {
+            Log.e(TAG, "Manual update failed: ${e.message}")
+            ManualUpdateResult.Failed(e.message ?: "Unknown error")
+        } finally {
+            tmpFile?.delete()
+        }
+    }
+
     private fun parseCsv(input: InputStream): List<RelayInfo> {
         val result = mutableListOf<RelayInfo>()
         BufferedReader(InputStreamReader(input)).use { reader ->

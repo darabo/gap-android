@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.*
@@ -59,6 +60,9 @@ import com.gapmesh.droid.onboarding.LanguagePreferenceManager
 import com.gapmesh.droid.util.ApkShareHelper
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Email
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Feature row for displaying app capabilities
@@ -1262,6 +1266,92 @@ fun AboutSheet(
                                                 )
                                             }
                                         }
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(start = 56.dp),
+                                            color = colorScheme.outline.copy(alpha = 0.12f)
+                                        )
+                                        // Update Georelay List Button
+                                        var isUpdatingRelays by remember { mutableStateOf(false) }
+                                        val coroutineScope = rememberCoroutineScope()
+                                        Surface(
+                                            onClick = {
+                                                if (isUpdatingRelays) return@Surface
+                                                
+                                                // Check if Tor is connected before attempting
+                                                if (com.gapmesh.droid.BuildConfig.HAS_TOR) {
+                                                    val torProvider = ArtiTorManager.getInstance()
+                                                    val status = torProvider.statusFlow.value
+                                                    if (!status.running || status.bootstrapPercent < 100) {
+                                                        val msg = if (status.running) {
+                                                            context.getString(R.string.update_relays_tor_connecting)
+                                                        } else {
+                                                            context.getString(R.string.update_relays_tor_disconnected)
+                                                        }
+                                                        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+                                                        return@Surface
+                                                    }
+                                                }
+                                                
+                                                isUpdatingRelays = true
+                                                coroutineScope.launch {
+                                                    val result = withContext(Dispatchers.IO) {
+                                                        com.gapmesh.droid.nostr.RelayDirectory.manualUpdate(context.applicationContext as android.app.Application)
+                                                    }
+                                                    isUpdatingRelays = false
+                                                    val msg = when (result) {
+                                                        is com.gapmesh.droid.nostr.RelayDirectory.ManualUpdateResult.Updated ->
+                                                            context.getString(R.string.update_relays_success, result.count)
+                                                        is com.gapmesh.droid.nostr.RelayDirectory.ManualUpdateResult.AlreadyUpToDate ->
+                                                            context.getString(R.string.update_relays_uptodate)
+                                                        is com.gapmesh.droid.nostr.RelayDirectory.ManualUpdateResult.Failed ->
+                                                            context.getString(R.string.update_relays_error)
+                                                    }
+                                                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                                                }
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = Color.Transparent
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                if (isUpdatingRelays) {
+                                                    CircularProgressIndicator(
+                                                        modifier = Modifier.size(22.dp),
+                                                        strokeWidth = 2.dp,
+                                                        color = colorScheme.primary
+                                                    )
+                                                } else {
+                                                    Icon(
+                                                        imageVector = Icons.Filled.Refresh,
+                                                        contentDescription = null,
+                                                        tint = colorScheme.primary,
+                                                        modifier = Modifier.size(22.dp)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.width(14.dp))
+                                                Column(
+                                                    modifier = Modifier.weight(1f),
+                                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = stringResource(R.string.update_relays_title),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight = FontWeight.Medium,
+                                                        color = colorScheme.onSurface
+                                                    )
+                                                    Text(
+                                                        text = if (isUpdatingRelays) stringResource(R.string.update_relays_updating) else stringResource(R.string.update_relays_desc),
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = colorScheme.onSurface.copy(alpha = 0.6f),
+                                                        lineHeight = 16.sp
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1556,7 +1646,8 @@ fun AboutSheet(
                                     Surface(
                                         onClick = { 
                                             val lang = if (com.gapmesh.droid.onboarding.LanguagePreferenceManager.getLanguage(context) == com.gapmesh.droid.onboarding.LanguagePreferenceManager.AppLanguage.FARSI) "?lang=fa" else ""
-                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://gapmesh.com/privacy$lang"))
+                                            val baseUrl = context.getString(R.string.url_privacy_policy)
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("$baseUrl$lang"))
                                             context.startActivity(intent)
                                         },
                                         modifier = Modifier.fillMaxWidth(),
@@ -1623,11 +1714,182 @@ fun AboutSheet(
                                             color = colorScheme.onSurface.copy(alpha = 0.6f)
                                         )
                                     }
+                                    
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 56.dp),
+                                        color = colorScheme.outline.copy(alpha = 0.12f)
+                                    )
+                                    
+                                    // Source Code (GitHub)
+                                    Surface(
+                                        onClick = {
+                                            val url = context.getString(R.string.url_source_code_android)
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                                            context.startActivity(intent)
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        color = Color.Transparent
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Public,
+                                                contentDescription = null,
+                                                tint = colorScheme.primary,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(14.dp))
+                                            Text(
+                                                text = stringResource(R.string.about_source_code),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Medium,
+                                                color = colorScheme.onSurface,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                contentDescription = null,
+                                                tint = colorScheme.onSurface.copy(alpha = 0.3f),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
 
+                    // Download Full Version (light build only — no Tor/geolocation)
+                    if (!com.gapmesh.droid.BuildConfig.HAS_TOR) {
+                        item(key = "download_full") {
+                            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                                Text(
+                                    text = stringResource(R.string.download_full_title).uppercase(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = colorScheme.onBackground.copy(alpha = 0.5f),
+                                    letterSpacing = 0.5.sp,
+                                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                                )
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = colorScheme.surface,
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Column {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Cloud,
+                                                contentDescription = null,
+                                                tint = colorScheme.primary,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(14.dp))
+                                            Text(
+                                                text = stringResource(R.string.download_full_desc),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = colorScheme.onSurface.copy(alpha = 0.7f),
+                                                lineHeight = 16.sp,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                        }
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(start = 56.dp),
+                                            color = colorScheme.outline.copy(alpha = 0.12f)
+                                        )
+                                        // Google Play Store
+                                        Surface(
+                                            onClick = {
+                                                val url = context.getString(R.string.url_download_play_store)
+                                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                                                context.startActivity(intent)
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = Color.Transparent
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Apps,
+                                                    contentDescription = null,
+                                                    tint = if (isDark) Color(0xFF32D74B) else Color(0xFF248A3D),
+                                                    modifier = Modifier.size(22.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(14.dp))
+                                                Text(
+                                                    text = stringResource(R.string.download_full_play_store),
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = colorScheme.onSurface,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                    contentDescription = null,
+                                                    tint = colorScheme.onSurface.copy(alpha = 0.3f),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        }
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(start = 56.dp),
+                                            color = colorScheme.outline.copy(alpha = 0.12f)
+                                        )
+                                        // GitHub Releases
+                                        Surface(
+                                            onClick = {
+                                                val url = context.getString(R.string.url_download_github)
+                                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                                                context.startActivity(intent)
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = Color.Transparent
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Public,
+                                                    contentDescription = null,
+                                                    tint = if (isDark) Color(0xFF32D74B) else Color(0xFF248A3D),
+                                                    modifier = Modifier.size(22.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(14.dp))
+                                                Text(
+                                                    text = stringResource(R.string.download_full_github),
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = colorScheme.onSurface,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                    contentDescription = null,
+                                                    tint = colorScheme.onSurface.copy(alpha = 0.3f),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     // Footer
                     item(key = "footer") {
                         Column(
