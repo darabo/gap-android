@@ -293,42 +293,49 @@ fun colorForPeerSeed(seed: String, isDark: Boolean): Color {
         hash = ((hash shl 5) + hash) + byte.toUByte().toULong()
     }
     
-    val baseColors = arrayOf(
-        intArrayOf(0, 114, 178),   // Blue
-        intArrayOf(213, 94, 0),    // Vermillion
-        intArrayOf(0, 158, 115),   // Bluish Green
-        intArrayOf(230, 159, 0),   // Orange
-        intArrayOf(204, 121, 167), // Reddish Purple
-        intArrayOf(86, 180, 233),  // Sky Blue
-        intArrayOf(240, 228, 66),  // Yellow
-        intArrayOf(17, 119, 51),   // Dark Green
-        intArrayOf(51, 34, 136),   // Dark Teal
-        intArrayOf(136, 204, 238), // Light Blue
-        intArrayOf(68, 170, 153),  // Mint
-        intArrayOf(153, 153, 51),  // Olive
-        intArrayOf(221, 204, 119), // Sand
-        intArrayOf(204, 102, 119), // Rose
-        intArrayOf(136, 34, 85)    // Wine
+    // 15 bold, distinct colors optimized explicitly for Dark Mode (Neon/Pastel Brights)
+    val darkColors = arrayOf(
+        intArrayOf(51, 181, 229),   // Neon Azure
+        intArrayOf(255, 136, 0),    // Neon Orange
+        intArrayOf(0, 200, 81),     // Neon Green
+        intArrayOf(170, 102, 204),  // Bright Purple
+        intArrayOf(255, 68, 68),    // Bright Pink/Rose
+        intArrayOf(255, 223, 0),    // Bright Yellow
+        intArrayOf(0, 229, 255),    // Cyan/Teal
+        intArrayOf(255, 0, 255),    // Bright Magenta
+        intArrayOf(174, 234, 0),    // Lime Green
+        intArrayOf(255, 112, 67),   // Coral
+        intArrayOf(92, 107, 192),   // Bright Indigo
+        intArrayOf(105, 240, 174),  // Bright Mint
+        intArrayOf(255, 202, 40),   // Gold
+        intArrayOf(224, 64, 251),   // Orchid
+        intArrayOf(68, 138, 255)    // Dodger Blue
     )
     
-    val colorIndex = (hash % baseColors.size.toULong()).toInt()
-    val baseRgb = baseColors[colorIndex]
+    // 15 bold, distinct colors optimized explicitly for Light Mode (Jewel Tones for high contrast)
+    val lightColors = arrayOf(
+        intArrayOf(0, 91, 159),     // Deep Azure
+        intArrayOf(230, 81, 0),     // Deep Orange
+        intArrayOf(0, 126, 51),     // Deep Green
+        intArrayOf(106, 27, 154),   // Deep Purple
+        intArrayOf(204, 0, 0),      // Deep Red
+        intArrayOf(245, 127, 23),   // Amber
+        intArrayOf(0, 96, 100),     // Deep Teal
+        intArrayOf(136, 14, 79),    // Deep Magenta
+        intArrayOf(85, 139, 47),    // Olive Green
+        intArrayOf(216, 67, 21),    // Rust
+        intArrayOf(40, 53, 147),    // Navy Indigo
+        intArrayOf(0, 105, 92),     // Deep Mint
+        intArrayOf(255, 143, 0),    // Dark Gold
+        intArrayOf(173, 20, 87),    // Deep Orchid
+        intArrayOf(1, 87, 155)      // Royal Blue
+    )
     
-    var r = baseRgb[0] / 255.0f
-    var g = baseRgb[1] / 255.0f
-    var b = baseRgb[2] / 255.0f
+    val activePalette = if (isDark) darkColors else lightColors
+    val colorIndex = (hash % activePalette.size.toULong()).toInt()
+    val rgb = activePalette[colorIndex]
     
-    if (isDark) {
-        r = r + (1.0f - r) * 0.4f
-        g = g + (1.0f - g) * 0.4f
-        b = b + (1.0f - b) * 0.4f
-    } else {
-        r = r * 0.8f
-        g = g * 0.8f
-        b = b * 0.8f
-    }
-    
-    return Color(r, g, b, 1.0f)
+    return Color(rgb[0] / 255.0f, rgb[1] / 255.0f, rgb[2] / 255.0f, 1.0f)
 }
 
 /**
