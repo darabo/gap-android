@@ -293,22 +293,42 @@ fun colorForPeerSeed(seed: String, isDark: Boolean): Color {
         hash = ((hash shl 5) + hash) + byte.toUByte().toULong()
     }
     
-    var hue = (hash % 360UL).toDouble() / 360.0
+    val baseColors = arrayOf(
+        intArrayOf(0, 114, 178),   // Blue
+        intArrayOf(213, 94, 0),    // Vermillion
+        intArrayOf(0, 158, 115),   // Bluish Green
+        intArrayOf(230, 159, 0),   // Orange
+        intArrayOf(204, 121, 167), // Reddish Purple
+        intArrayOf(86, 180, 233),  // Sky Blue
+        intArrayOf(240, 228, 66),  // Yellow
+        intArrayOf(17, 119, 51),   // Dark Green
+        intArrayOf(51, 34, 136),   // Dark Teal
+        intArrayOf(136, 204, 238), // Light Blue
+        intArrayOf(68, 170, 153),  // Mint
+        intArrayOf(153, 153, 51),  // Olive
+        intArrayOf(221, 204, 119), // Sand
+        intArrayOf(204, 102, 119), // Rose
+        intArrayOf(136, 34, 85)    // Wine
+    )
     
-    // Avoid orange (~30°) reserved for self (matches iOS logic)
-    val orange = 30.0 / 360.0
-    if (kotlin.math.abs(hue - orange) < 0.05) {
-        hue = (hue + 0.12) % 1.0
+    val colorIndex = (hash % baseColors.size.toULong()).toInt()
+    val baseRgb = baseColors[colorIndex]
+    
+    var r = baseRgb[0] / 255.0f
+    var g = baseRgb[1] / 255.0f
+    var b = baseRgb[2] / 255.0f
+    
+    if (isDark) {
+        r = r + (1.0f - r) * 0.4f
+        g = g + (1.0f - g) * 0.4f
+        b = b + (1.0f - b) * 0.4f
+    } else {
+        r = r * 0.8f
+        g = g * 0.8f
+        b = b * 0.8f
     }
     
-    val saturation = if (isDark) 0.50 else 0.70
-    val brightness = if (isDark) 0.85 else 0.35
-    
-    return Color.hsv(
-        hue = (hue * 360).toFloat(),
-        saturation = saturation.toFloat(),
-        value = brightness.toFloat()
-    )
+    return Color(r, g, b, 1.0f)
 }
 
 /**
