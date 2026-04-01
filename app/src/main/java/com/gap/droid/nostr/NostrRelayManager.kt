@@ -15,6 +15,7 @@ import kotlin.math.min
 import kotlin.math.pow
 import com.gapmesh.droid.net.ArtiTorManager
 import java.net.ConnectException
+import kotlin.random.Random
 
 /**
  * Manages WebSocket connections to Nostr relays
@@ -48,6 +49,10 @@ class NostrRelayManager private constructor() {
         private const val MAX_BACKOFF_INTERVAL = com.gapmesh.droid.util.AppConstants.Nostr.MAX_BACKOFF_INTERVAL_MS    // 5 minutes
         private const val BACKOFF_MULTIPLIER = com.gapmesh.droid.util.AppConstants.Nostr.BACKOFF_MULTIPLIER
         private const val MAX_RECONNECT_ATTEMPTS = com.gapmesh.droid.util.AppConstants.Nostr.MAX_RECONNECT_ATTEMPTS
+        private const val MAX_CONCURRENT_RELAY_DIALS = 4
+        private const val TRANSIENT_RECONNECT_MIN_DELAY_MS = 1_000L
+        private const val TRANSIENT_RECONNECT_MAX_DELAY_MS = 3_000L
+        private const val TOR_BOOTSTRAP_RECONNECT_DELAY_MS = 5_000L
         
         // Track gift-wraps we initiated for logging
         private val pendingGiftWrapIDs = ConcurrentHashMap.newKeySet<String>()
@@ -84,6 +89,7 @@ class NostrRelayManager private constructor() {
     // Internal state
     private val relaysList = mutableListOf<Relay>()
     private val connections = ConcurrentHashMap<String, WebSocket>()
+    private val connectingRelays = ConcurrentHashMap.newKeySet<String>()
     private val subscriptions = ConcurrentHashMap<String, Set<String>>() // relay URL -> subscription IDs
     private val messageHandlers = ConcurrentHashMap<String, (NostrEvent) -> Unit>()
     
@@ -193,17 +199,22 @@ class NostrRelayManager private constructor() {
         filter: NostrFilter,
         id: String = generateSubscriptionId(),
         handler: (NostrEvent) -> Unit,
-        includeDefaults: Boolean = false,
+        includeDefaults: Boolean = true,
         nRelays: Int = 5
     ): String {
         ensureGeohashRelaysConnected(geohash, nRelays, includeDefaults)
         val relayUrls = getRelaysForGeohash(geohash)
-        Log.d(TAG, "📡 Subscribing id=$id for geohash=$geohash on ${relayUrls.size} relays")
+        val targetRelayUrls = when {
+            relayUrls.isEmpty() -> Companion.defaultRelays()
+            relayUrls.none { connections.containsKey(it) } -> (relayUrls + Companion.defaultRelays()).distinct()
+            else -> relayUrls
+        }
+        Log.d(TAG, "📡 Subscribing id=$id for geohash=$geohash on ${targetRelayUrls.size} relays")
         return subscribe(
             filter = filter,
             id = id,
             handler = handler,
-            targetRelayUrls = relayUrls
+            targetRelayUrls = targetRelayUrls
         ).also {
             // update origin geohash for this subscription
             activeSubscriptions[it]?.let { sub ->
@@ -215,7 +226,7 @@ class NostrRelayManager private constructor() {
     /**
      * Send an event specifically to a geohash's relays (+ optional defaults).
      */
-    suspend fun sendEventToGeohash(event: NostrEvent, geohash: String, includeDefaults: Boolean = false, nRelays: Int = 5) {
+    suspend fun sendEventToGeohash(event: NostrEvent, geohash: String, includeDefaults: Boolean = true, nRelays: Int = 5) {
         ensureGeohashRelaysConnected(geohash, nRelays, includeDefaults)
         val relayUrls = getRelaysForGeohash(geohash)
         if (relayUrls.isEmpty()) {
@@ -223,8 +234,19 @@ class NostrRelayManager private constructor() {
             sendEvent(event, Companion.defaultRelays())
             return
         }
-        Log.v(TAG, "📤 Sending event kind=${event.kind} to ${relayUrls.size} relays for geohash=$geohash")
-        sendEvent(event, relayUrls)
+
+        val targetRelayUrls = if (relayUrls.none { connections.containsKey(it) }) {
+            val connectedRelays = relaysList.asSequence()
+                .filter { it.isConnected }
+                .map { it.url }
+                .toList()
+            (relayUrls + connectedRelays + Companion.defaultRelays()).distinct()
+        } else {
+            relayUrls
+        }
+
+        Log.v(TAG, "📤 Sending event kind=${event.kind} to ${targetRelayUrls.size} relays for geohash=$geohash")
+        sendEvent(event, targetRelayUrls)
     }
 
     // --- Internal helpers ---
@@ -640,8 +662,21 @@ class NostrRelayManager private constructor() {
     // MARK: - Private Methods
     
     private suspend fun connectToRelay(urlString: String) {
-        // Skip if we already have a connection
-        if (connections.containsKey(urlString)) {
+        // Skip if we already have a connection or are already dialing.
+        if (connections.containsKey(urlString) || connectingRelays.contains(urlString)) {
+            return
+        }
+        if (connectingRelays.size >= MAX_CONCURRENT_RELAY_DIALS) {
+            scheduleTransientReconnect(urlString, "dial_limit")
+            return
+        }
+
+        if (shouldDeferConnectUntilTorReady()) {
+            Log.d(TAG, "Deferring relay connect until Tor proxy is ready: $urlString")
+            scope.launch {
+                delay(TOR_BOOTSTRAP_RECONNECT_DELAY_MS + Random.nextLong(0L, 1_500L))
+                connectToRelay(urlString)
+            }
             return
         }
 
@@ -662,6 +697,7 @@ class NostrRelayManager private constructor() {
         Log.v(TAG, "Attempting to connect to Nostr relay: $urlString")
         
         try {
+            connectingRelays.add(urlString)
             val request = Request.Builder()
                 .url(urlString)
                 .build()
@@ -670,8 +706,19 @@ class NostrRelayManager private constructor() {
             connections[urlString] = webSocket
             
         } catch (e: Exception) {
+            connectingRelays.remove(urlString)
             Log.e(TAG, "❌ Failed to create WebSocket connection to $urlString: ${e.message}")
             handleDisconnection(urlString, e)
+        }
+    }
+
+    private fun shouldDeferConnectUntilTorReady(): Boolean {
+        return try {
+            val tor = ArtiTorManager.getInstance()
+            val status = tor.statusFlow.value
+            status.mode == com.gapmesh.droid.net.TorMode.ON && !tor.isProxyEnabled()
+        } catch (_: Exception) {
+            false
         }
     }
     
@@ -789,10 +836,17 @@ class NostrRelayManager private constructor() {
     }
     
     private fun handleDisconnection(relayUrl: String, error: Throwable) {
+        connectingRelays.remove(relayUrl)
         connections.remove(relayUrl)
         // NOTE: Don't remove subscriptions here - keep them for restoration on reconnection
         // subscriptions.remove(relayUrl)  // REMOVED - this was causing subscription loss
         
+        if (isBenignDisconnect(error)) {
+            updateRelayStatus(relayUrl, false, null)
+            scheduleTransientReconnect(relayUrl, "benign_disconnect")
+            return
+        }
+
         updateRelayStatus(relayUrl, false, error)
         
         // Check if this is a DNS error
@@ -843,16 +897,57 @@ class NostrRelayManager private constructor() {
             INITIAL_BACKOFF_INTERVAL * BACKOFF_MULTIPLIER.pow(relay.reconnectAttempts - 1.0),
             MAX_BACKOFF_INTERVAL.toDouble()
         ).toLong()
+        val jitterMs = (backoffInterval * 0.2).toLong().coerceAtLeast(1L)
+        val jitteredBackoffInterval = backoffInterval + Random.nextLong(0L, jitterMs + 1L)
         
-        relay.nextReconnectTime = System.currentTimeMillis() + backoffInterval
+        relay.nextReconnectTime = System.currentTimeMillis() + jitteredBackoffInterval
         
-        Log.d(TAG, "Scheduling reconnection to $relayUrl in ${backoffInterval / 1000}s (attempt ${relay.reconnectAttempts})")
+        Log.d(TAG, "Scheduling reconnection to $relayUrl in ${jitteredBackoffInterval / 1000}s (attempt ${relay.reconnectAttempts})")
         
         // Schedule reconnection
         scope.launch {
-            delay(backoffInterval)
+            delay(jitteredBackoffInterval)
             connectToRelay(relayUrl)
         }
+    }
+
+    private fun scheduleTransientReconnect(relayUrl: String, reason: String) {
+        val relay = relaysList.find { it.url == relayUrl }
+        
+        val attempt = if (relay != null) {
+            relay.reconnectAttempts++
+            relay.reconnectAttempts
+        } else {
+            1
+        }
+        
+        // Start at 1-3s, but exponentially back off up to MAX_BACKOFF_INTERVAL
+        val baseDelay = TRANSIENT_RECONNECT_MIN_DELAY_MS * BACKOFF_MULTIPLIER.pow(attempt - 1.0)
+        val backoffInterval = min(baseDelay, MAX_BACKOFF_INTERVAL.toDouble()).toLong()
+        
+        val jitterMs = (backoffInterval * 0.2).toLong().coerceAtLeast(1L)
+        val delayMs = backoffInterval + Random.nextLong(0L, jitterMs + 1L)
+        
+        if (relay != null) {
+            relay.nextReconnectTime = System.currentTimeMillis() + delayMs
+        }
+        
+        Log.d(TAG, "Scheduling transient reconnect to $relayUrl in ${delayMs}ms (attempt $attempt) reason=$reason")
+        scope.launch {
+            delay(delayMs)
+            connectToRelay(relayUrl)
+        }
+    }
+
+    private fun isBenignDisconnect(error: Throwable): Boolean {
+        if (error is java.net.SocketException) return true
+        val msg = error.message?.lowercase() ?: return false
+        if (msg.contains("cancelled") || msg.contains("canceled")) return true
+        if (msg.contains("socket is not connected")) return true
+        if (msg.contains("websocket closed: 1000")) return true
+        if (msg.contains("going away")) return true
+        if (msg.contains("stream was reset")) return true
+        return false
     }
     
     private fun updateRelayStatus(url: String, isConnected: Boolean, error: Throwable? = null) {
@@ -929,6 +1024,7 @@ class NostrRelayManager private constructor() {
     private inner class RelayWebSocketListener(private val relayUrl: String) : WebSocketListener() {
         
         override fun onOpen(webSocket: WebSocket, response: Response) {
+            connectingRelays.remove(relayUrl)
             Log.d(TAG, "✅ Connected to Nostr relay: $relayUrl")
             updateRelayStatus(relayUrl, true)
             
@@ -956,12 +1052,14 @@ class NostrRelayManager private constructor() {
         }
         
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+            connectingRelays.remove(relayUrl)
             Log.d(TAG, "WebSocket closed for $relayUrl: $code $reason")
             val error = Exception("WebSocket closed: $code $reason")
             handleDisconnection(relayUrl, error)
         }
         
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+            connectingRelays.remove(relayUrl)
             Log.e(TAG, "❌ WebSocket failure for $relayUrl: ${t.message}")
             handleDisconnection(relayUrl, t)
         }

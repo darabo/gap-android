@@ -114,9 +114,8 @@ class OnboardingCoordinator(
             Log.d(TAG, "  $permission: ${if (granted) "GRANTED" else "DENIED"}")
         }
 
-        val allGranted = permissions.values.all { it }
         val criticalPermissions = getCriticalPermissions()
-        val criticalGranted = criticalPermissions.all { permissions[it] == true }
+        val criticalGranted = criticalPermissions.all { permissionManager.isPermissionGranted(it) }
 
         when {
             criticalGranted -> {
@@ -125,7 +124,7 @@ class OnboardingCoordinator(
                     onBackgroundLocationRequired()
                     return
                 }
-                if (allGranted) {
+                if (permissions.values.all { it }) {
                     Log.d(TAG, "All permissions granted successfully")
                     completeOnboarding()
                 } else {

@@ -62,8 +62,11 @@ object ServiceUuidRotation {
     }
 
     /**
-     * Get all currently valid service UUIDs (for scanning)
-     * Includes current bucket and ±1 for overlap tolerance, plus fallback for Bitchat
+     * Get all currently valid service UUIDs (for scanning).
+     *
+     * We always include current, previous, and next buckets to tolerate
+     * moderate clock skew across devices. During the overlap window we also
+     * include one extra future bucket.
      */
     fun getValidServiceUuids(includeLegacy: Boolean = true): List<UUID> {
         val secret = rotationSecret ?: return listOf(FALLBACK_UUID)
@@ -76,9 +79,12 @@ object ServiceUuidRotation {
         // Include previous bucket (for devices slightly behind)
         uuids.add(deriveUuidForBucket(currentBucket - 1, secret))
 
-        // Include next bucket if we're in overlap window
+        // Include next bucket (for devices slightly ahead)
+        uuids.add(deriveUuidForBucket(currentBucket + 1, secret))
+
+        // Include one extra future bucket in overlap window
         if (isInOverlapWindow()) {
-            uuids.add(deriveUuidForBucket(currentBucket + 1, secret))
+            uuids.add(deriveUuidForBucket(currentBucket + 2, secret))
         }
 
         // Always include legacy UUIDs for backward + Bitchat compatibility (if enabled)

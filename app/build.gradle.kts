@@ -29,6 +29,7 @@ android {
             dimension = "variant"
             buildConfigField("boolean", "HAS_TOR", "true")
             buildConfigField("boolean", "HAS_GEOHASH", "true")
+            buildConfigField("boolean", "HAS_P2P", "true")
         }
         create("light") {
             dimension = "variant"
@@ -36,6 +37,7 @@ android {
             versionNameSuffix = "-light"
             buildConfigField("boolean", "HAS_TOR", "false")
             buildConfigField("boolean", "HAS_GEOHASH", "false")
+            buildConfigField("boolean", "HAS_P2P", "false")
         }
     }
 
@@ -97,6 +99,10 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
+        freeCompilerArgs += listOf(
+            "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
+            "-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi"
+        )
     }
     buildFeatures {
         compose = true

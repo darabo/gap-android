@@ -15,6 +15,7 @@ import java.util.*
 data class FavoriteRelationship(
     val peerNoisePublicKey: ByteArray,    // Noise static public key (32 bytes)
     val peerNostrPublicKey: String?,      // npub bech32 string
+    val peerLibp2pId: String?,            // libp2p peer id
     val peerNickname: String,
     val isFavorite: Boolean,              // We favorited them
     val theyFavoritedUs: Boolean,         // They favorited us
@@ -31,6 +32,7 @@ data class FavoriteRelationship(
 
         if (!peerNoisePublicKey.contentEquals(other.peerNoisePublicKey)) return false
         if (peerNostrPublicKey != other.peerNostrPublicKey) return false
+        if (peerLibp2pId != other.peerLibp2pId) return false
         if (peerNickname != other.peerNickname) return false
         if (isFavorite != other.isFavorite) return false
         if (theyFavoritedUs != other.theyFavoritedUs) return false
@@ -41,6 +43,7 @@ data class FavoriteRelationship(
     override fun hashCode(): Int {
         var result = peerNoisePublicKey.contentHashCode()
         result = 31 * result + (peerNostrPublicKey?.hashCode() ?: 0)
+        result = 31 * result + (peerLibp2pId?.hashCode() ?: 0)
         result = 31 * result + peerNickname.hashCode()
         result = 31 * result + isFavorite.hashCode()
         result = 31 * result + theyFavoritedUs.hashCode()
@@ -124,6 +127,7 @@ class FavoritesPersistenceService private constructor(private val context: Conte
             val relationship = FavoriteRelationship(
                 peerNoisePublicKey = noisePublicKey,
                 peerNostrPublicKey = nostrPubkey,
+                peerLibp2pId = null,
                 peerNickname = "Unknown",
                 isFavorite = false,
                 theyFavoritedUs = false,
@@ -148,6 +152,22 @@ class FavoritesPersistenceService private constructor(private val context: Conte
             Log.d(TAG, "Indexed npub for peerID ${pid.take(8)}…")
         } else {
             Log.w(TAG, "updateNostrPublicKeyForPeerID called with non-16hex peerID: $peerID")
+        }
+    }
+
+    /** Update libp2p peer id association for a known Noise key. */
+    fun updateLibp2pPeerID(noisePublicKey: ByteArray, libp2pPeerId: String) {
+        if (libp2pPeerId.isBlank()) return
+        val keyHex = noisePublicKey.joinToString("") { "%02x".format(it) }
+        val existing = favorites[keyHex]
+        if (existing != null) {
+            favorites[keyHex] = existing.copy(
+                peerLibp2pId = libp2pPeerId,
+                lastUpdated = Date()
+            )
+            saveFavorites()
+            notifyChanged(keyHex)
+            Log.d(TAG, "Updated libp2p peer id for ${keyHex.take(16)}...")
         }
     }
 
@@ -193,6 +213,7 @@ class FavoritesPersistenceService private constructor(private val context: Conte
             FavoriteRelationship(
                 peerNoisePublicKey = noisePublicKey,
                 peerNostrPublicKey = null,
+                peerLibp2pId = null,
                 peerNickname = nickname,
                 isFavorite = isFavorite,
                 theyFavoritedUs = false,
@@ -209,13 +230,20 @@ class FavoritesPersistenceService private constructor(private val context: Conte
     }
 
     /** Update peer favorited-us flag */
-    fun updatePeerFavoritedUs(noisePublicKey: ByteArray, theyFavoritedUs: Boolean) {
+    fun updatePeerFavoritedUs(
+        noisePublicKey: ByteArray,
+        theyFavoritedUs: Boolean,
+        peerNostrPublicKey: String? = null,
+        peerLibp2pId: String? = null
+    ) {
         val keyHex = noisePublicKey.joinToString("") { "%02x".format(it) }
         val existing = favorites[keyHex]
 
         if (existing != null) {
             val updated = existing.copy(
                 theyFavoritedUs = theyFavoritedUs,
+                peerNostrPublicKey = peerNostrPublicKey ?: existing.peerNostrPublicKey,
+                peerLibp2pId = peerLibp2pId ?: existing.peerLibp2pId,
                 lastUpdated = Date()
             )
             favorites[keyHex] = updated
@@ -339,6 +367,7 @@ class FavoritesPersistenceService private constructor(private val context: Conte
 private data class FavoriteRelationshipData(
     val peerNoisePublicKeyHex: String,
     val peerNostrPublicKey: String?,
+    val peerLibp2pId: String?,
     val peerNickname: String,
     val isFavorite: Boolean,
     val theyFavoritedUs: Boolean,
@@ -350,6 +379,7 @@ private data class FavoriteRelationshipData(
             return FavoriteRelationshipData(
                 peerNoisePublicKeyHex = relationship.peerNoisePublicKey.joinToString("") { "%02x".format(it) },
                 peerNostrPublicKey = relationship.peerNostrPublicKey,
+                peerLibp2pId = relationship.peerLibp2pId,
                 peerNickname = relationship.peerNickname,
                 isFavorite = relationship.isFavorite,
                 theyFavoritedUs = relationship.theyFavoritedUs,
@@ -364,6 +394,7 @@ private data class FavoriteRelationshipData(
         return FavoriteRelationship(
             peerNoisePublicKey = noiseKeyBytes,
             peerNostrPublicKey = peerNostrPublicKey,
+            peerLibp2pId = peerLibp2pId,
             peerNickname = peerNickname,
             isFavorite = isFavorite,
             theyFavoritedUs = theyFavoritedUs,

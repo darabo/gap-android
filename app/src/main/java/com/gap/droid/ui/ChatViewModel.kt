@@ -815,24 +815,11 @@ import com.gapmesh.droid.ui.ScreenshotDetector
                     isFavorite = isNowFavorite
                 )
 
-                // Send favorite notification via mesh or Nostr with our npub if available
+                // Send favorite notification via MessageRouter (mesh -> p2p -> nostr)
                 try {
-                    val myNostr = com.gapmesh.droid.nostr.NostrIdentityBridge.getCurrentNostrIdentity(getApplication())
-                    val announcementContent = if (isNowFavorite) "[FAVORITED]:${myNostr?.npub ?: ""}" else "[UNFAVORITED]:${myNostr?.npub ?: ""}"
-                    // Prefer mesh if session established, else try Nostr
-                    if (meshService.hasEstablishedSession(peerID)) {
-                        // Reuse existing private message path for notifications
-                        meshService.sendPrivateMessage(
-                            announcementContent,
-                            peerID,
-                            nickname,
-                            java.util.UUID.randomUUID().toString()
-                        )
-                    } else {
-                        val nostrTransport = com.gapmesh.droid.nostr.NostrTransport.getInstance(getApplication())
-                        nostrTransport.senderPeerID = meshService.myPeerID
-                        nostrTransport.sendFavoriteNotification(peerID, isNowFavorite)
-                    }
+                    com.gapmesh.droid.services.MessageRouter
+                        .getInstance(getApplication(), meshService)
+                        .sendFavoriteNotification(peerID, isNowFavorite)
                 } catch (_: Exception) { }
             }
         } catch (_: Exception) { }

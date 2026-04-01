@@ -57,6 +57,7 @@ import com.gapmesh.droid.net.TorMode
 import com.gapmesh.droid.net.TorPreferenceManager
 import com.gapmesh.droid.net.ArtiTorManager
 import com.gapmesh.droid.onboarding.LanguagePreferenceManager
+import com.gapmesh.droid.service.P2PPreferenceManager
 import com.gapmesh.droid.util.ApkShareHelper
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Email
@@ -491,7 +492,9 @@ fun AboutSheet(
                     // Settings Section - Unified Card with Toggles
                     item(key = "settings") {
                         LaunchedEffect(Unit) { PoWPreferenceManager.init(context) }
+                        LaunchedEffect(Unit) { P2PPreferenceManager.init(context) }
                         val powEnabled by PoWPreferenceManager.powEnabled.collectAsState()
+                        val p2pEnabled by P2PPreferenceManager.enabled.collectAsState()
                         val powDifficulty by PoWPreferenceManager.powDifficulty.collectAsState()
                         var backgroundEnabled by remember { mutableStateOf(com.gapmesh.droid.service.MeshServicePreferences.isBackgroundEnabled(true)) }
                         val torMode = remember { mutableStateOf(TorPreferenceManager.get(context)) }
@@ -542,6 +545,20 @@ fun AboutSheet(
                                         subtitle = stringResource(R.string.about_pow_tip),
                                         checked = powEnabled,
                                         onCheckedChange = { PoWPreferenceManager.setPowEnabled(it) }
+                                    )
+
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 56.dp),
+                                        color = colorScheme.outline.copy(alpha = 0.12f)
+                                    )
+
+                                    SettingsToggleRow(
+                                        icon = Icons.Filled.Cloud,
+                                        title = "P2P Private Routing",
+                                        subtitle = "Use libp2p as the private-message fallback before Nostr.",
+                                        checked = p2pEnabled,
+                                        onCheckedChange = { P2PPreferenceManager.setEnabled(it) },
+                                        enabled = com.gapmesh.droid.BuildConfig.HAS_P2P
                                     )
                                     
                                     if (com.gapmesh.droid.BuildConfig.HAS_TOR) {

@@ -399,6 +399,13 @@ class BluetoothPacketBroadcaster(
         
         // Send to server connections (devices connected to our GATT server)
         subscribedDevices.forEach { device ->
+            val serverConn = connectedDevices[device.address]
+            if (serverConn == null || serverConn.isClient) {
+                // Guard against stale subscribed entries during rapid connect/disconnect churn.
+                connectionTracker.removeSubscribedDevice(device)
+                connectionTracker.addressPeerMap.remove(device.address)
+                return@forEach
+            }
             if (device.address == routed.relayAddress) {
                 Log.d(TAG, "Skipping broadcast to client back to relayer: ${device.address}")
                 return@forEach
@@ -444,6 +451,12 @@ class BluetoothPacketBroadcaster(
         characteristic: BluetoothGattCharacteristic?
     ): Boolean {
         return try {
+            val liveConn = connectionTracker.getConnectedDevices()[device.address]
+            if (liveConn == null || liveConn.isClient) {
+                connectionTracker.removeSubscribedDevice(device)
+                connectionTracker.addressPeerMap.remove(device.address)
+                return false
+            }
             characteristic?.let { char ->
                 char.value = data
                 val result = gattServer?.notifyCharacteristicChanged(device, char, false) ?: false
@@ -468,11 +481,8 @@ class BluetoothPacketBroadcaster(
             false
         } catch (e: Exception) {
             Log.w(TAG, "Error sending to server connection ${device.address}: ${e.message}")
-            connectionScope.launch {
-                delay(CLEANUP_DELAY)
-                connectionTracker.removeSubscribedDevice(device)
-                connectionTracker.addressPeerMap.remove(device.address)
-            }
+            connectionTracker.removeSubscribedDevice(device)
+            connectionTracker.addressPeerMap.remove(device.address)
             false
         }
     }

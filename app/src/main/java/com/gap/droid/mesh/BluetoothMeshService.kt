@@ -250,6 +250,7 @@ class BluetoothMeshService(private val context: Context) {
                 // Send announcement and cached messages after key exchange
                 serviceScope.launch {
                     Log.d(TAG, "Key exchange completed with $peerID; sending follow-ups")
+                    MeshDiagnostics.event("HANDSHAKE_RESULT", "peer=$peerID status=completed", level = Log.INFO)
                     delay(100)
                     sendAnnouncementToPeer(peerID)
                     
@@ -273,6 +274,7 @@ class BluetoothMeshService(private val context: Context) {
                 val signedPacket = signPacketBeforeBroadcast(responsePacket)
                 connectionManager.broadcastPacket(RoutedPacket(signedPacket))
                 Log.d(TAG, "Sent Noise handshake response to $peerID (${response.size} bytes)")
+                MeshDiagnostics.event("HANDSHAKE_RESPONSE", "peer=$peerID bytes=${response.size}", level = Log.INFO)
             }
             
             override fun getPeerInfo(peerID: String): PeerInfo? {
@@ -369,6 +371,7 @@ class BluetoothMeshService(private val context: Context) {
             
             override fun initiateNoiseHandshake(peerID: String) {
                 try {
+                    MeshDiagnostics.event("HANDSHAKE_START", "peer=$peerID", level = Log.INFO)
                     // Initiate proper Noise handshake with specific peer
                     val handshakeData = encryptionService.initiateHandshake(peerID)
 
@@ -387,20 +390,35 @@ class BluetoothMeshService(private val context: Context) {
                         val signedPacket = signPacketBeforeBroadcast(packet)
                         connectionManager.broadcastPacket(RoutedPacket(signedPacket))
                         Log.d(TAG, "Initiated Noise handshake with $peerID (${handshakeData.size} bytes)")
+                        MeshDiagnostics.event("HANDSHAKE_PACKET", "peer=$peerID bytes=${handshakeData.size}", level = Log.INFO)
                     } else {
                         Log.w(TAG, "Failed to generate Noise handshake data for $peerID")
+                        MeshDiagnostics.event("HANDSHAKE_RESULT", "peer=$peerID status=failed reason=no_payload", level = Log.WARN)
                     }
                     
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to initiate Noise handshake with $peerID: ${e.message}")
+                    MeshDiagnostics.event(
+                        "HANDSHAKE_RESULT",
+                        "peer=$peerID status=failed reason=exception message=${e.message}",
+                        level = Log.ERROR,
+                        forceRelease = true
+                    )
                 }
             }
             
             override fun processNoiseHandshakeMessage(payload: ByteArray, peerID: String): ByteArray? {
                 return try {
+                    MeshDiagnostics.event("HANDSHAKE_PROCESS", "peer=$peerID bytes=${payload.size}")
                     encryptionService.processHandshakeMessage(payload, peerID)
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to process handshake message from $peerID: ${e.message}")
+                    MeshDiagnostics.event(
+                        "HANDSHAKE_PROCESS",
+                        "peer=$peerID status=failed message=${e.message}",
+                        level = Log.ERROR,
+                        forceRelease = true
+                    )
                     null
                 }
             }
@@ -702,6 +720,8 @@ class BluetoothMeshService(private val context: Context) {
             Log.e(TAG, "Failed to start Bluetooth services")
         }
     }
+
+    fun isRunning(): Boolean = isActive
     
     /**
      * Stop all mesh services
@@ -1255,6 +1275,7 @@ class BluetoothMeshService(private val context: Context) {
      */
     fun initiateNoiseHandshake(peerID: String) {
         // Delegate to the existing implementation in the MessageHandler delegate
+        MeshDiagnostics.event("HANDSHAKE_START", "peer=$peerID source=public_api", level = Log.INFO)
         messageHandler.delegate?.initiateNoiseHandshake(peerID)
     }
     

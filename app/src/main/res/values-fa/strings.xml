@@ -511,7 +511,7 @@
     <string name="system_tor_restarting">اتصال در حال راه‌اندازی مجدد برای بازیابی اتصال...</string>
     <string name="background_location_required_title">نیاز به مکان در پس‌زمینه</string>
     <string name="background_location_required_subtitle">دسترسی به مکان در پس‌زمینه لازم است</string>
-    <string name="background_location_explanation">گپ مش برای حفظ اتصال مش هنگام بستن برنامه به دسترسی مکان در پس‌زمینه نیاز دارد.</string>
+    <string name="background_location_explanation">گپ مش بهترین عملکرد را با دسترسی به موقعیت مکانی در پس‌زمینه دارد تا بتواند اتصال مش را در حالی که برنامه بسته است، حفظ کند.</string>
     <string name="background_location_settings_tip">به تنظیمات &gt; مکان &gt; مجوزهای برنامه &gt; گپ مش &gt; همیشه اجازه دهید بروید</string>
     <string name="background_location_needs_for">چرا این لازم است؟</string>
     <string name="background_location_needs_bullets">• حفظ شبکهٔ مش\n• دریافت پیام در پس‌زمینه\n• یافتن همتایان نزدیک</string>

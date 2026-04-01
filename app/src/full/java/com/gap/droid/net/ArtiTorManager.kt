@@ -25,6 +25,7 @@ import kotlinx.coroutines.CompletableDeferred
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.random.Random
 
 /**
  * Tor provider implementation using custom-built Arti (Tor-in-Rust).
@@ -499,7 +500,9 @@ class ArtiTorManager private constructor() {
         retryJob?.cancel()
         if (retryAttempts < MAX_RETRY_ATTEMPTS) {
             retryAttempts++
-            val delayMs = (1000L * (1 shl retryAttempts)).coerceAtMost(30000L)
+            val baseDelayMs = (1000L * (1 shl retryAttempts)).coerceAtMost(30000L)
+            val jitterMs = (baseDelayMs / 5).coerceAtLeast(1L) // up to +20%
+            val delayMs = baseDelayMs + Random.nextLong(0L, jitterMs + 1L)
             Log.w(TAG, "Scheduling Arti retry attempt $retryAttempts in ${delayMs}ms")
             retryJob = appScope.launch {
                 delay(delayMs)

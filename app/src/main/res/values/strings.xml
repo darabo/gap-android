@@ -473,9 +473,9 @@
     <string name="verify_my_qr_title">scan to verify me</string>
     <string name="verify_scan_prompt_friend">scan someone else’s QR</string>
     <string name="verify_scan_someone">scan someone else’s QR</string>
-    <string name="verify_show_my_qr">show my qr</string>
+    <string name="verify_show_my_qr">show my QR</string>
     <string name="verify_remove">remove verification</string>
-    <string name="verify_qr_unavailable">qr unavailable</string>
+    <string name="verify_qr_unavailable">QR unavailable</string>
     <string name="verify_camera_permission">camera permission is needed to scan qr codes</string>
     <string name="verify_request_camera">enable camera</string>
     <string name="verify_paste_label">paste verification url</string>
@@ -508,7 +508,7 @@
     <!-- Background Location Permission -->
     <string name="background_location_required_title">Background Location Required</string>
     <string name="background_location_required_subtitle">Background location access is needed</string>
-    <string name="background_location_explanation">Gap Mesh needs background location access to maintain mesh connectivity while the app is closed.</string>
+    <string name="background_location_explanation">Gap Mesh best runs with background location access to maintain mesh connectivity while the app is closed.</string>
     <string name="background_location_settings_tip">Go to Settings > Location > App permissions > Gap Mesh > Allow all the time</string>
     <string name="background_location_needs_for">Why is this needed?</string>
     <string name="background_location_needs_bullets">• Maintaining mesh network\n• Receiving messages in background\n• Discovering nearby peers</string>

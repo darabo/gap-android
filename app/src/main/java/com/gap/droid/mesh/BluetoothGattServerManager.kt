@@ -28,7 +28,10 @@ class BluetoothGattServerManager(
     private val powerManager: PowerManager,
     private val delegate: BluetoothConnectionManagerDelegate?
 ) {
-    
+    private enum class AdvertisingPayloadMode {
+        FULL,
+        COMPACT
+    }
 
     
     // Core Bluetooth components
@@ -49,6 +52,8 @@ class BluetoothGattServerManager(
     private var advertisingRestartJob: Job? = null
     private var advertisingRetryCount = 0
     private var isAdvertisingStarted = false
+    private var advertisingPayloadMode = AdvertisingPayloadMode.FULL
+    private var advertisingFallbackUsed = false
     
     companion object {
         private const val TAG = "BluetoothGattServerManager"
@@ -101,24 +106,32 @@ class BluetoothGattServerManager(
 
         if (isActive) {
             Log.d(TAG, "GATT server already active; start is a no-op")
+            MeshDiagnostics.event("SERVER_START", "already_active=true", level = Log.INFO)
             return true
         }
         if (!permissionManager.hasBluetoothPermissions()) {
             Log.e(TAG, "Missing Bluetooth permissions")
+            MeshDiagnostics.event("SERVER_START_BLOCKED", "reason=missing_permissions", level = Log.WARN)
             return false
         }
         
         if (bluetoothAdapter?.isEnabled != true) {
             Log.e(TAG, "Bluetooth is not enabled")
+            MeshDiagnostics.event("SERVER_START_BLOCKED", "reason=bluetooth_disabled", level = Log.WARN)
             return false
         }
         
         if (bleAdvertiser == null) {
             Log.e(TAG, "BLE advertiser not available")
+            MeshDiagnostics.event("SERVER_START_BLOCKED", "reason=advertiser_unavailable", level = Log.WARN)
             return false
         }
         
         isActive = true
+        advertisingRetryCount = 0
+        advertisingPayloadMode = AdvertisingPayloadMode.FULL
+        advertisingFallbackUsed = false
+        MeshDiagnostics.event("SERVER_START", "active=true", level = Log.INFO)
         
         connectionScope.launch {
             setupGattServer()
@@ -145,6 +158,8 @@ class BluetoothGattServerManager(
         }
 
         isActive = false
+        advertisingPayloadMode = AdvertisingPayloadMode.FULL
+        advertisingFallbackUsed = false
 
         connectionScope.launch {
             stopAdvertisingRestartTimer()
@@ -164,6 +179,7 @@ class BluetoothGattServerManager(
             gattServer = null
             
             Log.i(TAG, "GATT server stopped")
+            MeshDiagnostics.event("SERVER_STOP", "complete=true", level = Log.INFO)
         }
     }
     
@@ -195,6 +211,7 @@ class BluetoothGattServerManager(
                 when (newState) {
                     BluetoothProfile.STATE_CONNECTED -> {
                         Log.i(TAG, "Server: Device connected ${device.address}")
+                        MeshDiagnostics.event("SERVER_CONN", "addr=${device.address} state=connected status=$status")
                         
                         // Get best available RSSI (scan RSSI for server connections)
                         val rssi = connectionTracker.getBestRSSI(device.address) ?: Int.MIN_VALUE
@@ -205,16 +222,10 @@ class BluetoothGattServerManager(
                             isClient = false
                         )
                         connectionTracker.addDeviceConnection(device.address, deviceConn)
-
-                        connectionScope.launch {
-                            delay(1000)
-                            if (isActive) { // Check if still active
-                                delegate?.onDeviceConnected(device)
-                            }
-                        }
                     }
                     BluetoothProfile.STATE_DISCONNECTED -> {
                         Log.i(TAG, "Server: Device disconnected ${device.address}")
+                        MeshDiagnostics.event("SERVER_CONN", "addr=${device.address} state=disconnected status=$status")
                         connectionTracker.cleanupDeviceConnection(device.address)
                         // Notify delegate about device disconnection so higher layers can update direct flags
                         delegate?.onDeviceDisconnected(device)
@@ -231,8 +242,10 @@ class BluetoothGattServerManager(
                 
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     Log.d(TAG, "Server: Service added successfully: ${service.uuid}")
+                    MeshDiagnostics.event("SERVER_GATT_SERVICE", "uuid=${service.uuid} status=success")
                 } else {
                     Log.e(TAG, "Server: Failed to add service: ${service.uuid}, status: $status")
+                    MeshDiagnostics.event("SERVER_GATT_SERVICE", "uuid=${service.uuid} status=failed code=$status", level = Log.WARN)
                 }
             }
             
@@ -261,10 +274,17 @@ class BluetoothGattServerManager(
                     } else {
                         Log.w(TAG, "Server: Failed to parse packet from ${device.address}, size: ${value.size} bytes")
                         Log.w(TAG, "Server: Packet data: ${value.joinToString(" ") { "%02x".format(it) }}")
+                        MeshDiagnostics.event(
+                            "SERVER_PACKET_PARSE",
+                            "addr=${device.address} status=failed size=${value.size}",
+                            level = Log.WARN,
+                            throttleKey = "server_packet_parse_failed",
+                            throttleMs = 5_000L
+                        )
                     }
                     
                     if (responseNeeded) {
-                        gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+                        safeSendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, "char_write")
                     }
                 }
             }
@@ -297,7 +317,7 @@ class BluetoothGattServerManager(
                 }
                 
                 if (responseNeeded) {
-                    gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+                    safeSendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, "desc_write")
                 }
             }
         }
@@ -372,6 +392,33 @@ class BluetoothGattServerManager(
         }
         
         Log.i(TAG, "GATT server setup complete")
+        MeshDiagnostics.event(
+            "SERVER_SETUP",
+            "legacyMode=$legacyMode services=${if (legacyMode) 2 else 1}",
+            level = Log.INFO
+        )
+    }
+
+    private fun safeSendResponse(
+        device: BluetoothDevice,
+        requestId: Int,
+        status: Int,
+        source: String
+    ) {
+        try {
+            gattServer?.sendResponse(device, requestId, status, 0, null)
+        } catch (e: Exception) {
+            // Some stacks throw on sendResponse when link drops between callback dispatch and response.
+            MeshDiagnostics.event(
+                "SERVER_RESPONSE",
+                "source=$source addr=${device.address} status=failed message=${e.message}",
+                level = Log.WARN,
+                forceRelease = true,
+                throttleKey = "server_response_failed_${device.address}",
+                throttleMs = 2_000L
+            )
+            Log.w(TAG, "Server: sendResponse failed for ${device.address} source=$source: ${e.message}")
+        }
     }
     
     /**
@@ -385,30 +432,38 @@ class BluetoothGattServerManager(
         // Guard conditions – never throw here to avoid crashing the app from a background coroutine
         if (!permissionManager.hasBluetoothPermissions()) {
             Log.w(TAG, "Not starting advertising: missing Bluetooth permissions")
+            MeshDiagnostics.event("ADV_START_SKIPPED", "reason=missing_permissions", level = Log.WARN)
             return
         }
         if (bluetoothAdapter == null) {
             Log.w(TAG, "Not starting advertising: bluetoothAdapter is null")
+            MeshDiagnostics.event("ADV_START_SKIPPED", "reason=adapter_null", level = Log.WARN)
             return
         }
         if (!isActive) {
             Log.d(TAG, "Not starting advertising: manager not active")
+            MeshDiagnostics.event("ADV_START_SKIPPED", "reason=inactive", throttleKey = "adv_skip_inactive", throttleMs = 5_000L)
             return
         }
         if (!enabled) {
             Log.i(TAG, "Not starting advertising: GATT Server disabled via debug settings")
+            MeshDiagnostics.event("ADV_START_SKIPPED", "reason=debug_disabled", level = Log.INFO)
             return
         }
         if (bleAdvertiser == null) {
             Log.w(TAG, "Not starting advertising: BLE advertiser not available on this device")
+            MeshDiagnostics.event("ADV_START_SKIPPED", "reason=advertiser_unavailable", level = Log.WARN)
             return
         }
         if (!bluetoothAdapter.isMultipleAdvertisementSupported) {
             Log.w(TAG, "Not starting advertising: multiple advertisement not supported on this device")
+            MeshDiagnostics.event("ADV_START_SKIPPED", "reason=multiple_adv_unsupported", level = Log.WARN)
             return
         }
 
         val settings = powerManager.getAdvertiseSettings()
+        val payloadMode = advertisingPayloadMode
+        val payloadLabel = if (payloadMode == AdvertisingPayloadMode.FULL) "full" else "compact"
         
         // Use rotating UUID for privacy, or static UUID for legacy compatibility
         val legacyMode = try { 
@@ -416,20 +471,29 @@ class BluetoothGattServerManager(
         } catch (_: Exception) { false }
         
         val serviceUuid = if (legacyMode) {
-            // Legacy mode: use original Bitchat UUID so Bitchat/Noghteha devices can find us
-            ServiceUuidRotation.BITCHAT_LEGACY_UUID
-        } else {
-            // Privacy mode: use rotating UUID
-            ServiceUuidRotation.getCurrentServiceUuid()
-        }
+                // Legacy mode: use original Bitchat UUID so Bitchat/Noghteha devices can find us.
+                ServiceUuidRotation.BITCHAT_LEGACY_UUID
+            } else {
+                // Privacy mode: use rotating UUID.
+                ServiceUuidRotation.getCurrentServiceUuid()
+            }
         
         Log.d(TAG, "Advertising with UUID: $serviceUuid (legacy: $legacyMode)")
-        
-        val data = AdvertiseData.Builder()
+        MeshDiagnostics.event(
+            "ADV_START",
+            "uuid=$serviceUuid legacy=$legacyMode mode=${settings.mode} tx=${settings.txPowerLevel} payload=$payloadLabel fallbackUsed=$advertisingFallbackUsed",
+            level = Log.INFO
+        )
+
+        val dataBuilder = AdvertiseData.Builder()
             .addServiceUuid(ParcelUuid(serviceUuid))
             .setIncludeTxPowerLevel(false)
             .setIncludeDeviceName(false)
-            .build()
+        if (payloadMode == AdvertisingPayloadMode.FULL) {
+            // Duplicate UUID in service data improves discoverability on stacks that drop service UUID lists.
+            dataBuilder.addServiceData(ParcelUuid(serviceUuid), byteArrayOf(0x01))
+        }
+        val data = dataBuilder.build()
         
         advertiseCallback = object : AdvertiseCallback() {
             override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
@@ -439,17 +503,55 @@ class BluetoothGattServerManager(
                 Log.i(TAG, "Advertising started successfully (power mode: $mode)")
                 isAdvertisingStarted = true
                 advertisingRetryCount = 0  // Reset retry count on success
-                // Start the automatic restart timer
+                MeshDiagnostics.event(
+                    "ADV_RESULT",
+                    "status=success powerMode=$mode payload=$payloadLabel fallbackUsed=$advertisingFallbackUsed",
+                    level = Log.INFO
+                )
                 startAdvertisingRestartTimer()
             }
             
             override fun onStartFailure(errorCode: Int) {
                 Log.e(TAG, "Advertising failed with error code: $errorCode")
+                MeshDiagnostics.event(
+                    "ADV_RESULT",
+                    "status=failed errorCode=$errorCode retry=$advertisingRetryCount payload=$payloadLabel fallbackUsed=$advertisingFallbackUsed",
+                    level = Log.WARN,
+                    forceRelease = true
+                )
                 isAdvertisingStarted = false
+                if (
+                    errorCode == AdvertiseCallback.ADVERTISE_FAILED_DATA_TOO_LARGE &&
+                    advertisingPayloadMode == AdvertisingPayloadMode.FULL &&
+                    isActive
+                ) {
+                    advertisingPayloadMode = AdvertisingPayloadMode.COMPACT
+                    advertisingFallbackUsed = true
+                    advertisingRetryCount = 0
+                    Log.w(TAG, "Advertising payload too large; retrying with compact payload")
+                    MeshDiagnostics.event(
+                        "ADV_FALLBACK",
+                        "reason=data_too_large errorCode=$errorCode from=full to=compact",
+                        level = Log.WARN,
+                        forceRelease = true
+                    )
+                    connectionScope.launch {
+                        delay(200)
+                        if (isActive) {
+                            startAdvertising()
+                        }
+                    }
+                    return
+                }
                 // Attempt retry if we haven't exceeded max retries
                 if (advertisingRetryCount < MAX_ADVERTISING_RETRIES && isActive) {
                     advertisingRetryCount++
                     Log.i(TAG, "Retrying advertising (attempt $advertisingRetryCount of $MAX_ADVERTISING_RETRIES)")
+                    MeshDiagnostics.event(
+                        "ADV_RETRY",
+                        "attempt=$advertisingRetryCount max=$MAX_ADVERTISING_RETRIES errorCode=$errorCode payload=$payloadLabel fallbackUsed=$advertisingFallbackUsed",
+                        level = Log.INFO
+                    )
                     connectionScope.launch {
                         delay(ADVERTISING_RETRY_DELAY_MS)
                         if (isActive) {
@@ -479,8 +581,10 @@ class BluetoothGattServerManager(
         if (!permissionManager.hasBluetoothPermissions() || bleAdvertiser == null) return
         try {
             advertiseCallback?.let { cb -> bleAdvertiser.stopAdvertising(cb) }
+            MeshDiagnostics.event("ADV_STOP", "reason=explicit", level = Log.INFO)
         } catch (e: Exception) {
             Log.w(TAG, "Error stopping advertising: ${e.message}")
+            MeshDiagnostics.event("ADV_STOP", "reason=explicit_error message=${e.message}", level = Log.WARN)
         }
     }
     
@@ -494,7 +598,19 @@ class BluetoothGattServerManager(
             while (isActive) {
                 delay(ADVERTISING_RESTART_INTERVAL_MS)
                 if (isActive && isAdvertisingStarted) {
+                    val activeConnections = connectionTracker.getConnectedDeviceCount()
+                    if (activeConnections > 0) {
+                        MeshDiagnostics.event(
+                            "ADV_RESTART_SKIPPED",
+                            "reason=active_connections count=$activeConnections",
+                            level = Log.INFO,
+                            throttleKey = "adv_restart_skipped_active",
+                            throttleMs = ADVERTISING_RESTART_INTERVAL_MS
+                        )
+                        continue
+                    }
                     Log.d(TAG, "Advertising restart timer triggered - restarting to maintain visibility")
+                    MeshDiagnostics.event("ADV_RESTART", "trigger=timer", level = Log.INFO)
                     stopAdvertisingInternal()
                     delay(500) // Brief pause before restarting
                     startAdvertising()
@@ -520,8 +636,10 @@ class BluetoothGattServerManager(
         try {
             advertiseCallback?.let { cb -> bleAdvertiser.stopAdvertising(cb) }
             isAdvertisingStarted = false
+            MeshDiagnostics.event("ADV_STOP", "reason=internal", level = Log.DEBUG)
         } catch (e: Exception) {
             Log.w(TAG, "Error stopping advertising: ${e.message}")
+            MeshDiagnostics.event("ADV_STOP", "reason=internal_error message=${e.message}", level = Log.WARN)
         }
     }
     

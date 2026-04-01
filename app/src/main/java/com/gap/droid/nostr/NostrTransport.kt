@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.gapmesh.droid.model.ReadReceipt
 import com.gapmesh.droid.model.NoisePayloadType
+import com.gapmesh.droid.p2p.P2PTransport
 import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -280,7 +281,12 @@ class NostrTransport(
                     return@launch
                 }
                 
-                val content = if (isFavorite) "[FAVORITED]:${senderIdentity.npub}" else "[UNFAVORITED]:${senderIdentity.npub}"
+                val p2p = P2PTransport.getInstance(context)
+                val content = p2p.buildFavoritePayload(
+                    isFavorite = isFavorite,
+                    myNpub = senderIdentity.npub,
+                    myLibp2pPeerId = p2p.localPeerId()
+                )
                 
                 Log.d(TAG, "NostrTransport: preparing FAVORITE($isFavorite) to ${recipientNostrPubkey.take(16)}...")
                 

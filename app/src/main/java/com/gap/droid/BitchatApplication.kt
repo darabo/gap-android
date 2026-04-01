@@ -5,6 +5,10 @@ import com.gapmesh.droid.nostr.RelayDirectory
 import com.gapmesh.droid.ui.theme.ThemePreferenceManager
 import com.gapmesh.droid.net.ArtiTorManager
 import com.gapmesh.droid.net.SlipstreamPreferenceManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * ============================================================================
@@ -39,6 +43,7 @@ import com.gapmesh.droid.net.SlipstreamPreferenceManager
  *   messages to each other without needing the internet.
  */
 class BitchatApplication : Application() {
+    private val startupScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     /**
      * onCreate() is called once when the app process starts.
@@ -88,26 +93,34 @@ class BitchatApplication : Application() {
         // bundled with the app (assets/nostr_relays.csv).
         RelayDirectory.initialize(this)
 
-        // Schedule a background job (using Android's WorkManager) to refresh
-        // the relay list every 24 hours. WorkManager survives app restarts
-        // and runs even if the app is closed — unlike a simple coroutine loop.
-        com.gapmesh.droid.workers.RelayDirectoryUpdateWorker.schedule(this)
+        // Non-critical startup tasks are deferred off the main thread to reduce cold-start jank.
+        val appCtx = applicationContext
+        startupScope.launch {
+            // Schedule a background job (using Android's WorkManager) to refresh
+            // the relay list every 24 hours.
+            try { com.gapmesh.droid.workers.RelayDirectoryUpdateWorker.schedule(appCtx) } catch (_: Exception) { }
 
-        // ── STEP 3: CLEANUP WORKERS — Auto-delete old media for privacy ──
-        // MediaCleanupWorker: Deletes sent media (images, voice notes) after
-        //   1 hour, reducing the amount of data left on the device.
-        // StaleDataCleanupWorker: Removes orphaned zero-byte files after 7 days.
-        // These run periodically in the background via WorkManager.
-        com.gapmesh.droid.workers.MediaCleanupWorker.schedule(this)
-        com.gapmesh.droid.workers.StaleDataCleanupWorker.schedule(this)
+            // ── STEP 3: CLEANUP WORKERS — Auto-delete old media for privacy ──
+            try { com.gapmesh.droid.workers.MediaCleanupWorker.schedule(appCtx) } catch (_: Exception) { }
+            try { com.gapmesh.droid.workers.StaleDataCleanupWorker.schedule(appCtx) } catch (_: Exception) { }
 
-        // ── STEP 4: GEOHASH LOCATION FEATURES — Location-based chat ─────
-        // "Geohash" is a way to encode a GPS location into a short string
-        // (e.g., "u33dc" for Paris). Users can join location-based chat
-        // channels and see notes pinned to places on a map.
-        // HAS_GEOHASH is a build flag — some builds disable this feature.
-        if (BuildConfig.HAS_GEOHASH) {
-            try { com.gapmesh.droid.nostr.LocationNotesInitializer.initialize(this) } catch (_: Exception) { }
+            // ── STEP 4: GEOHASH LOCATION FEATURES — Location-based chat ─────
+            if (BuildConfig.HAS_GEOHASH) {
+                try { com.gapmesh.droid.nostr.LocationNotesInitializer.initialize(appCtx) } catch (_: Exception) { }
+                try {
+                    com.gapmesh.droid.nostr.GeohashAliasRegistry.initialize(appCtx)
+                    com.gapmesh.droid.nostr.GeohashConversationRegistry.initialize(appCtx)
+                } catch (_: Exception) { }
+            }
+
+            // Pre-load the Nostr identity (npub = Nostr public key in bech32 format)
+            // so it's immediately available when sending favorite notifications.
+            try {
+                com.gapmesh.droid.nostr.NostrIdentityBridge.getCurrentNostrIdentity(appCtx)
+            } catch (_: Exception) { }
+
+            // Debug toggles are non-critical; initialize off-main.
+            try { com.gapmesh.droid.ui.debug.DebugPreferenceManager.init(appCtx) } catch (_: Exception) { }
         }
 
         // ── STEP 5: FAVORITES — Remember your trusted contacts ────────────
@@ -119,31 +132,9 @@ class BitchatApplication : Application() {
             com.gapmesh.droid.favorites.FavoritesPersistenceService.initialize(this)
         } catch (_: Exception) { }
 
-        // Pre-load the Nostr identity (npub = Nostr public key in bech32 format)
-        // so it's immediately available when sending favorite notifications.
-        try {
-            com.gapmesh.droid.nostr.NostrIdentityBridge.getCurrentNostrIdentity(this)
-        } catch (_: Exception) { }
-
         // ── STEP 6: UI & DEBUG PREFERENCES ─────────────────────────────
         // Theme preference: Light, Dark, or System (follows device setting).
         ThemePreferenceManager.init(this)
-
-        // Debug toggles (e.g., show packet counts, enable verbose logging)
-        // are persisted in SharedPreferences so they survive app restarts.
-        try { com.gapmesh.droid.ui.debug.DebugPreferenceManager.init(this) } catch (_: Exception) { }
-
-        // ── STEP 7: GEOHASH REGISTRIES — Map aliases to Nostr pubkeys ────
-        // GeohashAliasRegistry: maps short peer IDs seen in geohash channels
-        //   to their full Nostr public keys, so we can route DMs.
-        // GeohashConversationRegistry: remembers which geohash a conversation
-        //   was started in, so replies use the correct location identity.
-        if (BuildConfig.HAS_GEOHASH) {
-            try {
-                com.gapmesh.droid.nostr.GeohashAliasRegistry.initialize(this)
-                com.gapmesh.droid.nostr.GeohashConversationRegistry.initialize(this)
-            } catch (_: Exception) { }
-        }
 
         // ── STEP 8: MESH SERVICE — The core of peer-to-peer communication ─
         // Load user preferences for the mesh service (background mode, etc.).

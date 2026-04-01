@@ -30,6 +30,7 @@ class BluetoothConnectionManager(
     
     // Power management
     private val powerManager = PowerManager(context.applicationContext)
+    private var lastKnownDutyCycleMode = powerManager.shouldUseDutyCycle()
     
     // Coroutines
     private val connectionScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -167,20 +168,32 @@ class BluetoothConnectionManager(
      */
     fun startServices(): Boolean {
         Log.i(TAG, "Starting power-optimized Bluetooth services...")
+        MeshDiagnostics.beginRun("connection_manager_start")
+        MeshDiagnostics.event(
+            phase = "PERM_SNAPSHOT",
+            message = "hasPermissions=${permissionManager.hasBluetoothPermissions()} " +
+                "btEnabled=${bluetoothAdapter?.isEnabled == true} " +
+                "scanner=${bluetoothAdapter?.bluetoothLeScanner != null} " +
+                "advertiser=${bluetoothAdapter?.bluetoothLeAdvertiser != null}",
+            level = Log.INFO
+        )
         
         if (!permissionManager.hasBluetoothPermissions()) {
             Log.e(TAG, "Missing Bluetooth permissions")
+            MeshDiagnostics.event("START_BLOCKED", "reason=missing_permissions", level = Log.WARN)
             return false
         }
         
         if (bluetoothAdapter?.isEnabled != true) {
             Log.e(TAG, "Bluetooth is not enabled")
+            MeshDiagnostics.event("START_BLOCKED", "reason=bluetooth_disabled", level = Log.WARN)
             return false
         }
         
         try {
             isActive = true
             Log.d(TAG, "ConnectionManager activated (permissions and adapter OK)")
+            MeshDiagnostics.event("CM_STATE", "state=active", level = Log.INFO)
             
             // Start all component managers
             connectionScope.launch {
@@ -198,6 +211,7 @@ class BluetoothConnectionManager(
                 if (startServer) {
                     if (!serverManager.start()) {
                         Log.e(TAG, "Failed to start server manager")
+                        MeshDiagnostics.event("START_FAILED", "component=server", level = Log.WARN)
                         this@BluetoothConnectionManager.isActive = false
                         return@launch
                     }
@@ -209,6 +223,7 @@ class BluetoothConnectionManager(
                 if (startClient) {
                     if (!clientManager.start()) {
                         Log.e(TAG, "Failed to start client manager")
+                        MeshDiagnostics.event("START_FAILED", "component=client", level = Log.WARN)
                         this@BluetoothConnectionManager.isActive = false
                         return@launch
                     }
@@ -218,12 +233,14 @@ class BluetoothConnectionManager(
                 }
                 
                 Log.i(TAG, "Bluetooth services started successfully")
+                MeshDiagnostics.event("START_SUCCESS", "server=$startServer client=$startClient", level = Log.INFO)
             }
             
             return true
             
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start Bluetooth services: ${e.message}")
+            MeshDiagnostics.event("START_EXCEPTION", "message=${e.message}", level = Log.ERROR, forceRelease = true)
             isActive = false
             return false
         }
@@ -234,6 +251,7 @@ class BluetoothConnectionManager(
      */
     fun stopServices() {
         Log.i(TAG, "Stopping power-optimized Bluetooth services")
+        MeshDiagnostics.event("CM_STATE", "state=stopping", level = Log.INFO)
         
         isActive = false
         
@@ -253,6 +271,7 @@ class BluetoothConnectionManager(
             connectionScope.cancel()
             
             Log.i(TAG, "All Bluetooth services stopped")
+            MeshDiagnostics.endRun("connection_manager_stop")
         }
     }
 
@@ -397,8 +416,8 @@ class BluetoothConnectionManager(
         Log.i(TAG, "Power mode changed to: $newMode")
         
         connectionScope.launch {
-            // Avoid rapid scan restarts by checking if we need to change scan behavior
-            val wasUsingDutyCycle = powerManager.shouldUseDutyCycle()
+            val shouldUseDutyCycle = powerManager.shouldUseDutyCycle()
+            lastKnownDutyCycleMode = shouldUseDutyCycle
             
             // Update advertising with new power settings if server enabled
             val serverEnabled = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattServerEnabled.value } catch (_: Exception) { true }
@@ -408,18 +427,17 @@ class BluetoothConnectionManager(
                 serverManager.stop()
             }
             
-            // Only restart scanning if the duty cycle behavior changed
-            val nowUsingDutyCycle = powerManager.shouldUseDutyCycle()
-            if (wasUsingDutyCycle != nowUsingDutyCycle) {
-                Log.d(TAG, "Duty cycle behavior changed (${wasUsingDutyCycle} -> ${nowUsingDutyCycle}), restarting scan")
-                val clientEnabled = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
-                if (clientEnabled) {
+            val clientEnabled = try { com.gapmesh.droid.ui.debug.DebugSettingsManager.getInstance().gattClientEnabled.value } catch (_: Exception) { true }
+            if (clientEnabled) {
+                if (shouldUseDutyCycle) {
+                    Log.d(TAG, "Power mode requires duty cycle scanning; restarting scan policy")
                     clientManager.restartScanning()
                 } else {
-                    clientManager.stop()
+                    Log.d(TAG, "Power mode uses continuous scanning; ensuring scanner stays active")
+                    clientManager.ensureContinuousScanning()
                 }
             } else {
-                Log.d(TAG, "Duty cycle behavior unchanged, keeping existing scan state")
+                clientManager.stop()
             }
             
             // Enforce connection limits

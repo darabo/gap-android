@@ -124,6 +124,10 @@ class MeshForegroundService : Service() {
     private val scope = CoroutineScope(Dispatchers.Default + serviceJob)
     private var isInForeground: Boolean = false
     private var isShuttingDown: Boolean = false
+    private var lastEnsureMeshAttemptAtMs: Long = 0L
+    private var lastEnsureMeshLogAtMs: Long = 0L
+    private var meshStartBlockedCount: Long = 0L
+    private var meshStartSkippedAlreadyRunningCount: Long = 0L
     // Wake Lock to keep CPU awake during active mesh
     private var wakeLock: PowerManager.WakeLock? = null
 
@@ -222,7 +226,7 @@ class MeshForegroundService : Service() {
         }
 
         // Ensure mesh is running (only after permissions are granted)
-        ensureMeshStarted()
+        ensureMeshStarted("onStartCommand")
 
         // Note: startForeground() is already called at the top of this method to satisfy
         // Android's 5-second requirement. The periodic loop will demote us if not eligible.
@@ -232,7 +236,7 @@ class MeshForegroundService : Service() {
             updateJob = scope.launch {
                 while (isActive) {
                     // Retry enabling mesh/foreground once permissions become available
-                    ensureMeshStarted()
+                    ensureMeshStarted("periodic")
                     val eligible = MeshServicePreferences.isBackgroundEnabled(true) && hasAllRequiredPermissions()
                     if (eligible) {
                         // Only update the notification; do not re-call startForeground()
@@ -253,15 +257,50 @@ class MeshForegroundService : Service() {
         return START_STICKY
     }
 
-    private fun ensureMeshStarted() {
+    private fun ensureMeshStarted(reason: String) {
         if (isShuttingDown) return
-        if (!hasBluetoothPermissions()) return
+        if (!hasBluetoothPermissions()) {
+            meshStartBlockedCount += 1
+            maybeLogEnsureMeshState(
+                "blocked_no_permissions",
+                reason,
+                "count=$meshStartBlockedCount"
+            )
+            return
+        }
+
+        val now = System.currentTimeMillis()
+        if (now - lastEnsureMeshAttemptAtMs < 30_000L) {
+            return
+        }
+        lastEnsureMeshAttemptAtMs = now
+
+        val running = try { meshService?.isRunning() == true } catch (_: Exception) { false }
+        if (running) {
+            meshStartSkippedAlreadyRunningCount += 1
+            maybeLogEnsureMeshState(
+                "skip_already_running",
+                reason,
+                "count=$meshStartSkippedAlreadyRunningCount"
+            )
+            return
+        }
+
         try {
-            android.util.Log.d("MeshForegroundService", "Ensuring mesh service is started")
+            maybeLogEnsureMeshState("starting", reason, "")
             meshService?.startServices()
+            maybeLogEnsureMeshState("start_requested", reason, "")
         } catch (e: Exception) {
             android.util.Log.e("MeshForegroundService", "Failed to start mesh service: ${e.message}")
         }
+    }
+
+    private fun maybeLogEnsureMeshState(state: String, reason: String, extra: String) {
+        val now = System.currentTimeMillis()
+        if (now - lastEnsureMeshLogAtMs < 10_000L) return
+        lastEnsureMeshLogAtMs = now
+        val suffix = if (extra.isNotBlank()) " $extra" else ""
+        android.util.Log.d("MeshForegroundService", "ensureMeshStarted state=$state reason=$reason$suffix")
     }
 
     private fun updateNotification(force: Boolean) {

@@ -5,6 +5,8 @@ import android.util.Log
 import com.gapmesh.droid.mesh.BluetoothMeshService
 import com.gapmesh.droid.model.ReadReceipt
 import com.gapmesh.droid.nostr.NostrTransport
+import com.gapmesh.droid.p2p.P2PTransport
+import com.gapmesh.droid.service.P2PPreferenceManager
 
 // ============================================================================
 // MessageRouter.kt — The "Postal Service" That Picks the Best Delivery Route
@@ -39,7 +41,8 @@ import com.gapmesh.droid.nostr.NostrTransport
 class MessageRouter private constructor(
     private val context: Context,
     private var mesh: BluetoothMeshService,
-    private val nostr: NostrTransport
+    private val nostr: NostrTransport,
+    private val p2p: P2PTransport
 ) {
     companion object {
         private const val TAG = "MessageRouter"
@@ -49,11 +52,14 @@ class MessageRouter private constructor(
             val instance = INSTANCE ?: synchronized(this) {
                 INSTANCE ?: run {
                     val nostr = NostrTransport.getInstance(context)
-                    MessageRouter(context.applicationContext, mesh, nostr).also { instance ->
+                    val p2p = P2PTransport.getInstance(context)
+                    P2PPreferenceManager.init(context)
+                    MessageRouter(context.applicationContext, mesh, nostr, p2p).also { instance ->
                         // Register for favorites changes to flush outbox
                         try {
                             com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.addListener(instance.favoriteListener)
                         } catch (_: Exception) {}
+                        instance.ensureP2PNodeState()
                         INSTANCE = instance
                     }
                 }
@@ -61,12 +67,22 @@ class MessageRouter private constructor(
             // Always update mesh reference and sync peer ID
             instance.mesh = mesh
             instance.nostr.senderPeerID = mesh.myPeerID
+            instance.ensureP2PNodeState()
             return instance
         }
     }
 
     // Outbox: peerID -> queued (content, nickname, messageID)
     private val outbox = mutableMapOf<String, MutableList<Triple<String, String, String>>>()
+
+    private fun ensureP2PNodeState() {
+        if (!com.gapmesh.droid.BuildConfig.HAS_P2P) return
+        if (P2PPreferenceManager.isEnabled()) {
+            p2p.startNode()
+        } else {
+            p2p.stopNode()
+        }
+    }
 
     // Listener for favorites changes to flush outbox when npub mapping appears/changes
     private val favoriteListener = object: com.gapmesh.droid.favorites.FavoritesChangeListener {
@@ -102,6 +118,18 @@ class MessageRouter private constructor(
         if (hasMesh && hasEstablished) {
             Log.d(TAG, "Routing PM via mesh to ${toPeerID} msg_id=${messageID.take(8)}…")
             mesh.sendPrivateMessage(content, toPeerID, recipientNickname, messageID)
+        } else if (canSendViaP2P(toPeerID)) {
+            Log.d(TAG, "Routing PM via P2P to ${toPeerID.take(32)}… msg_id=${messageID.take(8)}…")
+            val sent = p2p.sendPrivateMessage(content, toPeerID, recipientNickname, messageID)
+            if (!sent) {
+                Log.w(TAG, "p2p_send_fallback reason=send_failed peer=${toPeerID.take(12)} type=pm")
+                if (canSendViaNostr(toPeerID)) {
+                    nostr.sendPrivateMessage(content, toPeerID, recipientNickname, messageID)
+                } else {
+                    val q = outbox.getOrPut(toPeerID) { mutableListOf() }
+                    q.add(Triple(content, recipientNickname, messageID))
+                }
+            }
         } else if (canSendViaNostr(toPeerID)) {
             Log.d(TAG, "Routing PM via Nostr to ${toPeerID.take(32)}… msg_id=${messageID.take(8)}…")
             nostr.sendPrivateMessage(content, toPeerID, recipientNickname, messageID)
@@ -118,6 +146,12 @@ class MessageRouter private constructor(
         if ((mesh.getPeerInfo(toPeerID)?.isConnected == true) && mesh.hasEstablishedSession(toPeerID)) {
             Log.d(TAG, "Routing READ via mesh to ${toPeerID.take(8)}… id=${receipt.originalMessageID.take(8)}…")
             mesh.sendReadReceipt(receipt.originalMessageID, toPeerID, mesh.getPeerNicknames()[toPeerID] ?: mesh.myPeerID)
+        } else if (canSendViaP2P(toPeerID)) {
+            val sent = p2p.sendReadReceipt(receipt, toPeerID)
+            if (!sent) {
+                Log.w(TAG, "p2p_send_fallback reason=send_failed peer=${toPeerID.take(12)} type=read")
+                nostr.sendReadReceipt(receipt, toPeerID)
+            }
         } else {
             Log.d(TAG, "Routing READ via Nostr to ${toPeerID.take(8)}… id=${receipt.originalMessageID.take(8)}…")
             nostr.sendReadReceipt(receipt, toPeerID)
@@ -135,16 +169,31 @@ class MessageRouter private constructor(
             }
         }
         if (!((mesh.getPeerInfo(toPeerID)?.isConnected == true) && mesh.hasEstablishedSession(toPeerID))) {
-            nostr.sendDeliveryAck(messageID, toPeerID)
+            if (canSendViaP2P(toPeerID)) {
+                val sent = p2p.sendDeliveryAck(messageID, toPeerID)
+                if (!sent) {
+                    Log.w(TAG, "p2p_send_fallback reason=send_failed peer=${toPeerID.take(12)} type=delivered")
+                    nostr.sendDeliveryAck(messageID, toPeerID)
+                }
+            } else {
+                nostr.sendDeliveryAck(messageID, toPeerID)
+            }
         }
     }
 
     fun sendFavoriteNotification(toPeerID: String, isFavorite: Boolean) {
+        val myNpub = try { com.gapmesh.droid.nostr.NostrIdentityBridge.getCurrentNostrIdentity(context)?.npub } catch (_: Exception) { null }
+        val myLibp2pId = p2p.localPeerId()
+        val content = p2p.buildFavoritePayload(isFavorite, myNpub, myLibp2pId)
         if (mesh.getPeerInfo(toPeerID)?.isConnected == true) {
-            val myNpub = try { com.gapmesh.droid.nostr.NostrIdentityBridge.getCurrentNostrIdentity(context)?.npub } catch (_: Exception) { null }
-            val content = if (isFavorite) "[FAVORITED]:${myNpub ?: ""}" else "[UNFAVORITED]:${myNpub ?: ""}"
             val nickname = mesh.getPeerNicknames()[toPeerID] ?: toPeerID
             mesh.sendPrivateMessage(content, toPeerID, nickname)
+        } else if (canSendViaP2P(toPeerID)) {
+            val sent = p2p.sendFavoriteNotification(toPeerID, isFavorite, myNpub)
+            if (!sent) {
+                Log.w(TAG, "p2p_send_fallback reason=send_failed peer=${toPeerID.take(12)} type=favorite")
+                nostr.sendFavoriteNotification(toPeerID, isFavorite)
+            }
         } else {
             nostr.sendFavoriteNotification(toPeerID, isFavorite)
         }
@@ -171,6 +220,8 @@ class MessageRouter private constructor(
             val canNostr = canSendViaNostr(peerID)
             if (hasMesh) {
                 mesh.sendPrivateMessage(content, peerID, nickname, messageID)
+                iterator.remove()
+            } else if (canSendViaP2P(peerID) && p2p.sendPrivateMessage(content, peerID, nickname, messageID)) {
                 iterator.remove()
             } else if (canNostr) {
                 nostr.sendPrivateMessage(content, peerID, nickname, messageID)
@@ -202,6 +253,27 @@ class MessageRouter private constructor(
                 false
             }
         } catch (_: Exception) { false }
+    }
+
+    private fun canSendViaP2P(peerID: String): Boolean {
+        ensureP2PNodeState()
+        if (!com.gapmesh.droid.BuildConfig.HAS_P2P) return false
+        if (!P2PPreferenceManager.isEnabled()) return false
+        if (!p2p.isNodeRunning()) return false
+        return try {
+            if (peerID.length == 64 && peerID.matches(Regex("^[0-9a-fA-F]+$"))) {
+                val noiseKey = hexToBytes(peerID)
+                val fav = com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(noiseKey)
+                fav?.isMutual == true && !fav.peerLibp2pId.isNullOrBlank()
+            } else if (peerID.length == 16 && peerID.matches(Regex("^[0-9a-fA-F]+$"))) {
+                val fav = com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.getFavoriteStatus(peerID)
+                fav?.isMutual == true && !fav.peerLibp2pId.isNullOrBlank()
+            } else {
+                false
+            }
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun hexToBytes(hex: String): ByteArray {

@@ -561,23 +561,35 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
 
     /**
      * Handle favorite/unfavorite notification received over mesh as a private message.
-     * Content format: "[FAVORITED]:npub..." or "[UNFAVORITED]:npub..."
+     * Content format:
+     * - legacy: "[FAVORITED]:npub..." / "[UNFAVORITED]:npub..."
+     * - v2:     "[FAVORITED]:npub...:libp2pPeerId"
      */
     private fun handleFavoriteNotificationFromMesh(content: String, fromPeerID: String) {
         try {
             val isFavorite = content.startsWith("[FAVORITED]")
-            val npub = content.substringAfter(":", "").trim().takeIf { it.startsWith("npub1") }
+            val parts = content.split(":", limit = 3)
+            val npub = parts.getOrNull(1)?.trim()?.takeIf { it.startsWith("npub1") }
+            val peerLibp2pId = parts.getOrNull(2)?.trim()?.takeIf { it.isNotBlank() }
 
             // Update mutual favorite status in persistence
             // Resolve full Noise key if available via delegate peer info
             val peerInfo = delegate?.getPeerInfo(fromPeerID)
             val noiseKey = peerInfo?.noisePublicKey
             if (noiseKey != null) {
-                com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.updatePeerFavoritedUs(noiseKey, isFavorite)
+                com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.updatePeerFavoritedUs(
+                    noisePublicKey = noiseKey,
+                    theyFavoritedUs = isFavorite,
+                    peerNostrPublicKey = npub,
+                    peerLibp2pId = peerLibp2pId
+                )
                 if (npub != null) {
                     // Index by noise key and current mesh peerID for fast Nostr routing
                     com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.updateNostrPublicKey(noiseKey, npub)
                     com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.updateNostrPublicKeyForPeerID(fromPeerID, npub)
+                }
+                if (peerLibp2pId != null) {
+                    com.gapmesh.droid.favorites.FavoritesPersistenceService.shared.updateLibp2pPeerID(noiseKey, peerLibp2pId)
                 }
 
                 // Determine iOS-style guidance text

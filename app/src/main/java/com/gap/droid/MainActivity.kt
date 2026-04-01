@@ -71,6 +71,7 @@ class MainActivity : OrientationAwareActivity() {
     private lateinit var bluetoothStatusManager: BluetoothStatusManager
     private lateinit var locationStatusManager: LocationStatusManager
     private lateinit var batteryOptimizationManager: BatteryOptimizationManager
+    private var hasShownBatteryOptimizationScreenThisSession = false
     
     // Core mesh service - provided by the foreground service holder
     private lateinit var meshService: BluetoothMeshService
@@ -95,6 +96,8 @@ class MainActivity : OrientationAwareActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        hasShownBatteryOptimizationScreenThisSession =
+            savedInstanceState?.getBoolean("battery_optimization_screen_shown_session", false) == true
         
         // Register receiver for force finish signal from shutdown coordinator
         val filter = android.content.IntentFilter(com.gapmesh.droid.util.AppConstants.UI.ACTION_FORCE_FINISH)
@@ -321,6 +324,7 @@ class MainActivity : OrientationAwareActivity() {
                         checkBatteryOptimizationAndProceed()
                     },
                     onSkip = {
+                        hasShownBatteryOptimizationScreenThisSession = true
                         // Skip battery optimization and proceed
                         proceedWithPermissionCheck()
                     },
@@ -637,11 +641,18 @@ class MainActivity : OrientationAwareActivity() {
                 mainViewModel.updateLocationLoading(false)
             }
             currentBatteryOptimizationStatus == BatteryOptimizationStatus.ENABLED -> {
-                // Battery optimization still enabled, show battery optimization screen
-                android.util.Log.d("MainActivity", "Permissions granted, but battery optimization still enabled. Showing battery optimization screen.")
-                mainViewModel.updateBatteryOptimizationStatus(currentBatteryOptimizationStatus)
-                mainViewModel.updateOnboardingState(OnboardingState.BATTERY_OPTIMIZATION_CHECK)
-                mainViewModel.updateBatteryOptimizationLoading(false)
+                if (hasShownBatteryOptimizationScreenThisSession) {
+                    Log.d("MainActivity", "Battery optimization prompt already shown in this onboarding session; continuing initialization")
+                    mainViewModel.updateOnboardingState(OnboardingState.INITIALIZING)
+                    initializeApp()
+                } else {
+                    // Battery optimization still enabled, show battery optimization screen once per onboarding session
+                    hasShownBatteryOptimizationScreenThisSession = true
+                    android.util.Log.d("MainActivity", "Permissions granted, but battery optimization still enabled. Showing battery optimization screen.")
+                    mainViewModel.updateBatteryOptimizationStatus(currentBatteryOptimizationStatus)
+                    mainViewModel.updateOnboardingState(OnboardingState.BATTERY_OPTIMIZATION_CHECK)
+                    mainViewModel.updateBatteryOptimizationLoading(false)
+                }
             }
             else -> {
                 // Both are enabled, proceed to app initialization
@@ -694,10 +705,16 @@ class MainActivity : OrientationAwareActivity() {
                 proceedWithPermissionCheck()
             }
             BatteryOptimizationStatus.ENABLED -> {
-                // Show battery optimization disable screen
-                android.util.Log.d("MainActivity", "Battery optimization enabled, showing disable screen")
-                mainViewModel.updateOnboardingState(OnboardingState.BATTERY_OPTIMIZATION_CHECK)
-                mainViewModel.updateBatteryOptimizationLoading(false)
+                if (hasShownBatteryOptimizationScreenThisSession) {
+                    Log.d("MainActivity", "Battery optimization prompt already shown in this onboarding session; skipping repeat prompt")
+                    proceedWithPermissionCheck()
+                } else {
+                    // Show battery optimization disable screen once per onboarding session
+                    hasShownBatteryOptimizationScreenThisSession = true
+                    android.util.Log.d("MainActivity", "Battery optimization enabled, showing disable screen")
+                    mainViewModel.updateOnboardingState(OnboardingState.BATTERY_OPTIMIZATION_CHECK)
+                    mainViewModel.updateBatteryOptimizationLoading(false)
+                }
             }
         }
     }
@@ -707,6 +724,7 @@ class MainActivity : OrientationAwareActivity() {
      */
     private fun handleBatteryOptimizationDisabled() {
         android.util.Log.d("MainActivity", "Battery optimization disabled by user")
+        hasShownBatteryOptimizationScreenThisSession = true
         mainViewModel.updateBatteryOptimizationLoading(false)
         mainViewModel.updateBatteryOptimizationStatus(BatteryOptimizationStatus.DISABLED)
         proceedWithPermissionCheck()
@@ -781,6 +799,14 @@ class MainActivity : OrientationAwareActivity() {
                 handleOnboardingFailed("Failed to initialize the app: ${e.message}")
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(
+            "battery_optimization_screen_shown_session",
+            hasShownBatteryOptimizationScreenThisSession
+        )
     }
     
     override fun onNewIntent(intent: Intent) {

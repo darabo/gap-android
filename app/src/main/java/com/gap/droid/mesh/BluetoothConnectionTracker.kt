@@ -102,6 +102,11 @@ class BluetoothConnectionTracker(
         pendingConnections.remove(deviceAddress)
         // Mark as awaiting first ANNOUNCE on this connection
         firstAnnounceSeen[deviceAddress] = false
+        MeshDiagnostics.event(
+            "TRACKER_DELTA",
+            "event=connected addr=$deviceAddress role=${if (deviceConn.isClient) "client" else "server"} connected=${connectedDevices.size} pending=${pendingConnections.size}",
+            level = Log.INFO
+        )
     }
     
     /**
@@ -209,6 +214,13 @@ class BluetoothConnectionTracker(
             val attempts = if (currentAttempt?.isExpired() == true) 1 else (currentAttempt?.attempts ?: 0) + 1
             pendingConnections[deviceAddress] = ConnectionAttempt(attempts)
             Log.d(TAG, "Tracker: Added pending connection for $deviceAddress (attempts: $attempts)")
+            MeshDiagnostics.event(
+                "TRACKER_DELTA",
+                "event=pending_add addr=$deviceAddress attempts=$attempts connected=${connectedDevices.size} pending=${pendingConnections.size}",
+                level = Log.DEBUG,
+                throttleKey = "tracker_pending_add",
+                throttleMs = 500L
+            )
             return true
         }
     }
@@ -229,16 +241,20 @@ class BluetoothConnectionTracker(
      */
     fun removePendingConnection(deviceAddress: String) {
         pendingConnections.remove(deviceAddress)
+        MeshDiagnostics.event(
+            "TRACKER_DELTA",
+            "event=pending_remove addr=$deviceAddress connected=${connectedDevices.size} pending=${pendingConnections.size}",
+            level = Log.DEBUG,
+            throttleKey = "tracker_pending_remove",
+            throttleMs = 500L
+        )
     }
     
     /**
      * Get connected device count
      */
     fun getConnectedDeviceCount(): Int = connectedDevices.size
-    
-    /**
-     * Check if connection limit is reached
-     */
+
     /**
      * Check if connection limit is reached
      */
@@ -330,8 +346,14 @@ class BluetoothConnectionTracker(
             subscribedDevices.removeAll { it.address == deviceAddress }
             addressPeerMap.remove(deviceAddress)
         }
+        pendingConnections.remove(deviceAddress)
         firstAnnounceSeen.remove(deviceAddress)
         Log.d(TAG, "Cleaned up device connection for $deviceAddress")
+        MeshDiagnostics.event(
+            "TRACKER_DELTA",
+            "event=cleanup addr=$deviceAddress connected=${connectedDevices.size} pending=${pendingConnections.size}",
+            level = Log.INFO
+        )
     }
     
     /**

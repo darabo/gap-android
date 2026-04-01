@@ -93,21 +93,20 @@ class PowerManager(private val context: Context) : LifecycleEventObserver {
     
     init {
         registerBatteryReceiver()
-        
-        // Register for process lifecycle events on the main thread
-        Handler(Looper.getMainLooper()).post {
-            try {
-                ProcessLifecycleOwner.get().lifecycle.addObserver(this)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to register lifecycle observer: ${e.message}")
-            }
-        }
+
+        // Sync initial foreground/background state before computing power mode.
+        refreshAppBackgroundStateFromLifecycle()
+
+        // Register for process lifecycle events.
+        registerLifecycleObserver()
         
         updatePowerMode()
     }
     
     fun start() {
         Log.i(TAG, "Starting power management")
+        refreshAppBackgroundStateFromLifecycle()
+        updatePowerMode()
         startDutyCycle()
     }
     
@@ -227,9 +226,9 @@ class PowerManager(private val context: Context) : LifecycleEventObserver {
     fun getRSSIThreshold(): Int {
         return when (currentMode) {
             PowerMode.PERFORMANCE -> -95
-            PowerMode.BALANCED -> -85
-            PowerMode.POWER_SAVER -> -75
-            PowerMode.ULTRA_LOW_POWER -> -65
+            PowerMode.BALANCED -> -90
+            PowerMode.POWER_SAVER -> -85
+            PowerMode.ULTRA_LOW_POWER -> -80
         }
     }
     
@@ -237,7 +236,7 @@ class PowerManager(private val context: Context) : LifecycleEventObserver {
      * Check if duty cycling should be used
      */
     fun shouldUseDutyCycle(): Boolean {
-        return currentMode != PowerMode.PERFORMANCE
+        return currentMode == PowerMode.POWER_SAVER || currentMode == PowerMode.ULTRA_LOW_POWER
     }
     
     /**
@@ -293,6 +292,34 @@ class PowerManager(private val context: Context) : LifecycleEventObserver {
             } else {
                 stopDutyCycle()
             }
+        }
+    }
+
+    private fun registerLifecycleObserver() {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            try {
+                ProcessLifecycleOwner.get().lifecycle.addObserver(this)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to register lifecycle observer: ${e.message}")
+            }
+            return
+        }
+
+        Handler(Looper.getMainLooper()).post {
+            try {
+                ProcessLifecycleOwner.get().lifecycle.addObserver(this)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to register lifecycle observer: ${e.message}")
+            }
+        }
+    }
+
+    private fun refreshAppBackgroundStateFromLifecycle() {
+        try {
+            val lifecycle = ProcessLifecycleOwner.get().lifecycle
+            isAppInBackground = !lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to refresh lifecycle background state: ${e.message}")
         }
     }
     
