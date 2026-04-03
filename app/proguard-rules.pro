@@ -31,14 +31,26 @@
 -keepclassmembers class * implements android.location.LocationListener {
     public <methods>;
 }
-# === PRIVACY: Remove all Log calls from release builds ===
-# Strips all android.util.Log.* calls (d, e, i, w, v, wtf)
-# This ensures no sensitive information leaks through logs in production
+# === PRIVACY: Remove all logging from release builds ===
+# Strips all android.util.Log.* calls and standard stream printing APIs.
+# This ensures no sensitive information leaks through logs in production.
 -assumenosideeffects class android.util.Log {
     public static *** d(...);
     public static *** e(...);
     public static *** i(...);
+    public static *** println(...);
     public static *** w(...);
     public static *** v(...);
     public static *** wtf(...);
+}
+
+# Remove direct stdout/stderr prints if any exist in app code.
+-assumenosideeffects class java.io.PrintStream {
+    public void print(...);
+    public void println(...);
+}
+
+# Remove direct throwable stack-trace printing.
+-assumenosideeffects class java.lang.Throwable {
+    public void printStackTrace(...);
 }
