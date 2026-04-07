@@ -31,6 +31,7 @@ New to Gap Mesh? Start here:
 
 - 🇺🇸 **[English User Guide](docs/USER_GUIDE_EN.md)** – Complete guide for beginners
 - 🇮🇷 **[راهنمای فارسی](docs/USER_GUIDE_FA.md)** – راهنمای کامل به زبان فارسی
+- 🛡️ **[MasterDnsVPN Integration Walkthrough](docs/MASTER_DNS_VPN_INTEGRATION.md)** – Feasibility and migration plan from Slipstream
 
 ## Features
 
